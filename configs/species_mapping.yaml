@@ -1,0 +1,54 @@
+# Mapping del texto crudo de COBI/CONAPESCA → código interno snake_case.
+# El código interno es estable; el texto crudo cambia entre fuentes y entre años.
+
+mappings:
+  # Langosta
+  - code: lobster_red
+    aliases:
+      - "LANGOSTA ROJA ENT. FCA."
+      - "LANGOSTA ROJA"
+      - "Langosta roja"
+    scientific_name: Panulirus interruptus
+  - code: lobster_spiny
+    aliases:
+      - "LANGOSTA ENT. FCA. (PANULIRUS ARGUS)"
+      - "LANGOSTA"
+    scientific_name: Panulirus argus
+  - code: lobster_blue
+    aliases:
+      - "LANGOSTA AZUL"
+      - "LANGOSTA AZUL COLAS DE"
+    scientific_name: Panulirus inflatus
+
+  # Abulón
+  - code: abalone_blue
+    aliases:
+      - "ABULON AZUL ENT. FCO."
+      - "ABULÓN AZUL"
+    scientific_name: Haliotis fulgens
+  - code: abalone_red
+    aliases:
+      - "ABULON ROJO ENT. FCO."
+      - "ABULÓN ROJO"
+    scientific_name: Haliotis rufescens
+  - code: abalone_black
+    aliases:
+      - "ABULON NEGRO ENT. FCO."
+      - "ABULÓN NEGRO"
+    scientific_name: Haliotis cracherodii
+  - code: abalone_yellow
+    aliases:
+      - "ABULON AMARILLO ENT. FCO."
+      - "ABULON AMARILLO S.C. FCO."
+      - "ABULÓN AMARILLO"
+    scientific_name: Haliotis corrugata
+
+  # Erizo (no apareció en LITORAL_BC_SUR 2017-2021; presente en otras UEs)
+  - code: urchin_red
+    aliases:
+      - "ERIZO ROJO"
+    scientific_name: Mesocentrotus franciscanus
+  - code: urchin_purple
+    aliases:
+      - "ERIZO MORADO"
+    scientific_name: Strongylocentrotus purpuratus

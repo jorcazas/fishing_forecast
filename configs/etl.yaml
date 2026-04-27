@@ -1,0 +1,52 @@
+# Orquestación del ETL.
+# Ver docs/etl_design.md para el diseño completo.
+
+dataset_version: v1
+
+date_range:
+  start: 2017-01-01
+  end: 2026-04-15  # se va corriendo conforme haya datos nuevos
+
+dataset_v1_species:
+  - lobster_red
+  - abalone_blue
+  - abalone_red
+  - abalone_black
+  - urchin_red
+
+sources:
+  globcolour:
+    enabled: true
+    resolution_km: 4
+    coordinates_default:
+      lon_min: -117.0
+      lon_max: -112.5
+      lat_min: 28.0
+      lat_max: 32.0
+  copernicus:
+    enabled: true
+    products_file: configs/copernicus_vars.yaml
+  cicese:
+    enabled: true
+    stations_file: configs/cicese_stations.yaml
+  arribos_cobi:
+    enabled: true
+    csv_path: data/raw/arribos/Arribos2017-2021.csv  # legacy; ruta a confirmar con Javier
+  arribos_conapesca:
+    enabled: true
+    base_url: https://conapesca.gob.mx/wb/cona/avisos_arribo_cosecha_produccion
+    download_dir: data/raw/arribos/conapesca/
+
+mhw:
+  source: noaa_oisst_v2_1
+  baseline:
+    start: 1982-01-01
+    end: 2011-12-31
+  percentile: 90
+  min_duration_days: 5
+  smoothing_window_days: 11
+
+quality_checks:
+  ocean_coverage_min: 0.80
+  sst_cicese_correlation_min: 0.70
+  fail_on_warning: false

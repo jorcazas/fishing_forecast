@@ -205,3 +205,48 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# === fishing_forecast ===
+
+# Datos (raw inmutable, interim por fuente, processed con dataset_vN.parquet)
+data/raw/**
+data/interim/**
+data/processed/**
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Modelos serializados — pesados, viven en S3 o local
+models/**
+!models/.gitkeep
+
+# Reportes generados (figuras, métricas JSON, sesiones MD)
+reports/figures/**
+reports/metrics/**
+reports/etl/**
+!reports/figures/.gitkeep
+!reports/metrics/.gitkeep
+!reports/etl/.gitkeep
+# Reportes textuales SÍ se commitean
+!reports/sessions/**
+
+# Archivos científicos / artefactos
+*.nc
+*.dat
+*.joblib
+*.h5
+*.pt
+*.pth
+*.pkl
+*.parquet
+
+# Notebook outputs (correr nbstripout antes de commitear)
+*.ipynb_checkpoints
+
+# uv
+.venv/
+# uv.lock SÍ se commitea (lockfile de la app, reproducibilidad)
+
+# Logs locales
+*.log
+

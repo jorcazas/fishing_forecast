@@ -1,0 +1,17 @@
+# Productos de Copernicus Marine Service (post-migración a copernicusmarine).
+# Cada producto se descarga por separado y se agrega al `aggregate/ocean_by_ue`.
+
+products:
+  - dataset_id: cmems_obs-sst_glo_phy_my_l4_P1D-m
+    short_name: sst_l4
+    description: Daily L4 SST global blended product (1981-presente)
+    variables:
+      - analysed_sst
+    region:
+      lon_min: -117.0
+      lon_max: -112.5
+      lat_min: 28.0
+      lat_max: 32.0
+  # Pendiente: agregar productos de corrientes (uo, vo) y salinidad (so) cuando
+  # Javier confirme las credenciales y validemos qué producto es más confiable
+  # para la zona costera de Baja California.

@@ -1,0 +1,23 @@
+# Unidades económicas (cooperativas pesqueras) y sus zonas TURF.
+# Las coordenadas son placeholders hasta que COBI comparta los shapefiles oficiales.
+# Soporta dos formatos por UE:
+#   - bbox: {lon_min, lon_max, lat_min, lat_max}  (rápido, conservador)
+#   - polygon: lista [lon, lat]                    (cuando esté disponible)
+
+litoral_bc_sur:
+  name: "LITORAL DE BAJA CALIFORNIA S DE PR DE RL"
+  region: san_quintin
+  bbox:
+    lon_min: -117.0
+    lon_max: -115.0
+    lat_min: 30.0
+    lat_max: 31.5
+  notes: |
+    UE del paper original. Bbox cubre la zona costera de San Quintín.
+    Pendiente: reemplazar por polígono TURF real cuando COBI comparta shapefile.
+
+# Más UEs se agregan aquí conforme tengamos datos de arribos:
+# isla_natividad:
+#   ...
+# ensenada:
+#   ...

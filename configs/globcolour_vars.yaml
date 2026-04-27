@@ -1,0 +1,80 @@
+# Variables GlobColour. Mapea x_i (convención del paper) a la variable real.
+# El borrador 2024 usaba 16 variables; los nombres reales se confirman con el
+# variable_dict.csv original cuando lo recuperemos.
+#
+# Cada entrada tiene:
+#   slot: x1..x16 (orden estable; no reordenar sin bumpear dataset_version)
+#   variable: identificador GlobColour (e.g. "CHL1", "POC", "T865")
+#   description: variable física
+#   unit: unidad estándar
+#   file_format: patrón de archivo .nc (depende del producto y resolución)
+
+variables:
+  - slot: x1
+    variable: CHL1
+    description: Chlorophyll-a concentration (Garver-Siegel-Maritorena)
+    unit: "mg m^-3"
+  - slot: x2
+    variable: CHL-OC5
+    description: Chlorophyll-a OC5 algorithm (coastal)
+    unit: "mg m^-3"
+  - slot: x3
+    variable: KD490
+    description: Diffuse attenuation coefficient at 490 nm
+    unit: "m^-1"
+  - slot: x4
+    variable: PAR
+    description: Photosynthetically Available Radiation
+    unit: "Einstein m^-2 day^-1"
+  - slot: x5
+    variable: T865
+    description: Aerosol optical thickness at 865 nm
+    unit: "dimensionless"
+  - slot: x6
+    variable: T550
+    description: Aerosol optical thickness at 550 nm
+    unit: "dimensionless"
+  - slot: x7
+    variable: CF
+    description: Cloud fraction
+    unit: "dimensionless"
+  - slot: x8
+    variable: POC
+    description: Particulate organic carbon
+    unit: "mg m^-3"
+  - slot: x9
+    variable: SPM
+    description: Suspended particulate matter
+    unit: "g m^-3"
+  - slot: x10
+    variable: BBP443
+    description: Particle backscattering coefficient at 443 nm
+    unit: "m^-1"
+  - slot: x11
+    variable: CDM443
+    description: Colored detrital and dissolved material absorption at 443 nm
+    unit: "m^-1"
+  - slot: x12
+    variable: ZSD-DORON
+    description: Secchi disk depth (Doron algorithm)
+    unit: "m"
+  - slot: x13
+    variable: NFLH
+    description: Normalized fluorescence line height
+    unit: "mW cm^-2 um^-1 sr^-1"
+  - slot: x14
+    variable: EL555
+    description: Diffuse attenuation at 555 nm (legacy)
+    unit: "m^-1"
+  - slot: x15
+    variable: ATOT443
+    description: Total absorption at 443 nm
+    unit: "m^-1"
+  - slot: x16
+    variable: BBP-QAA
+    description: Particle backscattering (QAA algorithm)
+    unit: "m^-1"
+
+# Estos slots son tentativos hasta confirmar contra el variable_dict.csv del borrador.
+# Si recuperamos el original (en S3 o en algún backup), reemplazar por el orden exacto
+# del paper para preservar comparabilidad de coeficientes y métricas.

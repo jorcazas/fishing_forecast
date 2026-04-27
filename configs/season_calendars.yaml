@@ -1,0 +1,28 @@
+# Calendarios de temporada por (especie, UE).
+# Solo se declara lo que sabemos con certeza. Para combinaciones no declaradas,
+# el ETL asume in_season=True siempre y emite warning en QC.
+
+# Formato:
+#   <species_code>:
+#     <economic_unit_code>:
+#       start: "MM-DD"
+#       end:   "MM-DD"
+#       notes: ...
+
+lobster_red:
+  litoral_bc_sur:
+    start: "09-15"
+    end: "02-15"
+    notes: |
+      Temporada estándar de langosta roja en Baja California, según el reglamento
+      pesquero histórico. Misma convención usada en el paper 2024.
+
+# Pendiente de declarar (esperando confirmación con reglamento INAPESCA):
+# abalone_blue:
+#   litoral_bc_sur:
+#     start: "01-01"
+#     end:   "05-31"
+# abalone_red:
+#   ...
+# urchin_red:
+#   ...

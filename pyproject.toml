@@ -1,0 +1,163 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fishing_forecast"
+version = "0.1.0"
+description = "Predicción del volumen de pesca de langosta en San Quintín, Baja California — fase de expansión 2026."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Javier Orcazas", email = "jorcazas@gmail.com" },
+]
+keywords = [
+    "forecasting",
+    "fisheries",
+    "oceanography",
+    "marine-heatwaves",
+    "time-series",
+]
+
+# Núcleo: lo mínimo para que el paquete y la CLI carguen sin pelear con DL/Copernicus.
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pyarrow>=15",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "loguru>=0.7",
+]
+
+[project.optional-dependencies]
+
+# ETL: extracción y transformación de fuentes oceanográficas y de arribos.
+etl = [
+    "xarray>=2024.1",
+    "netCDF4>=1.6",
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.1",
+    "openpyxl>=3.1",
+    "copernicusmarine>=1.0",
+    "pandera>=0.18",
+]
+
+# Modelos clásicos / ML del paper original + baselines de Fase 1.
+models = [
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+    "statsmodels>=0.14",
+    "prophet>=1.1.5",
+    "joblib>=1.3",
+    "optuna>=3.6",
+    "hyperopt>=0.2.7",
+    "shap>=0.45",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+]
+
+# Probabilístico (Fase 4) y deep learning (Fase 5, opcional).
+prob = [
+    "mapie>=0.8",
+]
+dl = [
+    "torch>=2.2",
+    "pytorch-lightning>=2.2",
+    "pytorch-forecasting>=1.0",
+]
+
+# Tracking de experimentos.
+tracking = [
+    "mlflow>=2.11",
+]
+
+# Notebooks y exploración.
+nb = [
+    "jupyterlab>=4.1",
+    "ipykernel>=6.29",
+    "nbstripout>=0.7",
+]
+
+# Desarrollo.
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.1",
+    "pytest-cov>=5.0",
+    "mypy>=1.9",
+    "pandas-stubs",
+    "types-PyYAML",
+    "types-requests",
+]
+
+# Conjunto completo para `uv sync --all-extras`.
+all = [
+    "fishing_forecast[etl,models,prob,tracking,nb,dev]",
+]
+
+[project.scripts]
+fishing-etl = "fishing_forecast.cli:app"
+
+[project.urls]
+Repository = "https://github.com/jorcazas/fishing_forecast"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fishing_forecast"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src"]
+extend-exclude = [
+    "legacy",
+    "etl",
+    "forecasting_models",
+    "notebooks",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "PD",   # pandas-vet
+    "NPY",  # numpy-specific
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",  # line-too-long (formatter handles it)
+    "PD901", # df is a fine name in scripts
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --tb=short"
+markers = [
+    "slow: tests que tardan >5s (se omiten por default; correr con -m slow)",
+    "integration: tests que tocan red/disco real (no unitarios puros)",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_unused_ignores = true
+warn_return_any = true
+ignore_missing_imports = true
+files = ["src/fishing_forecast"]
