@@ -32,6 +32,9 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "loguru>=0.7",
+    # Algunos servidores gob.mx mandan cadenas SSL incompletas; truststore delega la
+    # validación al trust store del SO, que sí hace AIA chasing.
+    "truststore>=0.9",
 ]
 
 [project.optional-dependencies]
