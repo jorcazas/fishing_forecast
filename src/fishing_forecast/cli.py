@@ -21,6 +21,9 @@ app = typer.Typer(
 extract_app = typer.Typer(help="Descarga raw de cada fuente externa.")
 app.add_typer(extract_app, name="extract")
 
+transform_app = typer.Typer(help="Transforma raw → interim por fuente.")
+app.add_typer(transform_app, name="transform")
+
 
 @app.command()
 def info() -> None:
@@ -78,10 +81,51 @@ def extract_conapesca(
     print(f"[green]Descargados {len(paths)} archivo(s) en {dest}[/]")
 
 
-@app.command()
-def transform(sources: str = typer.Option("all")) -> None:
-    """Transforma raw → interim por fuente. Implementación pendiente (Fase 1.2)."""
-    raise NotImplementedError(f"transform({sources=}): pendiente (Fase 1.2)")
+@transform_app.command("arribos")
+def transform_arribos(
+    all_species: bool = typer.Option(
+        False,
+        "--all-species",
+        help="No filtrar por las especies de dataset_v1 (conserva todas las mapeadas).",
+    ),
+    all_units: bool = typer.Option(
+        False,
+        "--all-units",
+        help="No filtrar por UE definidas; conserva todas las mapeadas en economic_units.yaml.",
+    ),
+) -> None:
+    """Transforma los CSV crudos de CONAPESCA → data/interim/arribos.parquet."""
+    import yaml
+
+    from fishing_forecast.etl.transform import arribos as tr_arribos
+
+    settings = get_settings()
+    raw_dir = settings.raw_dir / "arribos" / "conapesca" / "arribo_cosecha"
+    csv_paths = sorted(raw_dir.glob("*.csv"))
+    if not csv_paths:
+        raise typer.BadParameter(
+            f"No hay CSV en {raw_dir}. Corre primero `fishing-etl extract conapesca`."
+        )
+
+    etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text(encoding="utf-8"))
+    keep_species = None if all_species else etl_cfg.get("dataset_v1_species")
+
+    economic_units_path = settings.configs_root / "economic_units.yaml"
+    keep_units = None
+    if not all_units:
+        ue_cfg = yaml.safe_load(economic_units_path.read_text(encoding="utf-8")) or {}
+        keep_units = list(ue_cfg.keys())
+
+    out_path = settings.interim_dir / "arribos.parquet"
+    df = tr_arribos.transform(
+        csv_paths,
+        species_mapping_path=settings.configs_root / "species_mapping.yaml",
+        economic_units_path=economic_units_path,
+        keep_species=keep_species,
+        keep_units=keep_units,
+        out_path=out_path,
+    )
+    print(f"[green]Transformadas {len(csv_paths)} CSV → {len(df)} filas en {out_path}[/]")
 
 
 @app.command()
