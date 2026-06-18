@@ -1,3 +1,4 @@
+
 # PLAN.md
 
 Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por prioridad según la reunión de planeación. Cada fase tiene criterios de éxito explícitos y un entregable verificable.
@@ -12,18 +13,18 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 **Instrucciones a Claude Code**:
 
-- [ ] Ejecutar `ls -la` en la raíz y `tree -L 3 -I '__pycache__|.git|node_modules|data/raw'` (o equivalente) para mapear la estructura.
-- [ ] Leer `README.md`, `pyproject.toml` o `requirements.txt`, `.gitignore`, y cualquier `Makefile` o `justfile`.
-- [ ] Identificar dónde viven los modelos actuales (`forecasting_models/`?, `src/`?, `notebooks/`?) y listar cada uno con una línea de descripción.
-- [ ] Identificar el formato de los datos procesados actuales: ¿CSV?, ¿Parquet?, ¿dónde están los splits train/val/test?
-- [ ] Identificar cómo se cargan los datos de GlobColour y COBI en el pipeline actual.
-- [ ] Verificar si hay tracking de experimentos (MLflow, Weights & Biases, o solo notebooks).
-- [ ] Verificar si hay tests (`pytest`, `unittest`).
-- [ ] Detectar la versión de Python y las librerías principales ya en uso (para no introducir duplicados ni incompatibilidades).
+- [x] Ejecutar `ls -la` en la raíz y `tree -L 3 -I '__pycache__|.git|node_modules|data/raw'` (o equivalente) para mapear la estructura.
+- [x] Leer `README.md`, `pyproject.toml` o `requirements.txt`, `.gitignore`, y cualquier `Makefile` o `justfile`.
+- [x] Identificar dónde viven los modelos actuales (`forecasting_models/`?, `src/`?, `notebooks/`?) y listar cada uno con una línea de descripción.
+- [x] Identificar el formato de los datos procesados actuales: ¿CSV?, ¿Parquet?, ¿dónde están los splits train/val/test?
+- [x] Identificar cómo se cargan los datos de GlobColour y COBI en el pipeline actual.
+- [x] Verificar si hay tracking de experimentos (MLflow, Weights & Biases, o solo notebooks).
+- [x] Verificar si hay tests (`pytest`, `unittest`).
+- [x] Detectar la versión de Python y las librerías principales ya en uso (para no introducir duplicados ni incompatibilidades).
 
 **Entregable**:
-- [ ] Un archivo `docs/repo_audit.md` con: estructura, inventario de modelos, formato de datos, gaps detectados, convenciones de estilo inferidas, y una lista priorizada de cosas a arreglar o estandarizar antes de empezar los experimentos.
-- [ ] Un comentario en el chat resumiendo hallazgos y proponiendo ajustes al `CLAUDE.md` si la realidad del repo contradice lo que dice ahí.
+- [x] Un archivo `docs/repo_audit.md` con: estructura, inventario de modelos, formato de datos, gaps detectados, convenciones de estilo inferidas, y una lista priorizada de cosas a arreglar o estandarizar antes de empezar los experimentos.
+- [x] Un comentario en el chat resumiendo hallazgos y proponiendo ajustes al `CLAUDE.md` si la realidad del repo contradice lo que dice ahí.
 
 **Criterio de éxito**: un humano puede leer `repo_audit.md` y entender el proyecto en 10 minutos.
 
@@ -35,9 +36,9 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ### 1.1. Diseño del ETL
 
-- [ ] Revisar el ETL existente del borrador (el paper describe un pipeline FTP → `.nc` → `.csv` → tabla consolidada para GlobColour, y OneDrive → `.csv` para COBI).
-- [ ] Listar los archivos crudos nuevos disponibles y dónde están: langosta San Quintín 2022-2025, otras especies (erizo, abulón, etc.), otras regiones/UE. **Preguntar al usuario** la ruta exacta si no es obvio.
-- [ ] Diseñar (y documentar en `docs/etl_design.md`) el esquema de la tabla consolidada nueva, con columnas:
+- [x] Revisar el ETL existente del borrador (el paper describe un pipeline FTP → `.nc` → `.csv` → tabla consolidada para GlobColour, y OneDrive → `.csv` para COBI).
+- [x] Listar los archivos crudos nuevos disponibles y dónde están: langosta San Quintín 2022-2025, otras especies (erizo, abulón, etc.), otras regiones/UE. **Preguntar al usuario** la ruta exacta si no es obvio. → resuelto: CONAPESCA datos abiertos.
+- [x] Diseñar (y documentar en `docs/etl_design.md`) el esquema de la tabla consolidada nueva, con columnas:
   - `ds` (date)
   - `y` (float, kg)
   - `species` (categorical: lobster, urchin, abalone, ...)
@@ -49,14 +50,20 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ### 1.2. Implementación del ETL
 
-- [ ] Implementar/extender módulos en `src/etl/` (o el paquete que corresponda):
-  - `extract_globcolour.py`: descarga por FTP con credenciales de `.env`, idempotente, con cache.
-  - `extract_cobi.py`: lectura desde OneDrive o ruta local si ya está descargado.
-  - `transform.py`: .nc → DataFrame, agregación espacial (promedio por zona TURF correspondiente), agregación temporal (diaria).
-  - `consolidate.py`: join de arribos con oceanográficos sobre `ds` + `economic_unit`, con manejo de NaN.
-  - `quality_checks.py`: asserts sobre rangos, tipos, duplicados; rechazar datos claramente inválidos.
-- [ ] Tests unitarios: un test por módulo, con fixtures chicos (5-10 filas).
-- [ ] Integrar con el pipeline existente sin romperlo (el antiguo y el nuevo deben coexistir durante la transición).
+> Nota: el desglose real de módulos sigue el split por fuente de `docs/etl_design.md`
+> (cada fuente tiene su `extract/` y `transform/` propios). Estado por módulo abajo.
+
+- [ ] Implementar/extender módulos en `src/fishing_forecast/etl/`:
+  - ✅ `extract/arribos_conapesca.py`: descubre el índice de CONAPESCA y descarga idempotente con cache (commit `51796f2`).
+  - ✅ `transform/arribos.py`: CSV CONAPESCA Latin-1 → long-tidy `(ds, y, species, economic_unit, region)`; mapeo species/UE, filtro dataset_v1, agregación diaria.
+  - ⏳ `extract/arribos_cobi.py`: lector del CSV legacy COBI 2017-2021 — bloqueado por la ruta local.
+  - ⏳ `extract/globcolour.py` / `extract/copernicus.py`: bloqueado por credenciales.
+  - ⏳ `transform/globcolour.py` / `transform/copernicus.py` / `transform/cicese.py`: `.nc`/`.dat` → parquet tidy.
+  - ⏳ `aggregate/ocean_by_ue.py`: promedio bbox por UE, join multi-fuente.
+  - ⏳ `consolidate.py`: join de arribos con oceanográficos sobre `ds` + `economic_unit`, con manejo de NaN.
+  - ⏳ `quality_checks.py`: asserts sobre rangos, tipos, duplicados; rechazar datos claramente inválidos.
+- [ ] Tests unitarios: un test por módulo, con fixtures chicos (5-10 filas). → ✅ hechos para `extract/arribos_conapesca` y `transform/arribos`.
+- [ ] Integrar con el pipeline existente sin romperlo (el antiguo y el nuevo deben coexistir durante la transición). → legacy intocado; CLI nuevo `fishing-etl transform arribos`.
 
 ### 1.3. Construcción del índice MHW
 
