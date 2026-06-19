@@ -57,9 +57,11 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
   - ✅ `extract/arribos_conapesca.py`: descubre el índice de CONAPESCA y descarga idempotente con cache (commit `51796f2`).
   - ✅ `transform/arribos.py`: CSV CONAPESCA Latin-1 → long-tidy `(ds, y, species, economic_unit, region)`; mapeo species/UE, filtro dataset_v1, agregación diaria.
   - ⏳ `extract/arribos_cobi.py`: lector del CSV legacy COBI 2017-2021 — bloqueado por la ruta local.
+  - ✅ `extract/sst_oisst.py`: SST diaria NOAA OISST v2.1 (archivos anuales netCDF, idempotente). Pública, sin credenciales.
   - ⏳ `extract/globcolour.py` / `extract/copernicus.py`: bloqueado por credenciales.
   - ⏳ `transform/globcolour.py` / `transform/copernicus.py` / `transform/cicese.py`: `.nc`/`.dat` → parquet tidy.
-  - ⏳ `aggregate/ocean_by_ue.py`: promedio bbox por UE, join multi-fuente.
+  - ✅ `aggregate/mhw.py`: índice MHW (Hobday 2016/2018) — ver Fase 1.3.
+  - 🟡 `aggregate/ocean_by_ue.py`: promedio bbox por UE para SST (OISST) + chain MHW listo y testeado; falta el join multi-fuente (GlobColour/Copernicus, bloqueado por credenciales) y el bbox real (placeholder hasta shapefile COBI).
   - ⏳ `consolidate.py`: join de arribos con oceanográficos sobre `ds` + `economic_unit`, con manejo de NaN.
   - ⏳ `quality_checks.py`: asserts sobre rangos, tipos, duplicados; rechazar datos claramente inválidos.
 - [ ] Tests unitarios: un test por módulo, con fixtures chicos (5-10 filas). → ✅ hechos para `extract/arribos_conapesca` y `transform/arribos`.
@@ -67,11 +69,11 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ### 1.3. Construcción del índice MHW
 
-- [ ] Implementar `src/features/mhw.py`: dada una serie de SST, calcular categoría de MHW por día según Hobday et al. 2016 (baseline climatológico de 30 años, percentil 90, duración mínima de 5 días).
-  - Opción: usar la librería `marineHeatWaves` (port de Python) si está disponible; si no, implementación propia basada en el paper.
-  - Output: columna `mhw_category` (0=sin, 1=moderado, 2=fuerte, 3=severo, 4=extremo) y `mhw_intensity` (float).
-- [ ] Agregar al dataset consolidado.
-- [ ] Visualizar: gráfica de SST + MHW sobre el período completo, salvar en `reports/figures/mhw_timeline.png`. Debe mostrar claramente 2014-2016 (Blob) y 2019-2021 (segundo régimen).
+- [x] Implementar el índice MHW por día según Hobday et al. 2016 (baseline climatológico de 30 años, percentil 90, duración mínima de 5 días). → vive en `etl/aggregate/mhw.py` (no `features/`), porque MHW es columna del dataset consolidado, no un feature de Fase 2. Es **puro respecto a la fuente de SST**.
+  - [x] Implementación propia basada en el paper (la librería `marineHeatWaves` no instala en el entorno). Detección + fusión de huecos ≤2d + categorización Hobday 2018.
+  - [x] Output: `mhw_category` (0=sin, 1=moderado, 2=fuerte, 3=severo, 4=extremo), `mhw_intensity` (NaN fuera de eventos) y `sst_anomaly` (siempre).
+- [ ] Agregar al dataset consolidado. → la SST diaria por UE ya la produce `aggregate/ocean_by_ue.py` (vía OISST); falta correr la descarga real y consolidar.
+- [ ] Visualizar: gráfica de SST + MHW sobre el período completo, salvar en `reports/figures/mhw_timeline.png`. Debe mostrar claramente 2014-2016 (Blob) y 2019-2021 (segundo régimen). → desbloqueado: `fishing-etl extract oisst` + `aggregate ocean` ya producen los datos (`add_mhw(..., return_diagnostics=True)` expone `clim`/`thresh`/`in_mhw`); solo falta correr la descarga (~150 MB/año) y graficar.
 
 ### 1.4. Re-entrenamiento del baseline
 

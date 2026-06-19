@@ -257,3 +257,151 @@ dos filas mismo día/UE/especie para verificar agregación; alias con y sin acen
 - **`aggregate/mhw.py`** — NOAA OISST v2.1 es público; calcular categoría MHW (Hobday
   2016) y testear contra el Blob 2014-2016 sin credenciales. Es el siguiente eslabón
   que no depende de Javier (coordenadas TURF / credenciales / CSV legacy COBI).
+
+---
+
+## 2026-06-19 — Fase 1.3: índice MHW (Hobday 2016/2018)
+
+### Hito: `etl/aggregate/mhw.py` (implementación propia, pura respecto a la fuente de SST)
+
+`marineHeatWaves` (port de Oliver) no instala en el entorno → implementación propia
+basada en el paper, como ya preveía `etl_design.md` §5.3. Vive en `etl/aggregate/`
+(no en `features/` como decía el PLAN original) porque MHW es **columna del dataset
+consolidado**, no un feature de modelado de Fase 2.
+
+**Diseño clave**: la función pública `add_mhw(daily_df, params)` recibe una serie
+diaria de SST de **una sola UE** y devuelve las columnas del esquema. No sabe de dónde
+viene la SST → desacoplado de la extracción oceanográfica (que sigue bloqueada por
+credenciales/coords). Esto permite implementar y testear MHW **ahora**.
+
+**Algoritmo**:
+- `compute_climatology` — climatología diaria sobre baseline (default 1982-2011):
+  para cada día-del-año agrupa SST en ventana ±5d a través de los años, calcula media
+  (`clim`) y p90 (`thresh`), y suaviza ambos con media móvil **circular** de 31d.
+- Día-del-año en **rejilla fija de 366** anclada a un año bisiesto de referencia (2000),
+  para que 1-mar=61 siempre y no se desfase entre años bisiestos/no-bisiestos (problema
+  del `dayofyear` crudo de pandas). `year_day()` expuesto y testeado.
+- `add_mhw` — reindexa a rango diario continuo (los huecos de calendario rompen la
+  consecutividad correctamente), detecta corridas de `SST≥thresh`, **fusiona eventos
+  separados por huecos ≤2d** (Hobday), descarta eventos < 5 días, y categoriza por
+  `(SST-clim)/(thresh-clim)`: [1,2)→I, [2,3)→II, [3,4)→III, ≥4→IV.
+
+**Columnas de salida** (esquema §4.1 + decisión §5.4):
+- `sst_anomaly` — `SST-clim`, siempre (incluso negativa).
+- `mhw_category` — int8 0..4; 0 fuera de evento, ≥1 dentro (los días-hueco fusionados,
+  por debajo del umbral, quedan en categoría 1).
+- `mhw_intensity` — `sst_anomaly` dentro de evento, `NaN` fuera.
+- Con `return_diagnostics=True` añade `clim`, `thresh`, `in_mhw` (para la figura).
+
+**Config**: agregué `window_half_width_days: 5` y `max_gap_days: 2` explícitos a
+`configs/etl.yaml`, y **cambié `smoothing_window_days` de 11 → 31** (default de Hobday;
+antes el 11 conflaba la ventana de pooling con la de suavizado). `MHWParams.from_config`
+mapea el bloque `mhw:` del YAML.
+
+**Tests** — 9 nuevos en `tests/etl/test_mhw.py` con series sintéticas (sinusoide
+estacional determinista, sin datos reales): alineación de día-del-año (bisiestos),
+bandas de categoría, umbral ≥ media, cero MHW en climatología pura, ola inyectada de
+10 días detectada, pico de 3 días ignorado (< min_duration), fusión de hueco de 1 día,
+preservación de filas con huecos de entrada, y `from_config`.
+
+**Verificación**: `uv run pytest` → 31/31 verde. `ruff check` + `ruff format` limpios.
+
+**Pendiente para cerrar Fase 1.3** (ambos requieren la SST real, fuera de lo no-bloqueado):
+1. Wirear un extractor de NOAA OISST v2.1 + agregación bbox por UE (`aggregate/ocean_by_ue.py`).
+2. `reports/figures/mhw_timeline.png` con el Blob 2014-2016 y el régimen 2019-2021.
+
+### Estado al cierre del 2026-06-19
+
+| Fase del PLAN | Estado |
+|---|---|
+| 0. Reconocimiento | ✅ |
+| 1.1 Diseño del ETL | ✅ |
+| 1.2 Implementación del ETL | 🟡 CONAPESCA extract + transform/arribos + algoritmo MHW |
+| 1.3 Índice MHW | 🟡 algoritmo listo y testeado; falta SST real + figura |
+| 1.4 Re-entrenamiento baseline | ⏳ bloqueado por dataset_v1 |
+
+### Próximo paso (ya con dependencia externa)
+
+El siguiente eslabón realista es **`extract/sst_oisst.py` + `aggregate/ocean_by_ue.py`**:
+NOAA OISST es público (no necesita credenciales), pero implica descarga grande y, para
+el promedio por UE, las **coordenadas TURF de COBI**. Confirmar con Javier si bajamos
+OISST global (bbox SQ) o esperamos el shapefile. Lo de GlobColour/Copernicus sigue
+bloqueado por credenciales.
+
+---
+
+## 2026-06-19 (cont.) — Vertical slice oceanográfico: OISST → SST por UE → MHW
+
+Decidí avanzar con el bbox **placeholder** de San Quintín que ya vive en
+`economic_units.yaml` (lon -117..-115, lat 30..31.5), en vez de esperar el shapefile
+TURF de COBI: el promedio sobre ese bbox es una primera aproximación razonable y el
+shapefile solo afina el recorte después. Así desbloqueo todo el camino OISST→MHW.
+
+**No corrí la descarga real** (OISST son ~150 MB/año × 30+ años; CLAUDE.md pide
+confirmar antes de operaciones largas). Todo quedó implementado y testeado con datos
+sintéticos + un roundtrip netCDF chico.
+
+#### `etl/extract/sst_oisst.py`
+
+Extractor de NOAA OISST v2.1 high-res (PSL): un netCDF anual `sst.day.mean.<YYYY>.nc`.
+- `build_specs(years)` — puro, ordena/deduplica, rechaza años < 1982.
+- `download_file` / `extract` — mismo patrón idempotente que CONAPESCA (cache
+  ETag/Last-Modified/Content-Length en `.meta.json`, descarga stream a `.part` + rename
+  atómico). Reusa el `truststore` global (ya inyectado en `__init__`).
+
+#### `etl/aggregate/ocean_by_ue.py`
+
+- `sst_bbox_mean(dataset, bbox)` — **puro sobre un `xarray.Dataset`**. Recorta al bbox y
+  promedia espacialmente (skipna, ignora celdas de tierra) → serie diaria `(ds, sst)`.
+  **Maneja la convención de longitud**: OISST usa 0-360 y los bbox del repo son -180..180;
+  detecta la convención del dataset y convierte el bbox (incluido el wrap en el
+  antimeridiano). Detección flexible de nombres de coords (lat/latitude, lon/longitude,
+  time/date).
+- `open_oisst(paths)` — aísla la lectura de disco (`open_dataset` / `open_mfdataset`).
+- `sst_series_for_bbox` / `sst_mhw_for_bbox` — encadenan lectura → bbox-mean → `add_mhw`.
+
+#### CLI
+
+- `fishing-etl extract oisst --years 1982-2011` (default = baseline climatológico MHW;
+  acepta rango `YYYY-YYYY` o lista coma-separada). Avisa del tamaño antes de bajar.
+- `fishing-etl aggregate ocean --ue litoral_bc_sur` — lee los netCDF descargados, toma el
+  bbox de la UE y los params MHW de `etl.yaml`, y escribe
+  `data/interim/ocean_<ue>.parquet` con `sst, sst_anomaly, mhw_category, mhw_intensity`.
+
+#### Config
+
+Agregué el bloque `sources.oisst` a `configs/etl.yaml` (base_url + download_dir).
+
+#### Tests — 10 nuevos
+
+- `test_extract_sst_oisst.py` (5): URLs anuales, rechazo de años < 1982, escritura de
+  archivo+meta, idempotencia con HEAD/ETag mockeado, `--force` re-descarga.
+- `test_ocean_by_ue.py` (5): bbox-mean selecciona las celdas correctas en convención
+  -180..180 **y** 0-360, bbox fuera del grid → NaN + warning, roundtrip netCDF real
+  (escribe `.nc` con xarray y reabre), y `sst_mhw_for_bbox` end-to-end (3 años sintéticos,
+  ola inyectada en 2002 detectada como MHW).
+
+**Verificación**: `uv run pytest` → 41/41 verde. `ruff check` + `ruff format` limpios.
+
+### Estado al cierre
+
+| Fase del PLAN | Estado |
+|---|---|
+| 0 / 1.1 | ✅ |
+| 1.2 Implementación del ETL | 🟡 CONAPESCA + transform/arribos + OISST extract + ocean_by_ue (SST) |
+| 1.3 Índice MHW | 🟡 algoritmo + pipeline SST→MHW listos; falta correr descarga real + figura |
+| 1.4 Re-entrenamiento baseline | ⏳ bloqueado por dataset_v1 |
+
+### Decisión que necesita a Javier
+
+Para **correr de verdad** el pipeline oceanográfico hay que bajar OISST (decidir rango:
+1982-2011 baseline + 2012-2025 operativo ≈ 44 archivos × ~150 MB). Confirmar antes de
+disparar la descarga. El bbox usado es placeholder; el shapefile TURF de COBI lo afina
+sin re-ETL (solo cambia `economic_units.yaml`).
+
+### Pendientes no bloqueados que siguen
+
+- `transform/cicese.py` — scraping de estaciones CICESE (Isla Cedros, Guerrero Negro);
+  útil para validar SST contra OISST (QC `sst_cicese_correlation_min`).
+- `extract/arribos_cobi.py` — lector del CSV legacy 2017-2021 (necesita la ruta local).
+- `consolidate.py` + `quality_checks.py` — una vez haya ≥2 fuentes en interim.

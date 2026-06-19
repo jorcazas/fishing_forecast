@@ -23,6 +23,10 @@ sources:
       lon_max: -112.5
       lat_min: 28.0
       lat_max: 32.0
+  oisst:
+    enabled: true
+    base_url: https://downloads.psl.noaa.gov/Datasets/noaa.oisst.v2.highres
+    download_dir: data/raw/sst/oisst/  # archivos anuales sst.day.mean.<YYYY>.nc (~150 MB c/u)
   copernicus:
     enabled: true
     products_file: configs/copernicus_vars.yaml
@@ -43,8 +47,10 @@ mhw:
     start: 1982-01-01
     end: 2011-12-31
   percentile: 90
-  min_duration_days: 5
-  smoothing_window_days: 11
+  window_half_width_days: 5    # ventana ±5d (=11d) para agrupar el p90 climatológico
+  min_duration_days: 5         # evento = SST≥p90 durante ≥5 días consecutivos
+  max_gap_days: 2              # eventos separados por ≤2d se fusionan (Hobday 2016)
+  smoothing_window_days: 31    # suavizado circular de clim/umbral (default Hobday; impar)
 
 quality_checks:
   ocean_coverage_min: 0.80

@@ -24,6 +24,9 @@ app.add_typer(extract_app, name="extract")
 transform_app = typer.Typer(help="Transforma raw → interim por fuente.")
 app.add_typer(transform_app, name="transform")
 
+aggregate_app = typer.Typer(help="Agregación espacial/temporal por UE + MHW.")
+app.add_typer(aggregate_app, name="aggregate")
+
 
 @app.command()
 def info() -> None:
@@ -79,6 +82,65 @@ def extract_conapesca(
         force=force,
     )
     print(f"[green]Descargados {len(paths)} archivo(s) en {dest}[/]")
+
+
+@extract_app.command("oisst")
+def extract_oisst(
+    years: str = typer.Option(
+        "1982-2011",
+        help="Rango 'YYYY-YYYY' o lista coma-separada. Default = baseline climatológico MHW.",
+    ),
+    force: bool = typer.Option(False, help="Re-descargar aunque haya cache local."),
+) -> None:
+    """Descarga SST diaria NOAA OISST v2.1 (archivos anuales netCDF)."""
+    from fishing_forecast.etl.extract import sst_oisst
+
+    settings = get_settings()
+    dest = settings.raw_dir / "sst" / "oisst"
+    year_list = _parse_years(years)
+    print(f"[yellow]OISST: {len(year_list)} año(s) (~150 MB c/u). Descargando a {dest}[/]")
+    paths = sst_oisst.extract(dest_dir=dest, years=year_list, force=force)
+    print(f"[green]Descargados {len(paths)} archivo(s) en {dest}[/]")
+
+
+def _parse_years(years: str) -> list[int]:
+    if "-" in years and "," not in years:
+        lo, hi = (int(p) for p in years.split("-"))
+        return list(range(lo, hi + 1))
+    return [int(y) for y in years.split(",")]
+
+
+@aggregate_app.command("ocean")
+def aggregate_ocean(
+    ue: str = typer.Option("litoral_bc_sur", help="Código de UE (clave en economic_units.yaml)."),
+) -> None:
+    """SST por UE (promedio bbox OISST) + índice MHW → data/interim/ocean_<ue>.parquet."""
+    import yaml
+
+    from fishing_forecast.etl.aggregate import ocean_by_ue
+    from fishing_forecast.etl.aggregate.mhw import MHWParams
+
+    settings = get_settings()
+    oisst_dir = settings.raw_dir / "sst" / "oisst"
+    paths = sorted(oisst_dir.glob("*.nc"))
+    if not paths:
+        raise typer.BadParameter(
+            f"No hay netCDF en {oisst_dir}. Corre primero `fishing-etl extract oisst`."
+        )
+
+    ue_cfg = yaml.safe_load((settings.configs_root / "economic_units.yaml").read_text("utf-8"))
+    if ue not in ue_cfg or "bbox" not in ue_cfg[ue]:
+        raise typer.BadParameter(f"UE {ue!r} sin bbox en economic_units.yaml.")
+    bbox = ue_cfg[ue]["bbox"]
+
+    etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text("utf-8"))
+    params = MHWParams.from_config(etl_cfg["mhw"])
+
+    df = ocean_by_ue.sst_mhw_for_bbox(paths, bbox, params)
+    out_path = settings.interim_dir / f"ocean_{ue}.parquet"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(out_path, compression="zstd", index=False)
+    print(f"[green]SST+MHW de {ue}: {len(df)} días → {out_path}[/]")
 
 
 @transform_app.command("arribos")
