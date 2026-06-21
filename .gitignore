@@ -240,6 +240,9 @@ reports/etl/**
 *.pkl
 *.parquet
 
+# Excepción: fixtures chicos de tests (necesarios para que la suite corra en limpio)
+!tests/fixtures/**
+
 # Notebook outputs (correr nbstripout antes de commitear)
 *.ipynb_checkpoints
 

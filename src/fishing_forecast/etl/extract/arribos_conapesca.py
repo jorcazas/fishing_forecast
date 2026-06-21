@@ -24,7 +24,6 @@ si CONAPESCA cambia el patrón de URL en años futuros lo seguimos automáticame
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -35,10 +34,9 @@ import requests
 from bs4 import BeautifulSoup
 from loguru import logger
 
-INDEX_URL = "https://conapesca.gob.mx/wb/cona/avisos_arribo_cosecha_produccion"
+from fishing_forecast.utils import download as dl
 
-#: Tamaño de chunk para streaming de descargas (1 MiB).
-DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+INDEX_URL = "https://conapesca.gob.mx/wb/cona/avisos_arribo_cosecha_produccion"
 
 FileKind = Literal["arribo_cosecha", "produccion"]
 
@@ -127,88 +125,12 @@ def download_file(
 ) -> Path:
     """Descarga ``spec`` a ``dest_dir/spec.relative_path()`` de manera idempotente.
 
-    Idempotencia:
-
-    1. Si existe un manifiesto local (``.meta.json`` junto al archivo) con el mismo
-       ``ETag`` o ``Last-Modified`` que el servidor reporta vía HEAD, **se omite la
-       descarga**.
-    2. Si el archivo local existe pero el manifiesto está desactualizado o no existe,
-       se hace una HEAD; si los headers coinciden con el tamaño/etag del archivo en
-       disco se rescata el manifiesto sin re-descargar.
-    3. Si nada coincide, se descarga completo (no hacemos resume parcial — añade
-       complejidad y los archivos completos cabe una vez en disco).
-
-    ``force=True`` ignora el manifiesto y re-descarga siempre.
-
-    Devuelve la ruta absoluta del archivo descargado.
+    Delega en :func:`fishing_forecast.utils.download.download_file` (cache `.meta.json`
+    con ETag/Last-Modified/Content-Length). ``force=True`` re-descarga siempre.
     """
-    session = session or requests.Session()
-    target = dest_dir / spec.relative_path()
-    meta_path = target.with_suffix(target.suffix + ".meta.json")
-    target.parent.mkdir(parents=True, exist_ok=True)
-
-    if not force and target.exists() and meta_path.exists():
-        cached_meta = json.loads(meta_path.read_text())
-        if _server_matches_cache(session, spec.url, cached_meta):
-            logger.info(f"[skip] {spec.filename} ya está actualizado.")
-            return target
-
-    logger.info(f"[get ] {spec.filename}")
-    with session.get(spec.url, timeout=120, stream=True) as response:
-        response.raise_for_status()
-        content_length = int(response.headers.get("Content-Length", 0))
-        bytes_written = 0
-        tmp_path = target.with_suffix(target.suffix + ".part")
-        with tmp_path.open("wb") as fh:
-            for chunk in response.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
-                if chunk:
-                    fh.write(chunk)
-                    bytes_written += len(chunk)
-        tmp_path.replace(target)
-
-        meta = {
-            "url": spec.url,
-            "etag": response.headers.get("ETag"),
-            "last_modified": response.headers.get("Last-Modified"),
-            "content_length": content_length or bytes_written,
-            "downloaded_bytes": bytes_written,
-        }
-        meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
-    logger.info(
-        f"[done] {spec.filename} ({bytes_written / (1024 * 1024):.1f} MB)"
+    return dl.download_file(
+        spec.url, dest_dir / spec.relative_path(), session=session, force=force
     )
-    return target
-
-
-def _server_matches_cache(
-    session: requests.Session, url: str, cached_meta: dict[str, str | int | None]
-) -> bool:
-    """True si el servidor reporta el mismo ETag/Last-Modified/Content-Length que el cache."""
-    try:
-        head = session.head(url, timeout=20, allow_redirects=True)
-    except requests.RequestException as exc:
-        logger.warning(f"HEAD falló ({exc}); asumiendo cache desactualizado.")
-        return False
-    if not head.ok:
-        return False
-    server_etag = head.headers.get("ETag")
-    server_last_mod = head.headers.get("Last-Modified")
-    server_size = head.headers.get("Content-Length")
-    if server_etag and cached_meta.get("etag") and server_etag == cached_meta["etag"]:
-        return True
-    if (
-        server_last_mod
-        and cached_meta.get("last_modified")
-        and server_last_mod == cached_meta["last_modified"]
-    ):
-        return True
-    if (
-        server_size
-        and cached_meta.get("content_length")
-        and int(server_size) == cached_meta["content_length"]
-    ):
-        return True
-    return False
 
 
 def extract(

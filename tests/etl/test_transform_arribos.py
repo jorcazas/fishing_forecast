@@ -14,11 +14,13 @@ import pytest
 import yaml
 
 from fishing_forecast.etl.transform.arribos import (
+    COBI_DIALECT,
     build_species_lookup,
     build_ue_lookup,
     clean_arribos,
     normalize_text,
     read_conapesca_csv,
+    read_source_csv,
     transform,
 )
 
@@ -38,6 +40,11 @@ DATASET_V1_SPECIES = [
 @pytest.fixture
 def sample_csv(fixtures_dir: Path) -> Path:
     return fixtures_dir / "conapesca_arribos_sample.csv"
+
+
+@pytest.fixture
+def cobi_csv(fixtures_dir: Path) -> Path:
+    return fixtures_dir / "cobi_arribos_sample.csv"
 
 
 def test_normalize_text_strips_accents_and_case() -> None:
@@ -142,6 +149,35 @@ def test_transform_writes_parquet(sample_csv: Path, tmp_path: Path) -> None:
     assert out_path.exists()
     roundtrip = pd.read_parquet(out_path)
     assert len(roundtrip) == len(df) == 4
+
+
+def test_cobi_dialect_reads_lowercase_iso_schema(cobi_csv: Path) -> None:
+    raw = read_source_csv(cobi_csv, COBI_DIALECT)
+    assert "especie" in raw.columns and "periodo_fin" in raw.columns
+    assert len(raw) == 7
+
+
+def test_cobi_dialect_end_to_end(cobi_csv: Path, tmp_path: Path) -> None:
+    out_path = tmp_path / "arribos.parquet"
+    df = transform(
+        [cobi_csv],
+        species_mapping_path=SPECIES_MAPPING,
+        economic_units_path=ECONOMIC_UNITS,
+        keep_species=DATASET_V1_SPECIES,
+        keep_units=["litoral_bc_sur"],
+        out_path=out_path,
+        dialect=COBI_DIALECT,
+    )
+    assert out_path.exists()
+    # TIBURON (sin mapeo), ERIZO CARNE DE (no es alias), y OTRA UE se descartan.
+    assert set(df["species"]) == {"lobster_red", "abalone_blue", "urchin_red"}
+    assert (df["economic_unit"] == "litoral_bc_sur").all()
+    # Las dos filas de langosta del 2018-11-01 (ISO, no dayfirst) se suman a 200.5.
+    lobster = df[(df["species"] == "lobster_red") & (df["ds"] == date(2018, 11, 1))]
+    assert lobster["y"].iloc[0] == pytest.approx(200.5)
+    # urchin_red mapea solo la forma "ENT. FCO." (300.0), no "CARNE DE FCO." (9.0).
+    urchin = df[df["species"] == "urchin_red"]
+    assert urchin["y"].sum() == pytest.approx(300.0)
 
 
 def test_transform_deduplicates_across_files(sample_csv: Path) -> None:

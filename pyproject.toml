@@ -35,6 +35,7 @@ dependencies = [
     # Algunos servidores gob.mx mandan cadenas SSL incompletas; truststore delega la
     # validación al trust store del SO, que sí hace AIA chasing.
     "truststore>=0.9",
+    "copernicusmarine>=2.4.0",
 ]
 
 [project.optional-dependencies]
@@ -49,6 +50,7 @@ etl = [
     "openpyxl>=3.1",
     "copernicusmarine>=1.0",
     "pandera>=0.18",
+    "matplotlib>=3.8",
 ]
 
 # Modelos clásicos / ML del paper original + baselines de Fase 1.

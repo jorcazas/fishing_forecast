@@ -9,10 +9,18 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+#: Defaults de las rutas; se usan cuando la variable de entorno viene vacía.
+_PATH_DEFAULTS = {
+    "data_root": REPO_ROOT / "data",
+    "configs_root": REPO_ROOT / "configs",
+    "reports_root": REPO_ROOT / "reports",
+    "models_root": REPO_ROOT / "models",
+}
 
 
 class Settings(BaseSettings):
@@ -33,6 +41,17 @@ class Settings(BaseSettings):
     configs_root: Path = Field(default=REPO_ROOT / "configs")
     reports_root: Path = Field(default=REPO_ROOT / "reports")
     models_root: Path = Field(default=REPO_ROOT / "models")
+
+    @field_validator("data_root", "configs_root", "reports_root", "models_root", mode="before")
+    @classmethod
+    def _empty_path_to_default(cls, value: object, info) -> object:
+        """Una variable de entorno vacía (`DATA_ROOT=`) no debe pisar el default.
+
+        Pasa cuando alguien copia `.env.example` (que trae las rutas en blanco) a `.env`.
+        """
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return _PATH_DEFAULTS[info.field_name]
+        return value
 
     # Credenciales (vacías por default; el código que las usa debe validar antes de llamar)
     globcolour_user: str = ""

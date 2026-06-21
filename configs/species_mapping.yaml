@@ -43,12 +43,15 @@ mappings:
       - "ABULÓN AMARILLO"
     scientific_name: Haliotis corrugata
 
-  # Erizo (no apareció en LITORAL_BC_SUR 2017-2021; presente en otras UEs)
+  # Erizo. El crudo COBI/CONAPESCA usa la forma "ENT. FCO." (entero fresco); "CARNE DE
+  # FCO." es producto procesado (gónada) con otra base de peso → se excluye a propósito.
   - code: urchin_red
     aliases:
+      - "ERIZO ROJO ENT. FCO."
       - "ERIZO ROJO"
     scientific_name: Mesocentrotus franciscanus
   - code: urchin_purple
     aliases:
+      - "ERIZO MORADO ENT. FCO."
       - "ERIZO MORADO"
     scientific_name: Strongylocentrotus purpuratus

@@ -56,16 +56,17 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 - [ ] Implementar/extender módulos en `src/fishing_forecast/etl/`:
   - ✅ `extract/arribos_conapesca.py`: descubre el índice de CONAPESCA y descarga idempotente con cache (commit `51796f2`).
   - ✅ `transform/arribos.py`: CSV CONAPESCA Latin-1 → long-tidy `(ds, y, species, economic_unit, region)`; mapeo species/UE, filtro dataset_v1, agregación diaria.
-  - ⏳ `extract/arribos_cobi.py`: lector del CSV legacy COBI 2017-2021 — bloqueado por la ruta local.
+  - ✅ arribos COBI: el export local (`Arribos2017-2021.csv`, 2016-2025) se ingiere con el dialecto COBI de `transform/arribos.py` (`transform arribos --source cobi`); no hizo falta un `extract/` aparte (archivo local). `dataset_v1` real generado.
   - ✅ `extract/sst_oisst.py`: SST diaria NOAA OISST v2.1 (archivos anuales netCDF, idempotente). Pública, sin credenciales.
   - ⏳ `extract/globcolour.py` / `extract/copernicus.py`: bloqueado por credenciales.
-  - ⏳ `transform/globcolour.py` / `transform/copernicus.py` / `transform/cicese.py`: `.nc`/`.dat` → parquet tidy.
+  - ✅ `extract/cicese.py` + `transform/cicese.py`: índice REDMAR → `.dat` (idempotente) → mediana diaria por estación → `interim/cicese/<station>.parquet`. Reescrito del legacy `etl/cicese.py`.
+  - ⏳ `transform/globcolour.py` / `transform/copernicus.py`: `.nc` → parquet tidy (bloqueado por credenciales).
   - ✅ `aggregate/mhw.py`: índice MHW (Hobday 2016/2018) — ver Fase 1.3.
   - 🟡 `aggregate/ocean_by_ue.py`: promedio bbox por UE para SST (OISST) + chain MHW listo y testeado; falta el join multi-fuente (GlobColour/Copernicus, bloqueado por credenciales) y el bbox real (placeholder hasta shapefile COBI).
-  - ⏳ `consolidate.py`: join de arribos con oceanográficos sobre `ds` + `economic_unit`, con manejo de NaN.
-  - ⏳ `quality_checks.py`: asserts sobre rangos, tipos, duplicados; rechazar datos claramente inválidos.
-- [ ] Tests unitarios: un test por módulo, con fixtures chicos (5-10 filas). → ✅ hechos para `extract/arribos_conapesca` y `transform/arribos`.
-- [ ] Integrar con el pipeline existente sin romperlo (el antiguo y el nuevo deben coexistir durante la transición). → legacy intocado; CLI nuevo `fishing-etl transform arribos`.
+  - ✅ `consolidate.py`: join de arribos con oceanográficos sobre `ds` + `economic_unit`, rejilla completa por `(ds, species, UE)`, manejo de `y` faltante (§4.4), columnas calendario y metadatos. Esquema §4.1 completo.
+  - ✅ `quality_checks.py`: asserts sobre duplicados, rangos (`y≥0`, `mhw_category∈0..4`), dominios species/UE, tipos `season`/`in_season`; warnings de cobertura oceanográfica. Política `fail_on_warning`.
+- [x] Tests unitarios: un test por módulo, con fixtures chicos (5-10 filas). → 56 tests verdes (extract conapesca/oisst, transform arribos, mhw, ocean_by_ue, consolidate, quality_checks).
+- [x] Integrar con el pipeline existente sin romperlo (el antiguo y el nuevo deben coexistir durante la transición). → legacy intocado; pipeline nuevo end-to-end verificado: `fishing-etl transform arribos → consolidate → qc` produce `dataset_v1.parquet` con el esquema §4.1.
 
 ### 1.3. Construcción del índice MHW
 
@@ -73,7 +74,7 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
   - [x] Implementación propia basada en el paper (la librería `marineHeatWaves` no instala en el entorno). Detección + fusión de huecos ≤2d + categorización Hobday 2018.
   - [x] Output: `mhw_category` (0=sin, 1=moderado, 2=fuerte, 3=severo, 4=extremo), `mhw_intensity` (NaN fuera de eventos) y `sst_anomaly` (siempre).
 - [ ] Agregar al dataset consolidado. → la SST diaria por UE ya la produce `aggregate/ocean_by_ue.py` (vía OISST); falta correr la descarga real y consolidar.
-- [ ] Visualizar: gráfica de SST + MHW sobre el período completo, salvar en `reports/figures/mhw_timeline.png`. Debe mostrar claramente 2014-2016 (Blob) y 2019-2021 (segundo régimen). → desbloqueado: `fishing-etl extract oisst` + `aggregate ocean` ya producen los datos (`add_mhw(..., return_diagnostics=True)` expone `clim`/`thresh`/`in_mhw`); solo falta correr la descarga (~150 MB/año) y graficar.
+- [ ] Visualizar: gráfica de SST + MHW sobre el período completo, salvar en `reports/figures/mhw_timeline.png`. Debe mostrar claramente 2014-2016 (Blob) y 2019-2021 (segundo régimen). → función lista: `viz/mhw_plot.plot_mhw_timeline` (SST + clim + umbral + eventos sombreados por categoría, testeada con datos sintéticos); solo falta correr la descarga OISST real y generar el PNG.
 
 ### 1.4. Re-entrenamiento del baseline
 

@@ -26,6 +26,7 @@ publica con otro separador, el QC de columnas faltantes lo detecta de inmediato.
 from __future__ import annotations
 
 import unicodedata
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable
 
@@ -33,18 +34,61 @@ import pandas as pd
 import yaml
 from loguru import logger
 
-#: Número de líneas de preámbulo antes del header en los CSV de CONAPESCA.
-CONAPESCA_PREAMBLE_LINES = 4
-CONAPESCA_ENCODING = "iso-8859-1"
-
-#: Nombres crudos de las columnas de interés en el CSV de CONAPESCA.
-COL_DS = "PERIODO FIN"
-COL_Y = "PESO DESEMBARCADO_KILOGRAMOS"
-COL_SPECIES = "NOMBRE ESPECIE"
-COL_UE = "UNIDAD ECONOMICA"
-
 #: Columnas de salida de la tabla interim long-tidy.
 OUTPUT_COLUMNS = ["ds", "y", "species", "economic_unit", "region"]
+
+
+@dataclass(frozen=True)
+class ArribosDialect:
+    """Cómo leer un CSV de arribos de una fuente concreta.
+
+    Las dos fuentes (CONAPESCA descargado vs export COBI) traen el mismo esquema lógico
+    con distinto encoding, casing de columnas, preámbulo y formato de fecha.
+    """
+
+    name: str
+    col_ds: str
+    col_y: str
+    col_species: str
+    col_ue: str
+    encoding: str = "utf-8"
+    preamble_lines: int = 0
+    sep: str = ","
+    dayfirst: bool = False
+
+
+#: CSV crudo descargado de CONAPESCA: ISO-8859-1, 4 líneas de preámbulo, fechas DD/MM/YYYY.
+CONAPESCA_DIALECT = ArribosDialect(
+    name="conapesca",
+    col_ds="PERIODO FIN",
+    col_y="PESO DESEMBARCADO_KILOGRAMOS",
+    col_species="NOMBRE ESPECIE",
+    col_ue="UNIDAD ECONOMICA",
+    encoding="iso-8859-1",
+    preamble_lines=4,
+    sep=",",
+    dayfirst=True,
+)
+
+#: Export COBI (`Arribos2017-2021.csv`): UTF-8, sin preámbulo, columnas snake_case,
+#: fechas ISO `YYYY-MM-DD`. Mismo esquema lógico que CONAPESCA, ya pre-parseado.
+COBI_DIALECT = ArribosDialect(
+    name="cobi",
+    col_ds="periodo_fin",
+    col_y="peso_desembarcado",
+    col_species="especie",
+    col_ue="unidad_economica",
+    encoding="utf-8",
+    preamble_lines=0,
+    sep=",",
+    dayfirst=False,
+)
+
+#: Dialectos disponibles por nombre (para el CLI `--source`).
+DIALECTS: dict[str, ArribosDialect] = {
+    CONAPESCA_DIALECT.name: CONAPESCA_DIALECT,
+    COBI_DIALECT.name: COBI_DIALECT,
+}
 
 
 def normalize_text(text: str) -> str:
@@ -87,34 +131,44 @@ def build_ue_lookup(economic_units: dict) -> dict[str, tuple[str, str | None]]:
     return lookup
 
 
-def read_conapesca_csv(
-    path: Path,
-    *,
-    sep: str = ",",
-    encoding: str = CONAPESCA_ENCODING,
-    preamble_lines: int = CONAPESCA_PREAMBLE_LINES,
-) -> pd.DataFrame:
-    """Lee un CSV crudo de CONAPESCA respetando preámbulo y encoding.
+def read_source_csv(path: Path, dialect: ArribosDialect) -> pd.DataFrame:
+    """Lee un CSV crudo de arribos según ``dialect`` (encoding/preámbulo/separador).
 
     Pura respecto a la lógica de negocio: solo lee bytes → DataFrame crudo (sin mapear).
+    Revienta con mensaje claro si faltan las columnas clave (separador/encoding malos).
     """
     df = pd.read_csv(
         path,
-        sep=sep,
-        encoding=encoding,
-        skiprows=preamble_lines,
+        sep=dialect.sep,
+        encoding=dialect.encoding,
+        skiprows=dialect.preamble_lines,
         dtype=str,
         low_memory=False,
     )
     df.columns = [c.strip() for c in df.columns]
-    missing = [c for c in (COL_DS, COL_Y, COL_SPECIES, COL_UE) if c not in df.columns]
+    required = (dialect.col_ds, dialect.col_y, dialect.col_species, dialect.col_ue)
+    missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(
-            f"{path.name}: faltan columnas esperadas {missing}. "
+            f"{path.name}: faltan columnas esperadas {missing} (dialecto {dialect.name!r}). "
             f"Columnas presentes: {list(df.columns)[:10]}... "
             "Revisar separador/encoding/preámbulo."
         )
     return df
+
+
+def read_conapesca_csv(
+    path: Path,
+    *,
+    sep: str = ",",
+    encoding: str = CONAPESCA_DIALECT.encoding,
+    preamble_lines: int = CONAPESCA_DIALECT.preamble_lines,
+) -> pd.DataFrame:
+    """Wrapper de compatibilidad: lee un CSV con el dialecto CONAPESCA (overrides opcionales)."""
+    dialect = replace(
+        CONAPESCA_DIALECT, sep=sep, encoding=encoding, preamble_lines=preamble_lines
+    )
+    return read_source_csv(path, dialect)
 
 
 def clean_arribos(
@@ -124,22 +178,24 @@ def clean_arribos(
     ue_lookup: dict[str, tuple[str, str | None]],
     keep_species: Iterable[str] | None = None,
     keep_units: Iterable[str] | None = None,
-    dayfirst: bool = True,
+    dialect: ArribosDialect = CONAPESCA_DIALECT,
 ) -> pd.DataFrame:
-    """Limpia un DataFrame crudo de CONAPESCA a la tabla long-tidy de salida.
+    """Limpia un DataFrame crudo de arribos a la tabla long-tidy de salida.
 
     Pasos:
-      1. Mapea ``NOMBRE ESPECIE`` → ``species`` y ``UNIDAD ECONOMICA`` → ``economic_unit``
-         usando los lookups normalizados. Filas sin mapeo se descartan (con conteo).
+      1. Mapea la especie y la UE crudas → códigos internos con los lookups normalizados.
+         Filas sin mapeo se descartan (con conteo).
       2. Filtra a ``keep_species`` / ``keep_units`` si se proveen (None = sin filtro).
-      3. Parsea ``ds`` a fecha y ``y`` a float (kg).
+      3. Parsea ``ds`` a fecha y ``y`` a float (kg) según ``dialect``.
       4. Agrega sumando ``y`` por ``(ds, species, economic_unit, region)``.
 
     No imputa nada ni introduce ceros. ``region`` se deriva del mapping UE.
     """
     df = raw.copy()
-    df["species"] = df[COL_SPECIES].map(lambda s: species_lookup.get(normalize_text(str(s))))
-    ue_mapped = df[COL_UE].map(lambda s: ue_lookup.get(normalize_text(str(s))))
+    df["species"] = df[dialect.col_species].map(
+        lambda s: species_lookup.get(normalize_text(str(s)))
+    )
+    ue_mapped = df[dialect.col_ue].map(lambda s: ue_lookup.get(normalize_text(str(s))))
     df["economic_unit"] = ue_mapped.map(lambda v: v[0] if v is not None else None)
     df["region"] = ue_mapped.map(lambda v: v[1] if v is not None else None)
 
@@ -155,8 +211,8 @@ def clean_arribos(
     if keep_units is not None:
         df = df[df["economic_unit"].isin(set(keep_units))]
 
-    df["ds"] = pd.to_datetime(df[COL_DS], dayfirst=dayfirst, errors="coerce").dt.date
-    df["y"] = pd.to_numeric(df[COL_Y], errors="coerce")
+    df["ds"] = pd.to_datetime(df[dialect.col_ds], dayfirst=dialect.dayfirst, errors="coerce").dt.date
+    df["y"] = pd.to_numeric(df[dialect.col_y], errors="coerce")
 
     bad_dates = df["ds"].isna().sum()
     if bad_dates:
@@ -187,20 +243,20 @@ def transform(
     keep_species: Iterable[str] | None = None,
     keep_units: Iterable[str] | None = None,
     out_path: Path | None = None,
-    sep: str = ",",
+    dialect: ArribosDialect = CONAPESCA_DIALECT,
 ) -> pd.DataFrame:
     """Orquestador: lee varios CSV crudos, los limpia y consolida en una tabla long-tidy.
 
-    Si ``out_path`` se provee, escribe el resultado a Parquet (zstd) y crea el directorio.
-    Devuelve siempre el DataFrame consolidado.
+    ``dialect`` selecciona la fuente (CONAPESCA o COBI). Si ``out_path`` se provee, escribe
+    el resultado a Parquet (zstd). Devuelve siempre el DataFrame consolidado.
     """
     species_lookup = build_species_lookup(_load_yaml(species_mapping_path))
     ue_lookup = build_ue_lookup(_load_yaml(economic_units_path))
 
     frames: list[pd.DataFrame] = []
     for path in csv_paths:
-        logger.info(f"Transformando {path.name}")
-        raw = read_conapesca_csv(path, sep=sep)
+        logger.info(f"Transformando {path.name} (dialecto {dialect.name})")
+        raw = read_source_csv(path, dialect)
         frames.append(
             clean_arribos(
                 raw,
@@ -208,6 +264,7 @@ def transform(
                 ue_lookup=ue_lookup,
                 keep_species=keep_species,
                 keep_units=keep_units,
+                dialect=dialect,
             )
         )
 

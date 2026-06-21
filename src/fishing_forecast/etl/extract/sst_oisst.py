@@ -15,7 +15,6 @@ descarga si el servidor reporta los mismos metadatos.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -23,14 +22,14 @@ from typing import Iterable
 import requests
 from loguru import logger
 
+from fishing_forecast.utils import download as dl
+
 #: Base PSL para los archivos anuales de OISST v2.1 high-res.
 PSL_BASE_URL = "https://downloads.psl.noaa.gov/Datasets/noaa.oisst.v2.highres"
 #: Plantilla del nombre de archivo anual.
 FILENAME_TEMPLATE = "sst.day.mean.{year}.nc"
 #: Primer año disponible en OISST v2.1.
 FIRST_YEAR = 1982
-#: Tamaño de chunk para streaming (1 MiB).
-DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -66,70 +65,14 @@ def download_file(
     session: requests.Session | None = None,
     force: bool = False,
 ) -> Path:
-    """Descarga ``spec`` a ``dest_dir`` idempotentemente (ver módulo CONAPESCA)."""
-    session = session or requests.Session()
-    target = dest_dir / spec.relative_path()
-    meta_path = target.with_suffix(target.suffix + ".meta.json")
-    target.parent.mkdir(parents=True, exist_ok=True)
+    """Descarga ``spec`` a ``dest_dir`` idempotentemente.
 
-    if not force and target.exists() and meta_path.exists():
-        cached_meta = json.loads(meta_path.read_text())
-        if _server_matches_cache(session, spec.url, cached_meta):
-            logger.info(f"[skip] {spec.filename} ya está actualizado.")
-            return target
-
-    logger.info(f"[get ] {spec.filename}")
-    with session.get(spec.url, timeout=300, stream=True) as response:
-        response.raise_for_status()
-        content_length = int(response.headers.get("Content-Length", 0))
-        bytes_written = 0
-        tmp_path = target.with_suffix(target.suffix + ".part")
-        with tmp_path.open("wb") as fh:
-            for chunk in response.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
-                if chunk:
-                    fh.write(chunk)
-                    bytes_written += len(chunk)
-        tmp_path.replace(target)
-        meta = {
-            "url": spec.url,
-            "etag": response.headers.get("ETag"),
-            "last_modified": response.headers.get("Last-Modified"),
-            "content_length": content_length or bytes_written,
-            "downloaded_bytes": bytes_written,
-        }
-        meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
-    logger.info(f"[done] {spec.filename} ({bytes_written / (1024 * 1024):.1f} MB)")
-    return target
-
-
-def _server_matches_cache(
-    session: requests.Session, url: str, cached_meta: dict[str, str | int | None]
-) -> bool:
-    try:
-        head = session.head(url, timeout=30, allow_redirects=True)
-    except requests.RequestException as exc:
-        logger.warning(f"HEAD falló ({exc}); asumiendo cache desactualizado.")
-        return False
-    if not head.ok:
-        return False
-    server_etag = head.headers.get("ETag")
-    server_last_mod = head.headers.get("Last-Modified")
-    server_size = head.headers.get("Content-Length")
-    if server_etag and cached_meta.get("etag") and server_etag == cached_meta["etag"]:
-        return True
-    if (
-        server_last_mod
-        and cached_meta.get("last_modified")
-        and server_last_mod == cached_meta["last_modified"]
-    ):
-        return True
-    if (
-        server_size
-        and cached_meta.get("content_length")
-        and int(server_size) == cached_meta["content_length"]
-    ):
-        return True
-    return False
+    Delega en :func:`fishing_forecast.utils.download.download_file`. Timeout largo (300 s)
+    porque los archivos anuales pesan ~150 MB.
+    """
+    return dl.download_file(
+        spec.url, dest_dir / spec.relative_path(), session=session, force=force, timeout=300
+    )
 
 
 def extract(

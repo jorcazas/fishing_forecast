@@ -1173,6 +1173,7 @@ name = "fishing-forecast"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "copernicusmarine" },
     { name = "loguru" },
     { name = "numpy" },
     { name = "pandas" },
@@ -1238,6 +1239,7 @@ etl = [
     { name = "beautifulsoup4" },
     { name = "copernicusmarine" },
     { name = "lxml" },
+    { name = "matplotlib" },
     { name = "netcdf4" },
     { name = "openpyxl" },
     { name = "pandera" },
@@ -1272,6 +1274,7 @@ tracking = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'etl'", specifier = ">=4.12" },
+    { name = "copernicusmarine", specifier = ">=2.4.0" },
     { name = "copernicusmarine", marker = "extra == 'etl'", specifier = ">=1.0" },
     { name = "fishing-forecast", extras = ["etl", "models", "prob", "tracking", "nb", "dev"], marker = "extra == 'all'" },
     { name = "hyperopt", marker = "extra == 'models'", specifier = ">=0.2.7" },
@@ -1282,6 +1285,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7" },
     { name = "lxml", marker = "extra == 'etl'", specifier = ">=5.1" },
     { name = "mapie", marker = "extra == 'prob'", specifier = ">=0.8" },
+    { name = "matplotlib", marker = "extra == 'etl'", specifier = ">=3.8" },
     { name = "matplotlib", marker = "extra == 'models'", specifier = ">=3.8" },
     { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=2.11" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9" },

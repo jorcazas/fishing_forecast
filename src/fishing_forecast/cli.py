@@ -5,6 +5,9 @@ Esqueleto inicial. Los comandos concretos se implementan en Fase 1.2.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pandas as pd
 import typer
 from rich import print
 from rich.table import Table
@@ -110,6 +113,29 @@ def _parse_years(years: str) -> list[int]:
     return [int(y) for y in years.split(",")]
 
 
+@extract_app.command("cicese")
+def extract_cicese(
+    years: str = typer.Option("2011-2025", help="Rango 'YYYY-YYYY' o lista coma-separada."),
+    force: bool = typer.Option(False, help="Re-descargar aunque haya cache local."),
+) -> None:
+    """Descarga los .dat de las estaciones CICESE (REDMAR) de cicese_stations.yaml."""
+    import yaml
+
+    from fishing_forecast.etl.extract import cicese
+
+    settings = get_settings()
+    cfg = yaml.safe_load((settings.configs_root / "cicese_stations.yaml").read_text("utf-8"))
+    stations = [
+        cicese.Station(name=name, code=meta["code"]) for name, meta in cfg["stations"].items()
+    ]
+    dest = settings.raw_dir / "cicese"
+    result = cicese.extract(
+        stations=stations, years=_parse_years(years), dest_dir=dest, force=force
+    )
+    total = sum(len(v) for v in result.values())
+    print(f"[green]CICESE: {total} archivo(s) .dat en {dest}[/]")
+
+
 @aggregate_app.command("ocean")
 def aggregate_ocean(
     ue: str = typer.Option("litoral_bc_sur", help="Código de UE (clave en economic_units.yaml)."),
@@ -145,6 +171,10 @@ def aggregate_ocean(
 
 @transform_app.command("arribos")
 def transform_arribos(
+    source: str = typer.Option(
+        "conapesca",
+        help="Fuente de arribos: 'conapesca' (CSV descargados) o 'cobi' (export local).",
+    ),
     all_species: bool = typer.Option(
         False,
         "--all-species",
@@ -156,22 +186,37 @@ def transform_arribos(
         help="No filtrar por UE definidas; conserva todas las mapeadas en economic_units.yaml.",
     ),
 ) -> None:
-    """Transforma los CSV crudos de CONAPESCA → data/interim/arribos.parquet."""
+    """Transforma los CSV crudos de arribos → data/interim/arribos.parquet.
+
+    `--source conapesca` lee los CSV descargados; `--source cobi` lee el export local
+    configurado en `etl.yaml: sources.arribos_cobi.csv_path`.
+    """
     import yaml
 
     from fishing_forecast.etl.transform import arribos as tr_arribos
 
     settings = get_settings()
-    raw_dir = settings.raw_dir / "arribos" / "conapesca" / "arribo_cosecha"
-    csv_paths = sorted(raw_dir.glob("*.csv"))
-    if not csv_paths:
-        raise typer.BadParameter(
-            f"No hay CSV en {raw_dir}. Corre primero `fishing-etl extract conapesca`."
-        )
-
     etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text(encoding="utf-8"))
-    keep_species = None if all_species else etl_cfg.get("dataset_v1_species")
 
+    if source not in tr_arribos.DIALECTS:
+        raise typer.BadParameter(f"source debe ser uno de {sorted(tr_arribos.DIALECTS)}.")
+    dialect = tr_arribos.DIALECTS[source]
+
+    if source == "cobi":
+        # csv_path en config es relativo a la raíz del repo (= configs_root.parent).
+        csv_path = settings.configs_root.parent / etl_cfg["sources"]["arribos_cobi"]["csv_path"]
+        if not csv_path.exists():
+            raise typer.BadParameter(f"No existe el CSV legacy COBI en {csv_path}.")
+        csv_paths = [csv_path]
+    else:
+        raw_dir = settings.raw_dir / "arribos" / "conapesca" / "arribo_cosecha"
+        csv_paths = sorted(raw_dir.glob("*.csv"))
+        if not csv_paths:
+            raise typer.BadParameter(
+                f"No hay CSV en {raw_dir}. Corre primero `fishing-etl extract conapesca`."
+            )
+
+    keep_species = None if all_species else etl_cfg.get("dataset_v1_species")
     economic_units_path = settings.configs_root / "economic_units.yaml"
     keep_units = None
     if not all_units:
@@ -186,20 +231,114 @@ def transform_arribos(
         keep_species=keep_species,
         keep_units=keep_units,
         out_path=out_path,
+        dialect=dialect,
     )
-    print(f"[green]Transformadas {len(csv_paths)} CSV → {len(df)} filas en {out_path}[/]")
+    print(
+        f"[green]Transformadas {len(csv_paths)} CSV ({source}) → {len(df)} filas en {out_path}[/]"
+    )
+
+
+@transform_app.command("cicese")
+def transform_cicese() -> None:
+    """Transforma los .dat de cada estación CICESE → data/interim/cicese/<station>.parquet."""
+    import yaml
+
+    from fishing_forecast.etl.transform import cicese as tr_cicese
+
+    settings = get_settings()
+    cfg = yaml.safe_load((settings.configs_root / "cicese_stations.yaml").read_text("utf-8"))
+    aggregates = cfg.get("daily_aggregates")
+
+    written = 0
+    for name, meta in cfg["stations"].items():
+        dat_paths = sorted((settings.raw_dir / "cicese" / name).glob("*.dat"))
+        if not dat_paths:
+            print(f"[yellow]{name}: sin .dat; se omite (corre `extract cicese`).[/]")
+            continue
+        out_path = settings.interim_dir / "cicese" / f"{name}.parquet"
+        df = tr_cicese.transform(
+            dat_paths,
+            station=name,
+            region=meta.get("region"),
+            aggregates=aggregates,
+            out_path=out_path,
+        )
+        print(f"[green]{name}: {len(df)} días → {out_path}[/]")
+        written += 1
+    if not written:
+        raise typer.BadParameter("Ninguna estación tenía .dat. Corre `fishing-etl extract cicese`.")
 
 
 @app.command()
 def consolidate(version: str = typer.Option("v1")) -> None:
-    """Produce data/processed/dataset_{version}.parquet. Pendiente (Fase 1.2)."""
-    raise NotImplementedError(f"consolidate({version=}): pendiente (Fase 1.2)")
+    """Join interim → data/processed/dataset_{version}.parquet (esquema §4.1)."""
+    import yaml
+
+    from fishing_forecast.etl import consolidate as cons
+
+    settings = get_settings()
+    arribos_path = settings.interim_dir / "arribos.parquet"
+    if not arribos_path.exists():
+        raise typer.BadParameter(
+            f"Falta {arribos_path}. Corre `fishing-etl transform arribos` primero."
+        )
+
+    etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text("utf-8"))
+    seasons = yaml.safe_load((settings.configs_root / "season_calendars.yaml").read_text("utf-8"))
+    date_range = etl_cfg["date_range"]
+
+    # Recoge los interims oceanográficos disponibles (ocean_<ue>.parquet).
+    ocean_by_ue = {
+        p.stem.removeprefix("ocean_"): pd.read_parquet(p)
+        for p in sorted(settings.interim_dir.glob("ocean_*.parquet"))
+    }
+    if not ocean_by_ue:
+        print("[yellow]Sin interims oceanográficos (ocean_*.parquet); SST/MHW irán vacías.[/]")
+
+    df = cons.consolidate(
+        pd.read_parquet(arribos_path),
+        season_calendars=seasons,
+        date_start=date_range["start"],  # PyYAML parsea YYYY-MM-DD como datetime.date
+        date_end=date_range["end"],
+        ocean_by_ue=ocean_by_ue or None,
+    )
+    out_path = settings.processed_dir / f"dataset_{version}.parquet"
+    cons.write_dataset(df, out_path)
+    print(f"[green]Consolidado {len(df)} filas → {out_path}[/]")
 
 
 @app.command()
-def qc(dataset: str = typer.Option("data/processed/dataset_v1.parquet")) -> None:
-    """Quality checks sobre el dataset consolidado. Pendiente (Fase 1.2)."""
-    raise NotImplementedError(f"qc({dataset=}): pendiente (Fase 1.2)")
+def qc(
+    dataset: str = typer.Option("data/processed/dataset_v1.parquet"),
+    fail_on_warning: bool = typer.Option(False, "--fail-on-warning"),
+) -> None:
+    """Quality checks sobre el dataset consolidado."""
+    import yaml
+
+    from fishing_forecast.etl import quality_checks as qc_mod
+
+    settings = get_settings()
+    path = Path(dataset)
+    if not path.exists():
+        raise typer.BadParameter(f"No existe {path}. Corre `fishing-etl consolidate` primero.")
+
+    etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text("utf-8"))
+    species_cfg = yaml.safe_load(
+        (settings.configs_root / "species_mapping.yaml").read_text("utf-8")
+    )
+    ue_cfg = yaml.safe_load((settings.configs_root / "economic_units.yaml").read_text("utf-8"))
+    known_species = [m["code"] for m in species_cfg.get("mappings", [])]
+    known_units = list(ue_cfg.keys())
+    coverage_min = etl_cfg.get("quality_checks", {}).get("ocean_coverage_min", 0.80)
+
+    issues = qc_mod.run_quality_checks(
+        pd.read_parquet(path),
+        known_species=known_species,
+        known_units=known_units,
+        ocean_coverage_min=coverage_min,
+        fail_on_warning=fail_on_warning,
+    )
+    print(f"[green]QC OK[/] — {len(issues)} incidencia(s) (ninguna bloqueante).")
 
 
 if __name__ == "__main__":

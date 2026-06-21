@@ -405,3 +405,236 @@ sin re-ETL (solo cambia `economic_units.yaml`).
   útil para validar SST contra OISST (QC `sst_cicese_correlation_min`).
 - `extract/arribos_cobi.py` — lector del CSV legacy 2017-2021 (necesita la ruta local).
 - `consolidate.py` + `quality_checks.py` — una vez haya ≥2 fuentes en interim.
+
+---
+
+## 2026-06-19 (cont.) — Cierre del camino de código del ETL: consolidate + quality_checks
+
+Petición: "terminar el plan". El plan completo (Fases 1-5) no se puede *terminar* sin
+datos reales y credenciales (bloqueadores externos), así que llevé el **código del ETL
+hasta el final del camino** (extract→transform→aggregate→**consolidate→quality_checks**)
+y dejé todo lo demás mapeado en `PENDINGS.md`.
+
+#### `etl/consolidate.py`
+
+Join final al esquema §4.1 (16 columnas). El spine es `interim/arribos.parquet`; se le
+pega la SST/MHW por UE (`interim/ocean_<ue>.parquet`), **broadcasteada** a todas las
+especies de la UE (la oceanografía es por UE, no por especie).
+- `build_grid` — rejilla completa `(ds, species, economic_unit, region)` sobre el rango
+  de fechas de `etl.yaml`, con las series presentes en arribos.
+- `_derive_season` — `season` + `in_season` por grupo usando `season_calendars.yaml` y
+  `utils/dates`; sin calendario declarado → `in_season=True` + warning.
+- Manejo de `y` (§4.4): fuera de temporada sin registro → `y=0`; dentro de temporada sin
+  registro → `NaN` (no se imputa). `is_imputed_y=False` siempre.
+- Metadatos: `is_imputed_x`, `ocean_impute_method`, `source_globcolour_files=0` (GlobColour
+  aún no integrado), `etl_run_id`.
+
+#### `etl/quality_checks.py`
+
+`check_dataset` (pura → lista de `QCIssue`) + `run_quality_checks` (aplica política,
+levanta `QualityCheckError`). Checks: duplicados de clave primaria, `y≥0`,
+`mhw_category∈0..4`, dominios species/UE, tipos `season`/`in_season`; **warnings** de
+filas fuera de temporada con `y≠0` y de cobertura SST < umbral. Nada de `except: pass`.
+
+#### CLI
+
+Implementé los comandos que eran `NotImplementedError`: `fishing-etl consolidate` y
+`fishing-etl qc [--fail-on-warning]`.
+
+#### Verificación end-to-end (no solo unit tests)
+
+Corrí el pipeline real con la fixture: `transform arribos → consolidate → qc`. Produjo
+`dataset_v1.parquet` con **10176 filas** (3 especies × 3392 días, 2017-01-01→2026-04-15),
+las 16 columnas del esquema, y el QC marcó correctamente el warning de cobertura SST 0%
+(no hay OISST descargado). Limpié los artefactos de la prueba (gitignored).
+
+**Tests**: 56/56 verde (15 nuevos: 7 consolidate + 8 quality_checks). `ruff` limpio.
+
+#### `PENDINGS.md` (nuevo, en la raíz)
+
+Mapa estructurado de lo que falta para terminar el plan: bloqueadores duros (credenciales
+GlobColour/Copernicus, shapefile TURF de COBI, CSV legacy COBI, artefactos S3), descargas
+grandes pendientes de confirmar (CONAPESCA ~1.4 GB, OISST ~6-7 GB), código de ETL aún
+desbloqueado (CICESE, particionado, ADR §4.4, export de compatibilidad), y el detalle de
+Fases 1.4-5 con sus dependencias. Incluye la ruta crítica recomendada.
+
+### Estado al cierre
+
+| Fase del PLAN | Estado |
+|---|---|
+| 0 / 1.1 | ✅ |
+| 1.2 Implementación del ETL | ✅ **código completo y testeado** (falta correr con datos reales) |
+| 1.3 Índice MHW | 🟡 algoritmo + pipeline listos; falta OISST real + figura |
+| 1.4 Re-entrenamiento baseline | ⏳ bloqueado por dataset real + artefactos S3 |
+| 2-5 | ⏳ dependen de Fase 1 cerrada con datos reales — ver `PENDINGS.md` |
+
+### Próximo paso
+
+Lo de mayor palanca ya no es código sino **insumos**: confirmar bbox/shapefile (B3) y
+rango OISST para correr el pipeline real, y regenerar credenciales (B1/B2). El siguiente
+código *desbloqueado* es `transform/cicese.py` (pendiente de verificar el formato `.dat`
+real). Todo en `PENDINGS.md`.
+
+---
+
+## 2026-06-19 (cont.) — CICESE: extractor + transformación (reescritos del legacy)
+
+Antes de escribir nada verifiqué el formato real leyendo el legacy `etl/cicese.py`
+(CLAUDE.md: no asumir). Hallazgos: índice HTML de REDMAR por estación/año lista archivos
+`.dat` **sin header**, separados por espacios, **23 columnas en orden fijo** (nombres de
+la metadata CICESE), agregados a mediana diaria.
+
+#### `etl/extract/cicese.py`
+
+- `build_index_url` / `parse_index_html` (pura, BeautifulSoup) — reemplaza el parsing
+  frágil del legacy (`line.split('href="')[1][:15]`) por extracción de `<a href>` `.dat`.
+- `download_file` idempotente (mismo patrón meta.json que CONAPESCA/OISST). REDMAR es
+  HTTP plano, sin credenciales.
+- `extract(stations, years, dest_dir)` → `{station: [paths]}`, tolera años con índice
+  inaccesible (warn + skip, sin reventar).
+
+#### `etl/transform/cicese.py`
+
+- `CICESE_COLUMNS` (23) + `RAW_TO_AGGREGATE` (español → códigos inglés de
+  `cicese_stations.yaml`).
+- `read_dat` (sep `\s+`, sin header), `to_daily` (mediana por `(anio,mes,dia)`, construye
+  `ds`, renombra, filtra a `daily_aggregates`, etiqueta `station`/`region`), `transform`
+  (concatena `.dat` → diario → parquet `interim/cicese/<station>.parquet`).
+- **Decisión consciente**: el valor centinela de dato faltante de REDMAR (¿9999?) no se
+  asume — `read_dat` toma `na_values` explícito (default None). Anotado en `PENDINGS.md`
+  para fijarlo cuando haya datos reales (evita sesgar la mediana con un supuesto).
+
+#### CLI
+
+`fishing-etl extract cicese` y `fishing-etl transform cicese` (iteran las estaciones de
+`cicese_stations.yaml`).
+
+#### Tests — 7 nuevos (`tests/etl/test_cicese.py`) + fixtures
+
+`cicese_index_sample.html` (2 `.dat` + `../` + `readme.txt` para verificar filtrado) y
+`cicese_sample.dat` (23 cols, 2 muestras/día × 2 días). Cubren: URL del índice, parse
+solo `.dat`, lectura de 23 columnas, mediana diaria (18+20→19, 21+23→22), renombrado,
+filtro `aggregates`, y roundtrip parquet.
+
+**Verificación**: `uv run pytest` → 63/63 verde. `ruff` limpio.
+
+### Estado al cierre
+
+| Fase del PLAN | Estado |
+|---|---|
+| 0 / 1.1 | ✅ |
+| 1.2 Implementación del ETL | ✅ código completo (CONAPESCA, OISST, **CICESE**, consolidate, qc) |
+| 1.3 Índice MHW | 🟡 algoritmo + pipeline listos; falta OISST real + figura |
+| 1.4 / 2-5 | ⏳ ver `PENDINGS.md` |
+
+Fuentes de código que quedan: GlobColour/Copernicus (bloqueadas por credenciales) y el
+lector legacy COBI (bloqueado por la ruta del CSV). Pendientes finos de CICESE (centinela
+NaN, check de correlación SST) y el refactor de los 3 descargadores idempotentes en
+`PENDINGS.md`.
+
+---
+
+## 2026-06-20 — Runbook + Etapa 2 de PENDINGS (código desbloqueado)
+
+Javier pidió (a) el paso a paso para conseguir credenciales/insumos y cerrar pendientes,
+y (b) arrancar los items de código desbloqueados.
+
+#### (a) `docs/SETUP_AND_RUNBOOK.md`
+
+Runbook en dos partes: **A** = cómo conseguir cada insumo externo (GlobColour FTP en
+hermes.acri.fr, Copernicus Marine + SDK, shapefile TURF de COBI, CSV legacy, S3) con las
+variables de `.env.example`; **B** = orden de ejecución de los pendientes (descargas →
+pipeline → código desbloqueado → enriquecimiento → modelado) marcando [tú] vs [claude].
+Incluye ruta crítica.
+
+#### (b) Etapa 2 — todo lo desbloqueable sin insumos externos
+
+1. **Correlación SST CICESE vs OISST** — `quality_checks.check_sst_correlation` (Pearson
+   sobre el solape diario; warning bajo el umbral o con solape < 30 días). 4 tests.
+2. **Figura MHW** — `viz/mhw_plot.plot_mhw_timeline` (SST + climatología + umbral +
+   eventos sombreados por categoría Hobday). Backend Agg. 2 tests (smoke PNG + validación
+   de columnas diagnósticas). Movió `matplotlib` al extra `etl` (era solo `models`).
+3. **Particionado** `consolidate.write_dataset_partitioned` (species×year), **export**
+   `consolidate.export_lstm_csv` (compat borrador: `ds,y[,x1..x16]`), **ADR-0001**
+   (y-missing), y **refactor**: el patrón de descarga idempotente se factorizó a
+   `utils/download.py` y los 3 extractores quedaron como wrappers delgados.
+
+#### Bug encontrado y corregido (a raíz del runbook)
+
+Al copiar `.env.example` → `.env`, las rutas venían como `DATA_ROOT=` (vacías) y pisaban
+los defaults (el smoke test reventó: `data_root.name == ''`). Mi propio runbook (`cp
+.env.example .env`) habría brickeado la config. Fix: (1) `field_validator(mode="before")`
+en `config.py` que trata string vacío como ausente y usa el default; (2) `.env.example`
+ahora trae las rutas comentadas con la nota.
+
+**Verificación**: `uv run pytest` → 71/71 verde. `ruff check` + `ruff format` limpios.
+
+### Estado al cierre
+
+| Fase del PLAN | Estado |
+|---|---|
+| 0 / 1.1 / 1.2 | ✅ |
+| 1.3 Índice MHW | 🟡 algoritmo + pipeline + figura listos; falta OISST real para generar el PNG |
+| 1.4 / 2-5 | ⏳ ver `PENDINGS.md` |
+
+Toda la Etapa 2 de `PENDINGS.md` (código desbloqueado) está cerrada. Lo que sigue
+requiere insumos externos: confirmar shapefile/bbox y rango OISST para correr el pipeline
+real, y credenciales GlobColour/Copernicus para el enriquecimiento.
+
+---
+
+## 2026-06-21 — Ingesta del export COBI (B4 resuelto) + primer `dataset_v1` real
+
+Javier entregó `data/raw/arribos/Arribos2017-2021.csv` (97k filas; **realmente 2016-2025**,
+no solo 2017-2021). Inspeccioné estructura (sin pegar datos de pescadores): mismo esquema
+lógico que CONAPESCA pero **snake_case minúsculas, UTF-8, sin preámbulo, fechas ISO**.
+Es un export ya pre-parseado de CONAPESCA. UE objetivo presente (5594 filas), 368 UEs
+distintas.
+
+#### Generalización a dialectos (en vez de duplicar el módulo)
+
+Refactoricé `transform/arribos.py` para soportar **dos dialectos** con la misma lógica:
+- `ArribosDialect` (columnas + encoding + preámbulo + separador + dayfirst).
+- `CONAPESCA_DIALECT` (ISO-8859-1, 4 líneas, `PERIODO FIN`, DD/MM/YYYY) y `COBI_DIALECT`
+  (UTF-8, 0 preámbulo, `periodo_fin`, ISO).
+- `read_conapesca_csv` quedó como wrapper de compatibilidad (tests viejos verdes);
+  `read_source_csv(path, dialect)` es el lector general. `clean_arribos`/`transform`
+  toman `dialect`. CLI: `transform arribos --source {conapesca,cobi}` (una sola salida
+  `interim/arribos.parquet`, fuente seleccionable).
+
+#### Bug de config corregido
+
+`species_mapping.yaml` mapeaba erizo con el alias `"ERIZO ROJO"`, pero el crudo solo trae
+`"ERIZO ROJO ENT. FCO."` → urchin_red habría mapeado **0 filas**. Agregué la forma
+"ENT. FCO." (y la morada). Decisión de dominio anotada: solo se mapean formas "entero";
+las formas de producto (S.C., COLAS DE, CARNE DE, COCIDA) se descartan para no mezclar
+bases de peso.
+
+#### Pipeline real corrido (rápido, 97k filas)
+
+`transform arribos --source cobi` → 842 filas tidy (5 especies dataset_v1 × UE SQ) →
+`consolidate` → `dataset_v1.parquet` (13568 filas de rejilla, 2017-01-01→2026-04-15) →
+`qc` OK con 2 warnings no bloqueantes (cobertura SST 0% — sin OISST aún; 1 arribo de
+langosta fuera de temporada). **Validación clave**: las sumas por temporada de langosta-SQ
+reproducen el **bache post-MHW**: 2019_2020 ≈173 t → 2020_2021 ≈106 t → **2021_2022 ≈31 t**
+(caída ~82% vs el pico), justo lo que documenta Villaseñor-Derbez 2024.
+
+#### Tests
+
++2 (`COBI_DIALECT` lectura y end-to-end con fixture UTF-8 `cobi_arribos_sample.csv`).
+**73/73 verde**, `ruff` limpio. Los artefactos reales en `data/` quedan (gitignored) para
+que Javier los use.
+
+### Estado al cierre
+
+| Fase | Estado |
+|---|---|
+| 0 / 1.1 | ✅ |
+| 1.2 ETL | ✅ código completo; **arribos reales ya fluyen (COBI)** |
+| 1.3 MHW | 🟡 algoritmo+pipeline+figura listos; falta OISST real para el PNG |
+| 1.4 baseline | ⏳ **desbloqueado en datos de arribos**: ya hay `dataset_v1` real langosta-SQ; falta enriquecer con oceanografía (OISST/GlobColour) y comparar vs S3 |
+
+### Pendientes de datos nuevos (en `PENDINGS.md` §3)
+
+Estrategia de unión CONAPESCA+COBI, formas de producto excluidas, hueco de langosta 2022+
+en SQ (¿la UE dejó de reportar?), y la fila fuera de temporada del QC.
