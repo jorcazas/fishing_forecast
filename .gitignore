@@ -253,3 +253,5 @@ reports/etl/**
 # Logs locales
 *.log
 
+# Keys
+*keys.json

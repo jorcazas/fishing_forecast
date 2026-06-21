@@ -57,9 +57,22 @@ Luego rellena cada bloque conforme lo obtengas.
 3. Claude implementa `extract/arribos_cobi.py` para leerlo.
 
 ### A5. Artefactos S3 del borrador 2024 (B5 — comparación de métricas)  [tú → claude]
-1. Consigue el **nombre del bucket** y **AWS key/secret** de quien montó el S3.
-2. Configura AWS: `aws configure` (o `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
-3. Pon `S3_BUCKET_LEGACY=...` en `.env` y verifica: `aws s3 ls s3://$S3_BUCKET_LEGACY/`.
+Las credenciales AWS van en **`keys.json`** en la raíz (gitignored vía `*keys.json`):
+```json
+{
+  "aws_access_key_id": "...",
+  "aws_secret_access_key": "...",
+  "region": "us-east-1",          // opcional
+  "bucket": "mi-bucket-borrador"  // opcional; si no, usa S3_BUCKET_LEGACY de .env
+}
+```
+1. Pega ahí las llaves (ya tienes `aws_access_key_id`/`aws_secret_access_key`).
+2. Agrega `"bucket"` a `keys.json` **o** `S3_BUCKET_LEGACY=...` en `.env`.
+3. Lista y descarga:
+   ```bash
+   uv run fishing-etl extract s3-legacy --list-only            # descubre
+   uv run fishing-etl extract s3-legacy --prefix models/       # descarga a models/legacy/
+   ```
 
 ---
 

@@ -113,6 +113,38 @@ def _parse_years(years: str) -> list[int]:
     return [int(y) for y in years.split(",")]
 
 
+@extract_app.command("s3-legacy")
+def extract_s3_legacy(
+    prefix: str = typer.Option("", help="Prefijo dentro del bucket (ej. 'models/' o 'metrics/')."),
+    bucket: str = typer.Option("", help="Override del bucket; si no, keys.json/.env."),
+    list_only: bool = typer.Option(False, "--list-only", help="Solo listar, no descargar."),
+    force: bool = typer.Option(False, help="Re-descargar aunque exista local."),
+) -> None:
+    """Lista/descarga artefactos del borrador 2024 desde S3 (credenciales en keys.json)."""
+    from fishing_forecast.etl.extract import s3_legacy
+
+    settings = get_settings()
+    try:
+        bucket_name = s3_legacy.resolve_bucket(settings, override=bucket or None)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    client = s3_legacy.build_client(settings)
+
+    if list_only:
+        objs = s3_legacy.list_artifacts(client, bucket_name, prefix)
+        table = Table(title=f"s3://{bucket_name}/{prefix} — {len(objs)} objeto(s)")
+        table.add_column("key")
+        table.add_column("MB", justify="right")
+        for o in objs:
+            table.add_row(o.key, f"{o.size / (1024 * 1024):.2f}")
+        print(table)
+        return
+
+    dest = settings.models_root / "legacy"
+    paths = s3_legacy.sync(client, bucket_name, prefix, dest, force=force)
+    print(f"[green]Descargados {len(paths)} artefacto(s) en {dest}[/]")
+
+
 @extract_app.command("cicese")
 def extract_cicese(
     years: str = typer.Option("2011-2025", help="Rango 'YYYY-YYYY' o lista coma-separada."),

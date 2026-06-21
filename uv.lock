@@ -1173,6 +1173,7 @@ name = "fishing-forecast"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "boto3" },
     { name = "copernicusmarine" },
     { name = "loguru" },
     { name = "numpy" },
@@ -1274,6 +1275,7 @@ tracking = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'etl'", specifier = ">=4.12" },
+    { name = "boto3", specifier = ">=1.34" },
     { name = "copernicusmarine", specifier = ">=2.4.0" },
     { name = "copernicusmarine", marker = "extra == 'etl'", specifier = ">=1.0" },
     { name = "fishing-forecast", extras = ["etl", "models", "prob", "tracking", "nb", "dev"], marker = "extra == 'all'" },

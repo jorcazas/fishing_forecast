@@ -6,6 +6,7 @@ Ningún módulo debe llamar a `os.getenv` directamente — siempre `get_settings
 
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -59,8 +60,10 @@ class Settings(BaseSettings):
     copernicus_user: str = ""
     copernicus_pass: str = ""
 
-    # S3 con artefactos del borrador (opcional)
+    # S3 con artefactos del borrador (opcional). Las credenciales AWS viven en
+    # `keys.json` (gitignored), no en `.env`. El bucket puede venir de `.env` o de keys.json.
     s3_bucket_legacy: str = ""
+    keys_file: Path = Field(default=REPO_ROOT / "keys.json")
 
     # Postgres (opcional, solo si se retoma la carga a DB)
     pg_host: str = "localhost"
@@ -79,6 +82,19 @@ class Settings(BaseSettings):
     @property
     def processed_dir(self) -> Path:
         return self.data_root / "processed"
+
+    def load_keys(self) -> dict[str, str]:
+        """Lee `keys.json` (credenciales AWS y opcionalmente bucket/region). {} si no existe.
+
+        Nunca loguear el contenido: trae secretos. Formato esperado:
+        ``{"aws_access_key_id": ..., "aws_secret_access_key": ..., "region"?: ..., "bucket"?: ...}``.
+        """
+        if not self.keys_file.exists():
+            return {}
+        data = json.loads(self.keys_file.read_text())
+        if not isinstance(data, dict):
+            raise ValueError(f"{self.keys_file} debe ser un objeto JSON con credenciales.")
+        return data
 
 
 @lru_cache

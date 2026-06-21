@@ -638,3 +638,37 @@ que Javier los use.
 
 Estrategia de unión CONAPESCA+COBI, formas de producto excluidas, hueco de langosta 2022+
 en SQ (¿la UE dejó de reportar?), y la fila fuera de temporada del QC.
+
+---
+
+## 2026-06-21 (cont.) — S3 legacy vía keys.json (B5)
+
+Javier pidió que S3 use `keys.json` (lo agregó al `.gitignore` como `*keys.json`). El
+archivo ya existe en la raíz con `aws_access_key_id` / `aws_secret_access_key`.
+
+- **`config.py`**: nuevo `keys_file` (default `keys.json`) + `Settings.load_keys()` (lee el
+  JSON o `{}` si no existe; **nunca se loguea** — trae secretos). Centraliza la carga de
+  credenciales AWS fuera de `.env`.
+- **`etl/extract/s3_legacy.py`**: `build_client` (boto3 con creds de keys.json o cadena
+  default), `resolve_bucket` (override > `keys.json['bucket']` > `S3_BUCKET_LEGACY`),
+  `list_artifacts` (paginado), `download_artifact` (idempotente por tamaño), `sync`.
+- **CLI**: `fishing-etl extract s3-legacy [--list-only] [--prefix ...] [--bucket ...]`
+  (descarga a `models/legacy/`). Bucket faltante → `BadParameter` claro.
+- **Dependencia**: `boto3>=1.34` declarado (ya venía transitivo por copernicusmarine).
+- **Tests**: 8 nuevos con cliente boto3 **mockeado** (sin tocar AWS, sin imprimir llaves):
+  load_keys, prioridad de bucket, paginación de listado, skip por tamaño, descarga, sync.
+
+**Verificación**: `uv run pytest` → 81/81 verde. `ruff` limpio.
+
+**Falta para usarlo de verdad**: el **bucket** (agregar `"bucket"` a `keys.json` o
+`S3_BUCKET_LEGACY` en `.env`) y correr `extract s3-legacy --list-only`. No lo corrí porque
+no conozco el bucket y no leo el `.env`/secretos del usuario.
+
+**Actualización (mismo día)**: Javier agregó el bucket a `keys.json`. El listado funcionó:
+12 objetos ≈ 21 GB — un `.h5` suelto (LSTM, 2.8 GB) y **11 zips `Tesis-*.zip` (~18 GB)** que
+parecen un dump tipo Google Takeout de la carpeta de tesis (con el XGB joblib y las métricas
+adentro). Por decisión de Javier descargué **solo el LSTM** `lstm_model_23-005.h5` a
+`models/legacy/` (gitignored): 2795.98 MB, coincide exacto con S3, firma HDF5 válida. Los
+zips quedan sin bajar (no vale la pena 18 GB para extraer un joblib; confirmar si los tiene
+local). Para *cargar* el `.h5` hará falta TensorFlow/Keras (el borrador usaba tf 2.7; no está
+en deps) — se resuelve al llegar a Fase 1.4.

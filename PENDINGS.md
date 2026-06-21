@@ -2,13 +2,20 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-06-19**.
+actualización: **2026-06-21**.
 
-Estado global: el **camino de ETL de código está completo y testeado** (extract →
-transform → aggregate → consolidate → quality_checks), verificado end-to-end con la
-fixture (`transform arribos → consolidate → qc` produce `dataset_v1.parquet`). Lo que
-falta para que el dataset sea *real y útil* depende de insumos externos y de correr
-descargas grandes. Las Fases 2-5 dependen de tener ese dataset real.
+Estado global:
+- **Código del ETL completo y testeado** (extract → transform → aggregate → consolidate →
+  quality_checks), 81 tests verdes.
+- **Arribos reales ya fluyen**: el export COBI (2016-2025) se ingiere y produce un
+  `dataset_v1.parquet` real para langosta-SQ (reproduce el bache post-MHW 2021-2022). →
+  los **baselines estadísticos de Fase 1.4 (ARIMA/Prophet) ya se pueden correr** sobre
+  arribos solos, sin esperar a la oceanografía.
+- **Falta** para el dataset *enriquecido*: SST/MHW reales (OISST) y las `x1..x16`
+  (GlobColour/Copernicus) — gated por descargas grandes y credenciales.
+- Artefacto LSTM del borrador (`.h5`) ya descargado para comparación.
+
+Lo que sigue se ordena por bloqueador.
 
 ---
 
@@ -22,7 +29,7 @@ Ninguno de estos se puede resolver desde el código; requieren un insumo externo
 | B2 | **Credenciales Copernicus Marine** | `extract/copernicus.py` (SDK `copernicusmarine`), SST L4 alternativa | Crear cuenta nueva, `copernicusmarine login`, credenciales a `.env`. El ETL hay que escribirlo con el SDK nuevo (motuclient está muerto desde mar-2024). |
 | B3 | **Coordenadas TURF reales de COBI (shapefile/polígono)** | Recorte espacial fino por UE en `aggregate/ocean_by_ue.py` | Hoy se usa un **bbox placeholder** de San Quintín en `economic_units.yaml`. Reemplazar por el polígono real (cambio solo de config, sin re-ETL de código). |
 | ~~B4~~ | ~~CSV legacy COBI `Arribos2017-2021.csv`~~ | **RESUELTO (2026-06-21)** | Archivo entregado en `data/raw/arribos/Arribos2017-2021.csv` (97k filas, 2016-2025). Se ingiere con `fishing-etl transform arribos --source cobi` (dialecto COBI). `dataset_v1` real generado: langosta-SQ reproduce el bache post-MHW 2021-2022. |
-| B5 | **Artefactos del borrador en S3** (joblib XGB, `.h5` LSTM, métricas) | Comparación de métricas en Fase 1.4 | Confirmar bucket/credenciales S3 (`S3_BUCKET_LEGACY` en `config.py`). |
+| B5 | **Artefactos del borrador en S3** (joblib XGB, `.h5` LSTM, métricas) | Comparación de métricas en Fase 1.4 | **Parcial (2026-06-21)**: bucket en `keys.json`, listado OK (12 objetos ≈21 GB). Descargado **`lstm_model_23-005.h5`** (2.8 GB, HDF5 válido) en `models/legacy/`. El XGB joblib y los JSON de métricas están **dentro de 11 zips `Tesis-*.zip` (~18 GB, un dump de la carpeta de tesis)** — no descargados; decidir si vale la pena o si Javier los tiene local. |
 
 ---
 
@@ -86,19 +93,24 @@ No requieren insumos externos más allá de conocer el formato; se pueden hacer 
 
 ---
 
-## 4. Fase 1.4 — Re-entrenamiento del baseline (bloqueada por dataset real)
+## 4. Fase 1.4 — Re-entrenamiento del baseline (parcialmente desbloqueada)
 
-Depende de tener `dataset_v1.parquet` con datos reales (Sección 2) y de B5 para comparar.
+`dataset_v1.parquet` ya es real para langosta-SQ (arribos COBI). Los modelos que **solo
+usan `y`** (ARIMA, Prophet) se pueden entrenar **ya**. Los que usan covariables
+oceanográficas (LGBM/XGBoost/LSTM con `x1..x16`/SST) esperan al enriquecimiento (B1/B2 +
+OISST). La comparación contra el `.h5` del borrador necesita además TensorFlow/Keras
+(no está en deps; el borrador usaba tf 2.7) y el XGB joblib (dentro de los zips de B5).
 
-- [ ] Scripts `experiments/exp1_baseline_retrain/` por modelo (ARIMA, Prophet, LGBM,
-  XGBoost, LSTM, XGBoost+LSTM).
+- [ ] Scripts `experiments/exp1_baseline_retrain/` por modelo. **Empezar por ARIMA y
+  Prophet** (solo `y`); LGBM/XGBoost/LSTM cuando haya oceanografía.
 - [ ] Partición temporal canónica corte **`2020-07-01`** + partición adicional
   `2024-06-01`.
 - [ ] Métricas (MAE, RMSE, sMAPE, error de temporada) → `reports/metrics/exp1_*.json`.
 - [ ] Tabla comparativa contra los números del paper (criterio: ±10% en la partición
-  antigua).
-- [ ] **Figura MHW** `reports/figures/mhw_timeline.png` (desbloqueada en cuanto haya
-  OISST real; `add_mhw(..., return_diagnostics=True)` ya expone `clim/thresh/in_mhw`).
+  antigua). Cargar el `.h5` requiere agregar TensorFlow (pin tf 2.x) — diferir hasta el
+  modelo LSTM.
+- [ ] **Figura MHW** `reports/figures/mhw_timeline.png` (función `viz/mhw_plot` lista;
+  desbloqueada en cuanto haya OISST real).
 
 ---
 
@@ -134,7 +146,12 @@ en la raíz) sigue intocado. Antes de reusarlo:
 
 ## Ruta crítica recomendada
 
-1. Javier resuelve **B3** (bbox/shapefile) y confirma rango OISST → correr Sección 2.
-2. Con dataset real: cerrar **Fase 1.3** (figura MHW) y **Fase 1.4** (baseline).
-3. En paralelo, B1/B2 (credenciales) habilitan `x1..x16` para enriquecer el dataset.
-4. Recién entonces tienen sentido las Fases 2-5.
+1. **Ya, sin esperar nada**: arrancar **Fase 1.4 baseline estadístico** (ARIMA/Prophet)
+   sobre el `dataset_v1` de arribos COBI — da los primeros números reproducidos.
+2. Javier resuelve **B3** (bbox/shapefile) y confirma rango OISST → correr la descarga
+   OISST (§2) → `aggregate ocean` → SST/MHW en el dataset → figura MHW (Fase 1.3).
+3. En paralelo, **B1/B2** (credenciales) habilitan `x1..x16` → completan los modelos con
+   covariables (LGBM/XGBoost/LSTM) de Fase 1.4.
+4. Para comparar el LSTM del borrador: agregar TensorFlow y (si hace falta) bajar el XGB
+   joblib de los zips de B5.
+5. Recién con el dataset enriquecido tienen pleno sentido las Fases 2-5.
