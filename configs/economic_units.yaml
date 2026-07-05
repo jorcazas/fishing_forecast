@@ -16,8 +16,20 @@ litoral_bc_sur:
     UE del paper original. Bbox cubre la zona costera de San Quintín.
     Pendiente: reemplazar por polígono TURF real cuando COBI comparta shapefile.
 
-# Más UEs se agregan aquí conforme tengamos datos de arribos:
-# isla_natividad:
-#   ...
-# ensenada:
-#   ...
+isla_cedros:
+  name: "SCPP PESCADORES NACIONALES DE ABULON SC DE RL"
+  region: vizcaino
+  bbox:
+    lon_min: -115.5
+    lon_max: -114.8
+    lat_min: 27.7
+    lat_max: 28.4
+  notes: |
+    Cooperativa de abulón de Isla Cedros (oficina de arribo = ISLA CEDROS). Arribos:
+    langosta roja (~576 t) + abulón azul (~175 t) 2017-2021. Bbox APROXIMADO alrededor de
+    Isla Cedros; ~2.5° al sur de San Quintín → prueba el gradiente biogeográfico. Pendiente
+    polígono TURF real. El nombre debe coincidir exacto con `unidad_economica` del crudo COBI.
+
+# Más UEs se agregan aquí conforme se confirmen ubicaciones (oficina de arribo da la zona):
+# EL ROSARIO (~30.0°N): SCPP ENSENADA SCL, REGASA, MORTERA DE LEYVA, ...
+# ENSENADA  (~31.8°N): SANTO TOMAS, HERMANOS VIERA, AJUSCO, BAHIA DE TODOS SANTOS, ...

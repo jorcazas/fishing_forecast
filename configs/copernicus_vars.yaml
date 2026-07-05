@@ -2,15 +2,21 @@
 # Cada producto se descarga por separado y se agrega al `aggregate/ocean_by_ue`.
 
 products:
-  - dataset_id: cmems_obs-sst_glo_phy_my_l4_P1D-m
+  # OSTIA global L4 SST reprocesado (producto SST_GLO_SST_L4_REP_OBSERVATIONS_010_011),
+  # 0.05° diario, 1981-presente. dataset_id verificado contra el catálogo (2026-06-21);
+  # el id viejo `cmems_obs-sst_glo_phy_my_l4_P1D-m` ya no existe (DatasetNotFound).
+  - dataset_id: METOFFICE-GLO-SST-L4-REP-OBS-SST
     short_name: sst_l4
-    description: Daily L4 SST global blended product (1981-presente)
+    description: Daily L4 SST global OSTIA reprocesado (1981-presente)
     variables:
       - analysed_sst
+    # Región de descarga = superconjunto de los bbox de todas las UEs. lat_min bajado a
+    # 27.0 para cubrir Isla Cedros (~27.7-28.4°N). Ampliar más al sur si se agregan UEs
+    # de Vizcaíno/Punta Abreojos (~26.7°N).
     region:
       lon_min: -117.0
       lon_max: -112.5
-      lat_min: 28.0
+      lat_min: 27.0
       lat_max: 32.0
   # Pendiente: agregar productos de corrientes (uo, vo) y salinidad (so) cuando
   # Javier confirme las credenciales y validemos qué producto es más confiable

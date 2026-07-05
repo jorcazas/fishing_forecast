@@ -6,7 +6,7 @@ necesitan covariables oceanográficas (LGBM/XGBoost/LSTM con `x1..x16`/SST) espe
 ingesta de OISST/GlobColour.
 
 Decisiones (documentadas; ver `docs/etl_design.md` §4.4 y ADR-0001):
-- Serie diaria de `y` (kg) para `lobster_red × litoral_bc_sur`.
+- Serie diaria de `y` (kg) para `lobster_red x litoral_bc_sur`.
 - Los `y=NaN` dentro de temporada se rellenan con **0** *solo para modelar* (un día en
   temporada sin registro = sin captura ese día). El ETL conserva el NaN; el relleno vive
   en esta capa de modelado.
@@ -39,7 +39,7 @@ ECONOMIC_UNIT = "litoral_bc_sur"
 CUT_DATE = pd.Timestamp("2020-07-01")
 SEED = 42
 
-# Rejilla pequeña y principista para ARIMA (AIC en train), no la 50×50×50 del borrador.
+# Rejilla pequeña y principista para ARIMA (AIC en train), no la 50x50x50 del borrador.
 ARIMA_P = range(0, 4)
 ARIMA_D = range(0, 2)
 ARIMA_Q = range(0, 4)
@@ -73,7 +73,7 @@ def load_series(species: str = SPECIES, economic_unit: str = ECONOMIC_UNIT) -> S
 
     last_catch = sub.index[sub["y"] > 0].max()
     sub = sub.loc[:last_catch]
-    logger.info(f"Serie {species}×{economic_unit}: {len(sub)} días, hasta {last_catch.date()}.")
+    logger.info(f"Serie {species} x {economic_unit}: {len(sub)} días, hasta {last_catch.date()}.")
 
     full = sub[["y", "season"]]
     return SeriesBundle(
@@ -172,7 +172,8 @@ def _plot(test: pd.DataFrame, preds: dict[str, np.ndarray], out_path: Path) -> N
 
 
 def main() -> None:
-    np.random.seed(SEED)
+    # ARIMA es determinista dado el orden; SEED queda registrado para los modelos
+    # estocásticos que se agreguen después (Prophet usa estimación MAP determinista).
     settings = get_settings()
     bundle = load_series()
     logger.info(f"train={len(bundle.train)} días, test={len(bundle.test)} días")
@@ -224,7 +225,9 @@ def _write_summary(results: list[dict], out_path: Path) -> None:
     for r in results:
         d = r["daily"]
         seas = "; ".join(
-            f"{s}: {v['pct_error']}%" for s, v in r["season_sum"].items() if v["pct_error"] is not None
+            f"{s}: {v['pct_error']}%"
+            for s, v in r["season_sum"].items()
+            if v["pct_error"] is not None
         )
         rows.append(
             f"| {r['model']} | {d['mae']:.1f} | {d['rmse']:.1f} | {d['smape']:.1f} | {seas or '—'} |"
