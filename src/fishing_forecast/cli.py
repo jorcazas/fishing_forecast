@@ -145,6 +145,33 @@ def extract_s3_legacy(
     print(f"[green]Descargados {len(paths)} artefacto(s) en {dest}[/]")
 
 
+@extract_app.command("copernicus")
+def extract_copernicus(
+    force: bool = typer.Option(False, help="Re-descargar aunque exista el netCDF."),
+) -> None:
+    """Descarga los productos de Copernicus Marine (SST L4, …) de copernicus_vars.yaml."""
+    import yaml
+
+    from fishing_forecast.etl.extract import copernicus
+
+    settings = get_settings()
+    etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text("utf-8"))
+    date_range = etl_cfg["date_range"]
+    # La SST debe cubrir el baseline climatológico de MHW (1982-2011), no solo el rango de
+    # análisis: el índice MHW (Hobday) necesita 30 años previos. Por eso arrancamos en el
+    # inicio del baseline. El SDK recorta solo a la cobertura real del producto.
+    start = min(etl_cfg["mhw"]["baseline"]["start"], date_range["start"])
+    dest = settings.raw_dir / "copernicus"
+    paths = copernicus.extract(
+        config_path=settings.configs_root / "copernicus_vars.yaml",
+        start=start,
+        end=date_range["end"],
+        output_dir=dest,
+        force=force,
+    )
+    print(f"[green]Copernicus: {len(paths)} producto(s) en {dest}[/]")
+
+
 @extract_app.command("cicese")
 def extract_cicese(
     years: str = typer.Option("2011-2025", help="Rango 'YYYY-YYYY' o lista coma-separada."),
@@ -171,19 +198,28 @@ def extract_cicese(
 @aggregate_app.command("ocean")
 def aggregate_ocean(
     ue: str = typer.Option("litoral_bc_sur", help="Código de UE (clave en economic_units.yaml)."),
+    source: str = typer.Option(
+        "copernicus", help="Fuente de SST: 'copernicus' (OSTIA) o 'oisst' (NOAA)."
+    ),
 ) -> None:
-    """SST por UE (promedio bbox OISST) + índice MHW → data/interim/ocean_<ue>.parquet."""
+    """SST por UE (promedio bbox) + índice MHW → data/interim/ocean_<ue>.parquet."""
     import yaml
 
     from fishing_forecast.etl.aggregate import ocean_by_ue
     from fishing_forecast.etl.aggregate.mhw import MHWParams
 
     settings = get_settings()
-    oisst_dir = settings.raw_dir / "sst" / "oisst"
-    paths = sorted(oisst_dir.glob("*.nc"))
+    source_dirs = {
+        "copernicus": settings.raw_dir / "copernicus",
+        "oisst": settings.raw_dir / "sst" / "oisst",
+    }
+    if source not in source_dirs:
+        raise typer.BadParameter(f"source debe ser uno de {sorted(source_dirs)}.")
+    nc_dir = source_dirs[source]
+    paths = sorted(nc_dir.glob("*.nc"))
     if not paths:
         raise typer.BadParameter(
-            f"No hay netCDF en {oisst_dir}. Corre primero `fishing-etl extract oisst`."
+            f"No hay netCDF en {nc_dir}. Corre primero `fishing-etl extract {source}`."
         )
 
     ue_cfg = yaml.safe_load((settings.configs_root / "economic_units.yaml").read_text("utf-8"))
