@@ -672,3 +672,299 @@ adentro). Por decisión de Javier descargué **solo el LSTM** `lstm_model_23-005
 zips quedan sin bajar (no vale la pena 18 GB para extraer un joblib; confirmar si los tiene
 local). Para *cargar* el `.h5` hará falta TensorFlow/Keras (el borrador usaba tf 2.7; no está
 en deps) — se resuelve al llegar a Fase 1.4.
+
+---
+
+## 2026-06-21 (cont.) — Fase 1.4 arrancada: métricas + script de baseline (no corrido)
+
+Empecé el re-entrenamiento del baseline. Javier interrumpió la ejecución del experimento y
+pidió **dejar lo pendiente en `PENDINGS.md`**, así que el código quedó listo y testeado pero
+**no corrí el entrenamiento ni regeneré datos**.
+
+- **`src/fishing_forecast/evaluation/metrics.py`**: `mae`, `rmse`, `smape` (simétrico,
+  acotado [0,200], 0/0→0), `season_sum_percentage_error` y `season_sum_errors` (error de
+  suma de temporada, la métrica que le importa a COBI). 7 tests.
+- **`experiments/exp1_baseline_retrain/baseline.py`** (reproducible, un comando): carga
+  `dataset_v1`, filtra langosta-SQ, arma la serie diaria (NaN in-season→0 *solo para
+  modelar*, recorta al último día con captura), corte canónico **2020-07-01**, ajusta
+  **ARIMA** (rejilla chica por AIC, no la 50x50x50 del borrador) y **Prophet** (si está
+  instalado; si no, se omite con warning). Escribe métricas JSON, figura pred-vs-real y
+  `exp1_summary.md`. Decisión de relleno NaN→0 documentada (consistente con ADR-0001 y con
+  cómo el borrador sumaba la temporada).
+- **statsmodels/joblib** instalados con `uv pip install` (⚠️ no quedaron en `uv.lock` —
+  pendiente fijarlos con `uv sync --extra models`). Prophet aún no instalado.
+
+**Verificación**: `ruff` limpio, `uv run pytest` → **88/88 verde** (sin correr training ni
+tocar datos).
+
+**Pendiente (en `PENDINGS.md` §4)**: correr el experimento, instalar Prophet, fijar deps en
+el lock, comparar vs el paper, y los modelos con covariables (LGBM/XGBoost/LSTM) que esperan
+la oceanografía. El corte 2024-06-01 no aplica (no hay langosta-SQ tras 2022).
+
+### Estado al cierre
+
+| Fase | Estado |
+|---|---|
+| 0 / 1.1 / 1.2 | ✅ |
+| 1.3 MHW | 🟡 algoritmo+pipeline+figura listos; falta OISST real |
+| 1.4 baseline | 🟡 métricas + script ARIMA/Prophet escritos y testeados; **falta correrlos** |
+| 2-5 | ⏳ dependen del dataset enriquecido — ver `PENDINGS.md` |
+
+### Actualización (mismo día): Javier corrió el baseline
+
+`uv run python experiments/exp1_baseline_retrain/baseline.py` (con Prophet ya instalado).
+train=1277 días, test=549 días (2020-07-01 →). ARIMA mejor orden (3,0,3) por AIC.
+
+| modelo | MAE | RMSE | sMAPE% | suma temp. 2020-21 | suma temp. **2021-22** (crash) |
+|---|---|---|---|---|---|
+| ARIMA(3,0,3) | 345 | 463 | 138% | −26% | **+291%** |
+| Prophet | 372 | 576 | 129% | +62% | **+418%** |
+
+**Hallazgo central** (justifica el proyecto): ambos baselines solo-`y` sobrepredicen la
+temporada 2021-2022 por 3-4x (real 31 t; predicen 120-160 t) porque no "ven" la MHW que
+colapsó la captura. El error de suma de temporada que le importa a COBI solo bajará con el
+índice MHW + covariables oceanográficas (el ensamble del borrador lograba ~8.7%). Estos
+números son el **piso** contra el cual medir las fases siguientes.
+
+Artefactos: `reports/metrics/exp1_baseline_{arima,prophet}_2020-07-01.json`,
+`reports/figures/exp1_baseline_pred_vs_real.png`, `reports/exp1_baseline_summary.md`.
+Pendiente: fijar `statsmodels`/`joblib`/`prophet` en `uv.lock` (se instalaron con `uv pip
+install`). Fase 1.4 sigue 🟡 hasta tener los modelos con covariables.
+
+### Fix de dependencias (mismo día)
+
+Javier corrió `uv sync --extra models`, que **desinstaló el extra `etl`** (lxml, bs4,
+xarray, netCDF4, requests) y rompió la CLI (`extract conapesca` → `FeatureNotFound: lxml`).
+Causa raíz: las deps runtime del ETL vivían en un extra opcional, así que cualquier
+`uv sync` sin `--extra etl` dejaba la CLI rota; además core tenía el shim `bs4` pero no el
+parser `lxml`.
+
+**Fix durable**: moví requests, beautifulsoup4, lxml, xarray, netCDF4, matplotlib al
+**core** de `pyproject.toml` (el ETL es la función principal del paquete). El extra `etl`
+queda solo con openpyxl/pandera; quité el matplotlib duplicado de `models` y el
+`copernicusmarine` duplicado del etl. Re-sync `uv sync --extra models --extra dev` →
+reconcilia env + `uv.lock` (también fija statsmodels/prophet/joblib). README actualizado.
+
+**Verificación**: imports ETL OK, `fishing-etl extract conapesca --list-only` lista los 18
+archivos, `uv run pytest` → 88/88 verde. Un `uv sync` pelón ya deja la CLI funcional.
+
+> Nota: `uv sync` **no** edita `pyproject.toml`, solo el `.venv` y (si cambió pyproject)
+> el `uv.lock`. Por eso correrlo no pisó mis ediciones.
+
+---
+
+## 2026-06-21 (cont.) — Credenciales resueltas + `extract/copernicus.py`
+
+**Credenciales** (B1/B2): Javier pasó credenciales nuevas de GlobColour; las guardé en
+`.env` (gitignored, sin imprimir valores) y **verifiqué login FTP a `ftp.hermes.acri.fr`
+OK**. Copernicus ya estaba (`--check-credentials-valid` → válidas). Ambos blockers cerrados.
+
+**B3 (polígono TURF)**: COBI ya no está disponible. Busqué en internet; el dataset público
+de TURFs (`jcvdav/ReserveEffect`) cubre QRoo + Isla Natividad, **no San Quintín**. Decisión:
+usar el **bbox** de SQ (suficiente a resolución OISST/GlobColour). Guardé el shapefile (tiene
+Isla Natividad) en `data/raw/turf/reserveeffect/` para Fase 3.
+
+**`extract/copernicus.py`** (SDK `copernicusmarine` v2.4.0, reemplaza motuclient):
+- `ProductSpec` + `load_products` (de `copernicus_vars.yaml`), `build_subset_kwargs` (pura:
+  config → kwargs del SDK; verifiqué los nombres reales de `subset()`: `minimum_longitude`,
+  `start_datetime`, `output_filename`, `overwrite`, etc.), `download_product` (idempotente
+  por existencia; credenciales de `.env` o login file; `subset_fn` inyectable para tests),
+  `extract` (itera productos). CLI `fishing-etl extract copernicus`.
+- **Tests**: 7 con `subset` mockeado (sin red): mapeo de región/fechas, credenciales
+  presentes/ausentes, idempotencia, force, iteración. **95/95 verde**, ruff limpio.
+- **NO corrí la descarga real** (preferencia de Javier: dejar la ejecución como pendiente).
+
+**Smoke test real (aprobado por Javier)**: corrí un subset de 1 semana (2019-08-01..07,
+durante la MHW). Falló primero con `DatasetNotFound`: el `dataset_id` de
+`copernicus_vars.yaml` (`cmems_obs-sst_glo_phy_my_l4_P1D-m`) ya no existe. Consulté el
+catálogo vía el SDK y lo corregí a **`METOFFICE-GLO-SST-L4-REP-OBS-SST`** (OSTIA REP, 0.05°
+diario, `analysed_sst`; coincide con lo que sugería `etl_design.md` §5.3). Re-corrida OK:
+netCDF de 7 días × 80×90, 0.13 MB, `analysed_sst` mean ≈ 24.1 °C (plausible). Smoke borrado.
+Warning menor: `InsecureRequestWarning` del backend S3 del SDK (interno, no nuestro).
+
+**Descarga completa (aprobada)**: `fishing-etl extract copernicus` → `data/raw/copernicus/
+sst_l4.nc` (47 MB). El SDK recortó solo al rango disponible del REP: **2017-01-01 →
+2025-12-18** (3274 días continuos), grid 80×90 sobre el bbox 28-32°N/−117..−112.5°W,
+`analysed_sst` en Kelvin (mean ≈20.2°C, rango [10.1, 34.3]°C; ~40% NaN = máscara de tierra,
+OK porque el promedio por-UE usa skipna). El REP termina 2025-12-18 → para ene-abr 2026
+haría falta el NRT, pero la langosta-SQ termina en 2022, así que sobra cobertura.
+
+**Pendiente** (`PENDINGS.md`): `transform/copernicus.py` (`.nc`→tidy) e integrarlo en
+`aggregate/ocean_by_ue` (que ya detecta `latitude`/`longitude` y la var única
+`analysed_sst`). Análogo para GlobColour (FTP).
+
+### Estado: bloqueadores de insumos = 0
+
+B1/B2 ✓ (verificados), B3 decidido (bbox), B4 ✓ (COBI ingerido), B5 ✓ (.h5). Lo que queda
+es código (extractores oceanográficos + transforms) y correr descargas (OISST, Copernicus,
+GlobColour). Ruta crítica actualizada en `PENDINGS.md`.
+
+---
+
+## 2026-06-22 — SST + MHW integrados a `dataset_v1` (Copernicus OSTIA)
+
+Cerré el eslabón oceanográfico para SST. Hito grande: **`dataset_v1` ya trae las columnas
+oceanográficas reales** (`sst`, `sst_anomaly`, `mhw_category`, `mhw_intensity`).
+
+**Decisión clave**: el índice MHW (Hobday) necesita un baseline climatológico **pre-ola de
+calor**. La SST de 2017-2025 no sirve de baseline (incluiría las MHW y las enmascararía).
+Como OSTIA REP cubre 1981+, cambié `extract copernicus` para arrancar en el inicio del
+baseline (`mhw.baseline.start`, 1982) y re-descargué: **`sst_l4.nc` 1982-01-01→2025-12-18,
+16058 días, 231 MB**.
+
+**Sin `transform/copernicus.py` aparte**: `aggregate/ocean_by_ue` lee el `.nc` directo
+(ya detecta `latitude`/`longitude` y la var única `analysed_sst`). Agregué
+`_to_celsius` (OSTIA viene en Kelvin; OISST en °C) por atributo `units` o heurística de
+magnitud. CLI `aggregate ocean --source {copernicus,oisst}`.
+
+**Pipeline corrido**: `aggregate ocean --source copernicus` (16058 días, MHW con baseline
+1982-2011) → `interim/ocean_litoral_bc_sur.parquet` → `consolidate` → `dataset_v1`.
+
+**Validación del índice MHW** (días MHW/año en el bbox de SQ): el **Blob 2014-2016 sale
+fuerte** (2014: 231, 2015: 293, 2016: 102) y 2020: 100 — justo lo esperado. En langosta-SQ,
+`sst` no-nula 96.5% (el hueco es 2025-12-19→2026, fuera del REP). dist `mhw_category` en SQ:
+{0:2918, 1:429, 2:40, 3:5}.
+
+**Tests**: +2 (Kelvin→°C por units y por magnitud). **97/97 verde**, ruff limpio.
+
+**Implicaciones**:
+- OISST ya **no es necesario** para el camino crítico (Copernicus da SST+baseline). Queda opcional.
+- La **figura MHW** (Fase 1.3) ya es producible con SST real (falta exponer `clim/thresh/in_mhw`).
+- **Fase 1.4 con covariables** ahora es posible: re-correr el baseline incluyendo MHW/SST
+  para ver si baja la sobrepredicción de la temporada 2021-2022.
+
+Pendientes finos en `PENDINGS.md`: NRT para ene-abr 2026 (irrelevante para langosta, que
+acaba en 2022), figura MHW, y los modelos con covariables.
+
+---
+
+## 2026-06-22 (cont.) — Exp 2: modelo con covariables SST/MHW vs el piso
+
+Primer modelo que usa la oceanografía recién integrada.
+
+- **`features/covariates.py`** (puro, reutilizable Fase 2): calendario (doy sin/cos,
+  in_season), lags de `y` (365/730), y SST/MHW **desplazadas 90 días** (convención
+  X(t)→Y(t+90d)) más medias rodantes (estado pre-temporada / calor acumulado). **Sin
+  leakage** garantizado por construcción (todo `shift(≥90)`); 4 tests lo verifican
+  (incluido un pico inyectado que NO aparece en features previas).
+- **`experiments/exp2_covariates/covariate_model.py`**: XGBoost, misma serie/partición que
+  Exp 1 (langosta-SQ, corte 2020-07-01), 17 features. Métricas + suma de temporada +
+  importancias; compara contra el piso ARIMA/Prophet; artefactos en `reports/`.
+
+**Resultado (suma de temporada 2021-2022, el crash)**: XGBoost **+368%** vs ARIMA +291% /
+Prophet +418%. **Las covariables NO arreglan el crash todavía.** Matices importantes: (1) el
+modelo SÍ eligió las covariables oceanográficas (`sst_roll90_lag90`,
+`mhw_category_roll365_lag90` en el top-5), (2) MAE diario 327 (lig. mejor que ARIMA 345).
+
+**Por qué**: train = 2017-01→2020-06 = solo ~3 temporadas → casi no hay ejemplos de la
+relación "MHW del año previo → menor captura". **Hallazgo metodológico que motiva Fase 3**:
+el valor de las covariables requiere más temporadas y/o *pooling* entre especies/UEs (modelo
+global que tome prestada fuerza estadística). Honesto y defendible para la tesis.
+
+**Tests**: +4 (no-leakage). **101/101 verde**, ruff limpio. Artefactos:
+`reports/metrics/exp2_covariates_2020-07-01.json`, `reports/figures/exp2_covariates_pred_vs_real.png`,
+`reports/exp2_covariates_summary.md`.
+
+### Estado
+
+Fase 1 (ETL + baseline + covariables) esencialmente cerrada como marco. El cuello de botella
+ya no es código ni datos oceanográficos, sino **cantidad de temporadas de captura**. Siguiente
+paso natural: **Fase 3 (modelo global multi-especie/UE)** para pooling, y/o conseguir más
+temporadas de arribos.
+
+---
+
+## 2026-07-02 — Fase 3: modelo global multi-especie (marco + primer resultado)
+
+Diseño en `docs/hierarchical_design.md`. Con los datos actuales, "global" = **4 especies en
+SQ** (langosta + 3 abulones; erizo excluido, 0 captura). Mono-UE todavía (solo hay arribos
+de `litoral_bc_sur`).
+
+- **`features/build_multiseries_features`**: agrupa por especie y aplica el builder por serie
+  → sin cross-leakage entre especies (test dedicado: pico en langosta no aparece en features
+  de abulón). One-hot de especie se hace en el experimento.
+- **`experiments/exp3_global_model/`**: XGBoost **global** (4 especies, one-hot + oceanografía
+  compartida) vs **específico** (uno por especie). Corte 2020-07-01. Compara RMSE diario por
+  serie.
+
+**Resultado** (RMSE diario, global vs específico):
+| serie | global | específico | gana |
+|---|---|---|---|
+| abalone_black | **8.8** | 52.8 | global (6×) |
+| abalone_red | **7.7** | 8.9 | global |
+| abalone_blue | 8.9 | **6.0** | específico |
+| lobster_red | 759.7 | **558.3** | específico |
+
+**Global gana 2/4 (50%)**, bajo el criterio de 60% (PLAN §3.1). Pero el **patrón es el
+esperado y valioso**: el pooling **ayuda a las series cortas** (abalone_black, que sola
+sobreajusta feo: 52.8→8.8) y **estorba a la rica** (langosta se diluye: 558→760). Top
+features del global: `in_season, doy_sin, y_lag365, sst_roll90_lag90, doy_cos` — el one-hot
+de especie NO está en el top-5, así que el modelo explota estacionalidad/oceanografía
+compartida, no solo separa especies.
+
+**Conclusión metodológica**: el pooling total no es óptimo; el camino es **partial pooling /
+jerárquico** (regularizar las series cortas hacia el grupo sin diluir la rica). Eso + multi-UE
+(más UEs) son el siguiente paso real de Fase 3.
+
+**Tests**: +1 (no cross-leakage multiserie). **102/102 verde**, ruff limpio. Artefactos:
+`reports/metrics/exp3_global_model_2020-07-01.json`, `reports/exp3_global_model_summary.md`.
+
+### Estado
+
+Fases 1-3 existen como **marco reproducible y testeado** sobre datos reales (arribos COBI +
+SST/MHW Copernicus). El cuello de botella persistente es la **cantidad de series/temporadas**
+(4 especies, 1 UE, ~3 temporadas de train). Palancas de mayor impacto: multi-UE (definir
+bboxes + procesar CONAPESCA nacional), más temporadas, y partial pooling.
+
+---
+
+## 2026-07-03 — Fase 3 multi-UE: se agrega Isla Cedros (gradiente biogeográfico)
+
+Ataqué el cuello de botella "1 UE" agregando una 2ª unidad económica.
+
+**Exploración**: en el crudo COBI, las cooperativas del Pacífico se agrupan por oficina de
+arribo (Ensenada ~31.8°N, El Rosario ~30°N, **Isla Cedros ~28°N**) → esa dispersión de
+latitud ES el gradiente biogeográfico de la tesis. Elegí **Isla Cedros** (SCPP Pescadores
+Nacionales de Abulón): isla → ubicación clara, e ícono del abulón. Aporta lobster_red (~576 t,
+343 días) + abalone_blue (~175 t) a ~28°N.
+
+**Config**: agregué `isla_cedros` a `economic_units.yaml` (bbox aprox. de la isla, marcado
+provisional). Cedros (27.7-28.4°N) caía debajo del bbox de descarga de Copernicus (lat_min
+28) → **amplié `copernicus_vars.yaml` a lat_min 27** y re-descargué la SST (289 MB, 1982-2025,
+lat 27-32).
+
+**Código**: `build_multiseries_features` ahora acepta `group_col` multi-columna
+(`["species","economic_unit"]`) sin romper el uso mono-columna (tests verdes). `exp3`
+generalizado a series `(especie, UE)`: descubre series con ≥20 días de captura, one-hot de
+especie **y** UE, compara global vs específico por serie.
+
+**Pipeline multi-UE corrido**: transform (2 UEs) → aggregate ocean SQ + Cedros → consolidate.
+`dataset_v1` ahora tiene **2 UEs**, SST 97% en ambas.
+
+**Resultado Exp 3 multi-UE** (RMSE diario, 5 series):
+| serie | días captura test | global | específico | gana |
+|---|---|---|---|---|
+| lobster_red@isla_cedros | 85 | **893.6** | 898.7 | global |
+| lobster_red@litoral_bc_sur | 251 | 618.9 | 558.3 | específico |
+| abalone_black@SQ | 3 | 24.6 | 52.8 | global |
+| abalone_blue@SQ | 6 | 24.1 | 6.0 | específico |
+| abalone_red@SQ | 2 | 24.0 | 8.9 | específico |
+
+Global 2/5 (40%). **Hallazgos clave**: (1) **transferencia positiva dentro de especie entre
+UEs** — la langosta de Cedros (menos datos) mejora al agruparse con la de SQ (893.6 < 898.7);
+(2) el pooling **todo-junto está confundido por escala**: la langosta (cientos de kg) domina
+el loss y **empeora** las predicciones de abulón (RMSE abulón-global saltó de ~8 a ~24 al
+meter la langosta de Cedros al pool); (3) `species_lobster_red` sube al top-3 de importancias
+(el modelo necesita distinguir escalas). **Conclusión de diseño**: no pooling todo-junto;
+**agrupar por especie entre UEs** y/o **normalizar `y` por serie** (log/escala) para que la
+escala no domine.
+
+**Tests**: 102/102 verde, ruff limpio. Artefactos: `reports/metrics/exp3_global_model_2020-07-01.json`,
+`reports/exp3_global_model_summary.md`.
+
+### Estado
+
+Multi-UE funciona end-to-end (mecánica lista para agregar más UEs: definir bbox por oficina).
+La lección metodológica (transferencia intra-especie sí; pooling inter-escala no) apunta al
+siguiente paso: **partial pooling / normalización de `y` por serie**, y sumar más UEs
+(El Rosario, Ensenada) para robustecer la señal intra-especie.

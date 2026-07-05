@@ -1173,9 +1173,13 @@ name = "fishing-forecast"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "beautifulsoup4" },
     { name = "boto3" },
     { name = "copernicusmarine" },
     { name = "loguru" },
+    { name = "lxml" },
+    { name = "matplotlib" },
+    { name = "netcdf4" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pyarrow" },
@@ -1183,27 +1187,24 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "rich" },
     { name = "truststore" },
     { name = "typer" },
+    { name = "xarray" },
 ]
 
 [package.optional-dependencies]
 all = [
-    { name = "beautifulsoup4" },
-    { name = "copernicusmarine" },
     { name = "hyperopt" },
     { name = "ipykernel" },
     { name = "joblib" },
     { name = "jupyterlab" },
     { name = "lightgbm" },
-    { name = "lxml" },
     { name = "mapie" },
-    { name = "matplotlib" },
     { name = "mlflow" },
     { name = "mypy" },
     { name = "nbstripout" },
-    { name = "netcdf4" },
     { name = "openpyxl" },
     { name = "optuna" },
     { name = "pandas-stubs" },
@@ -1211,7 +1212,6 @@ all = [
     { name = "prophet" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "requests" },
     { name = "ruff" },
     { name = "scikit-learn" },
     { name = "seaborn" },
@@ -1219,7 +1219,6 @@ all = [
     { name = "statsmodels" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
-    { name = "xarray" },
     { name = "xgboost" },
 ]
 dev = [
@@ -1237,21 +1236,13 @@ dl = [
     { name = "torch" },
 ]
 etl = [
-    { name = "beautifulsoup4" },
-    { name = "copernicusmarine" },
-    { name = "lxml" },
-    { name = "matplotlib" },
-    { name = "netcdf4" },
     { name = "openpyxl" },
     { name = "pandera" },
-    { name = "requests" },
-    { name = "xarray" },
 ]
 models = [
     { name = "hyperopt" },
     { name = "joblib" },
     { name = "lightgbm" },
-    { name = "matplotlib" },
     { name = "optuna" },
     { name = "prophet" },
     { name = "scikit-learn" },
@@ -1274,10 +1265,9 @@ tracking = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", marker = "extra == 'etl'", specifier = ">=4.12" },
+    { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "boto3", specifier = ">=1.34" },
     { name = "copernicusmarine", specifier = ">=2.4.0" },
-    { name = "copernicusmarine", marker = "extra == 'etl'", specifier = ">=1.0" },
     { name = "fishing-forecast", extras = ["etl", "models", "prob", "tracking", "nb", "dev"], marker = "extra == 'all'" },
     { name = "hyperopt", marker = "extra == 'models'", specifier = ">=0.2.7" },
     { name = "ipykernel", marker = "extra == 'nb'", specifier = ">=6.29" },
@@ -1285,14 +1275,13 @@ requires-dist = [
     { name = "jupyterlab", marker = "extra == 'nb'", specifier = ">=4.1" },
     { name = "lightgbm", marker = "extra == 'models'", specifier = ">=4.3" },
     { name = "loguru", specifier = ">=0.7" },
-    { name = "lxml", marker = "extra == 'etl'", specifier = ">=5.1" },
+    { name = "lxml", specifier = ">=5.1" },
     { name = "mapie", marker = "extra == 'prob'", specifier = ">=0.8" },
-    { name = "matplotlib", marker = "extra == 'etl'", specifier = ">=3.8" },
-    { name = "matplotlib", marker = "extra == 'models'", specifier = ">=3.8" },
+    { name = "matplotlib", specifier = ">=3.8" },
     { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=2.11" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9" },
     { name = "nbstripout", marker = "extra == 'nb'", specifier = ">=0.7" },
-    { name = "netcdf4", marker = "extra == 'etl'", specifier = ">=1.6" },
+    { name = "netcdf4", specifier = ">=1.6" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "openpyxl", marker = "extra == 'etl'", specifier = ">=3.1" },
     { name = "optuna", marker = "extra == 'models'", specifier = ">=3.6" },
@@ -1309,7 +1298,7 @@ requires-dist = [
     { name = "pytorch-forecasting", marker = "extra == 'dl'", specifier = ">=1.0" },
     { name = "pytorch-lightning", marker = "extra == 'dl'", specifier = ">=2.2" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "requests", marker = "extra == 'etl'", specifier = ">=2.31" },
+    { name = "requests", specifier = ">=2.31" },
     { name = "rich", specifier = ">=13.7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "scikit-learn", marker = "extra == 'models'", specifier = ">=1.4" },
@@ -1321,7 +1310,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.12" },
     { name = "types-pyyaml", marker = "extra == 'dev'" },
     { name = "types-requests", marker = "extra == 'dev'" },
-    { name = "xarray", marker = "extra == 'etl'", specifier = ">=2024.1" },
+    { name = "xarray", specifier = ">=2024.1" },
     { name = "xgboost", marker = "extra == 'models'", specifier = ">=2.0" },
 ]
 provides-extras = ["etl", "models", "prob", "dl", "tracking", "nb", "dev", "all"]

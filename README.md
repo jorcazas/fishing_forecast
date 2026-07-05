@@ -22,10 +22,12 @@ Predicción del volumen de pesca de langosta (*Panulirus interruptus*) en San Qu
 Requiere Python 3.11+ y [uv](https://github.com/astral-sh/uv).
 
 ```bash
-# Instalar dependencias core + dev
-uv sync --extra dev
+# Core ya incluye todo el runtime del ETL (extractores, xarray, figuras), así que un
+# `uv sync` pelón deja la CLI `fishing-etl` funcional. Para correr los modelos de Fase 1.4
+# (ARIMA/Prophet/XGBoost…) agrega el extra `models`; para tests, `dev`:
+uv sync --extra models --extra dev
 
-# Instalar todos los extras (etl, models, prob, tracking, nb, dev)
+# Todo (models, prob, dl, tracking, nb, dev + extras menores del etl):
 uv sync --all-extras
 
 # Configurar credenciales (copiar y rellenar)

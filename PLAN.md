@@ -78,6 +78,12 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ### 1.4. Re-entrenamiento del baseline
 
+> Estado (2026-06-21): 🟡 **arrancada**. `evaluation/metrics.py` (MAE/RMSE/sMAPE/suma de
+> temporada) y `experiments/exp1_baseline_retrain/baseline.py` (ARIMA + Prophet sobre
+> langosta-SQ, corte 2020-07-01) están escritos y testeados. **Falta correrlo** e instalar
+> Prophet; los modelos con covariables (LGBM/XGBoost/LSTM) esperan la oceanografía. Detalle
+> y comandos en `PENDINGS.md` §4.
+
 - [ ] Para cada modelo del borrador original (ARIMA, Prophet, LGBM, XGBoost, LSTM, XGBoost+LSTM) crear un script en `experiments/exp1_baseline_retrain/` que:
   - Carga el dataset expandido.
   - Filtra solo langosta + San Quintín (para ser comparable con el borrador).
@@ -142,6 +148,17 @@ Implementar en `src/features/`:
 ## Fase 3. Modelo jerárquico / global multi-especie y multi-región
 
 **Objetivo**: entrenar un solo modelo global sobre todas las especies y unidades económicas disponibles, aprovechando transferencia de información entre series.
+
+> Estado (2026-07-03): 🟡 **marco listo + multi-UE + resultados**. Diseño en
+> `docs/hierarchical_design.md`; `features/build_multiseries_features` (group_col multi-col,
+> sin cross-leakage, testeado) y `experiments/exp3_global_model/` (XGBoost global vs
+> específico). Se agregó **Isla Cedros** como 2ª UE (~28°N vs SQ ~30.5°N) → 5 series
+> `(especie, UE)`. **Hallazgos**: (1) señal de **transferencia positiva dentro de especie
+> entre UEs** — lobster@cedros (185 días) mejora con el pool (893.6 < 898.7 específico);
+> (2) el pooling **todo-junto está confundido por escala** (langosta en cientos de kg domina
+> el loss sobre abulón en unidades → RMSE de abulón-global empeora); (3) 2/5 (40%), bajo 60%.
+> **Conclusión**: agrupar **por especie entre UEs** (o normalizar `y` por serie), no
+> todo-junto. Multi-UE end-to-end funciona; falta partial pooling y más UEs. Detalle en `PENDINGS.md`.
 
 ### 3.1. Diseño
 

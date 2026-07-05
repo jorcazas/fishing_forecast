@@ -6,14 +6,17 @@ actualización: **2026-06-21**.
 
 Estado global:
 - **Código del ETL completo y testeado** (extract → transform → aggregate → consolidate →
-  quality_checks), 81 tests verdes.
+  quality_checks) + **métricas y script de baseline ARIMA/Prophet**. 88 tests verdes.
 - **Arribos reales ya fluyen**: el export COBI (2016-2025) se ingiere y produce un
   `dataset_v1.parquet` real para langosta-SQ (reproduce el bache post-MHW 2021-2022). →
   los **baselines estadísticos de Fase 1.4 (ARIMA/Prophet) ya se pueden correr** sobre
   arribos solos, sin esperar a la oceanografía.
-- **Falta** para el dataset *enriquecido*: SST/MHW reales (OISST) y las `x1..x16`
-  (GlobColour/Copernicus) — gated por descargas grandes y credenciales.
-- Artefacto LSTM del borrador (`.h5`) ya descargado para comparación.
+- **Credenciales/insumos resueltos**: GlobColour (FTP verificado), Copernicus (login
+  válido), arribos COBI ingeridos, `.h5` del borrador descargado, polígono TURF decidido
+  (bbox). CONAPESCA 2018-2026 descargado.
+- **Falta** para el dataset *enriquecido*: **código** de los extractores oceanográficos
+  (`extract/copernicus.py`, `extract/globcolour.py` + transforms) y **correr** la descarga
+  OISST. Ya nada de esto está bloqueado por insumos externos.
 
 Lo que sigue se ordena por bloqueador.
 
@@ -21,13 +24,16 @@ Lo que sigue se ordena por bloqueador.
 
 ## 1. Bloqueadores duros (necesitan a Javier / COBI / credenciales)
 
-Ninguno de estos se puede resolver desde el código; requieren un insumo externo.
+**Estado (2026-06-21): todos resueltos o decididos.** B1/B2 credenciales OK y verificadas,
+B4 (arribos COBI) ingerido, B3 (polígono TURF) decidido a favor del bbox, B5 (.h5) bajado.
+Lo que queda ya es **código** (escribir los extractores oceanográficos) + **correr la
+descarga OISST**, no insumos externos.
 
 | # | Bloqueador | Qué desbloquea | Acción concreta |
 |---|---|---|---|
-| B1 | **Credenciales GlobColour (FTP)** | `extract/globcolour.py`, `transform/globcolour.py`, columnas `x1..x16` | Regenerar credenciales (las del borrador expiraron) y ponerlas en `.env` (`GLOBCOLOUR_USER`/`GLOBCOLOUR_PASS`, ya previstas en `config.py`). |
-| B2 | **Credenciales Copernicus Marine** | `extract/copernicus.py` (SDK `copernicusmarine`), SST L4 alternativa | Crear cuenta nueva, `copernicusmarine login`, credenciales a `.env`. El ETL hay que escribirlo con el SDK nuevo (motuclient está muerto desde mar-2024). |
-| B3 | **Coordenadas TURF reales de COBI (shapefile/polígono)** | Recorte espacial fino por UE en `aggregate/ocean_by_ue.py` | Hoy se usa un **bbox placeholder** de San Quintín en `economic_units.yaml`. Reemplazar por el polígono real (cambio solo de config, sin re-ETL de código). |
+| ~~B1~~ | ~~Credenciales GlobColour (FTP)~~ | **RESUELTO (2026-06-21)** | Credenciales nuevas en `.env` (`GLOBCOLOUR_USER`/`PASS`); **login FTP a `ftp.hermes.acri.fr` verificado OK**. Pendiente (código, ya desbloqueado): `extract/globcolour.py` + `transform/globcolour.py` → columnas `x1..x16`. |
+| ~~B2~~ | ~~Credenciales Copernicus Marine~~ | **RESUELTO + SST/MHW en `dataset_v1` (2026-06-22)** | OSTIA SST **1982-01-01→2025-12-18** en `data/raw/copernicus/sst_l4.nc` (231 MB; el rango arranca en el baseline MHW). `aggregate ocean --source copernicus` → `interim/ocean_litoral_bc_sur.parquet` (SST °C + MHW Hobday con baseline 1982-2011) → `consolidate` → **`dataset_v1` ya trae `sst`/`sst_anomaly`/`mhw_category`/`mhw_intensity`** (langosta-SQ 96.5% SST no-nula). **Validado**: el Blob 2014-16 sale fuerte (2015: 293 días MHW). No hizo falta `transform/copernicus.py`: `aggregate/ocean_by_ue` lee el `.nc` directo (detecta `latitude`/`longitude` + var única, convierte Kelvin→°C). |
+| B3 | **Polígono TURF de San Quintín** | Recorte fino por UE en `aggregate/ocean_by_ue.py` | **COBI ya no está disponible** para entregar el shapefile. Busqué en internet (2026-06-21): el dataset público de TURFs de Villaseñor-Derbez (`jcvdav/ReserveEffect`) cubre Quintana Roo + Isla Natividad (lat 18.7-28.0°N), **NO San Quintín** (~30.4°N); el polígono de la cooperativa de SQ no es descargable públicamente. **Decisión pragmática**: a resolución OISST (0.25°≈27 km) y aun GlobColour (4 km) un **bbox costero de SQ basta** (es lo que hizo el borrador). Se mantiene el bbox de `economic_units.yaml` (lon −117..−115, lat 30..31.5). Polígono exacto = nice-to-have, no bloqueante. |
 | ~~B4~~ | ~~CSV legacy COBI `Arribos2017-2021.csv`~~ | **RESUELTO (2026-06-21)** | Archivo entregado en `data/raw/arribos/Arribos2017-2021.csv` (97k filas, 2016-2025). Se ingiere con `fishing-etl transform arribos --source cobi` (dialecto COBI). `dataset_v1` real generado: langosta-SQ reproduce el bache post-MHW 2021-2022. |
 | B5 | **Artefactos del borrador en S3** (joblib XGB, `.h5` LSTM, métricas) | Comparación de métricas en Fase 1.4 | **Parcial (2026-06-21)**: bucket en `keys.json`, listado OK (12 objetos ≈21 GB). Descargado **`lstm_model_23-005.h5`** (2.8 GB, HDF5 válido) en `models/legacy/`. El XGB joblib y los JSON de métricas están **dentro de 11 zips `Tesis-*.zip` (~18 GB, un dump de la carpeta de tesis)** — no descargados; decidir si vale la pena o si Javier los tiene local. |
 
@@ -38,10 +44,15 @@ Ninguno de estos se puede resolver desde el código; requieren un insumo externo
 El código existe; falta **ejecutarlo** porque implica datos pesados (CLAUDE.md: confirmar
 antes de operaciones largas).
 
-- [ ] **Descargar CONAPESCA** (`fishing-etl extract conapesca --years all`): 9 años ×
-  ~150 MB = ~1.4 GB de `arribo_cosecha`. Extractor listo e idempotente.
-- [ ] **Descargar NOAA OISST** (`fishing-etl extract oisst --years 1982-2025`): baseline
-  1982-2011 + operativo 2012-2025 ≈ 44 archivos × ~150 MB ≈ **6-7 GB**. Decidir rango.
+- [x] **Descargar CONAPESCA** (2026-06-21): `fishing-etl extract conapesca --years all`
+  bajó los 9 CSV de `arribo_cosecha` 2018-2026 (~1.3 GB) a
+  `data/raw/arribos/conapesca/arribo_cosecha/`. Falta **transformarlos/usarlos**:
+  `transform arribos --source conapesca` los lleva a interim, pero el spine de `dataset_v1`
+  hoy es COBI → decidir la unión/dedup CONAPESCA+COBI antes de combinarlos (ver §3). Útiles
+  para validar langosta-SQ y para otras UEs/especies (Fase 3).
+- [~] **NOAA OISST** (`extract oisst`): **ya no es necesario para el camino crítico** —
+  Copernicus OSTIA cubre SST 1982-2025 (baseline + análisis) y la MHW ya está en
+  `dataset_v1`. OISST queda como fuente **alternativa/validación** (~6-7 GB), opcional.
 - [x] Correr el pipeline real de **arribos** (vía COBI, sin descargas): `transform arribos
   --source cobi → consolidate → qc` ya genera `dataset_v1.parquet` real (langosta-SQ con
   el bache post-MHW 2021-2022). Falta sumar `aggregate ocean` cuando haya OISST real.
@@ -90,27 +101,67 @@ No requieren insumos externos más allá de conocer el formato; se pueden hacer 
   dejó de reportar (afecta cuántas temporadas nuevas hay para Fase 1.4).
 - [ ] **1 fila de langosta fuera de temporada** (warning `y_out_of_season` en QC real):
   revisar si es un arribo tardío legítimo o un error de fecha en el crudo.
+- [ ] **Copernicus REP vs cobertura reciente**: `METOFFICE-GLO-SST-L4-REP-OBS-SST` es
+  reprocesado (cobertura hasta ~hace meses). Si la descarga completa no llega a 2026, sumar
+  el NRT `METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2` para los meses recientes (otro `ProductSpec`).
+- [ ] **`InsecureRequestWarning`** del SDK copernicusmarine (su backend S3 CloudFerro hace
+  HTTPS sin verificar). Es interno del SDK, no de nuestro código; la descarga es válida.
+  Revisar si una versión nueva lo arregla o si conviene silenciarlo.
+- [ ] **Polígono de Isla Natividad disponible** (descargado en
+  `data/raw/turf/reserveeffect/turfs.{shp,dbf,...}`, atributo `Coop="SCPP Buzos y Pescadores
+  de la Baja California"`): si se agrega esa UE en Fase 3, usarlo como polígono real.
+  Requiere soporte de polígono (no solo bbox) en `ocean_by_ue` + `geopandas`/`shapely`.
 
 ---
 
 ## 4. Fase 1.4 — Re-entrenamiento del baseline (parcialmente desbloqueada)
 
-`dataset_v1.parquet` ya es real para langosta-SQ (arribos COBI). Los modelos que **solo
-usan `y`** (ARIMA, Prophet) se pueden entrenar **ya**. Los que usan covariables
-oceanográficas (LGBM/XGBoost/LSTM con `x1..x16`/SST) esperan al enriquecimiento (B1/B2 +
-OISST). La comparación contra el `.h5` del borrador necesita además TensorFlow/Keras
-(no está en deps; el borrador usaba tf 2.7) y el XGB joblib (dentro de los zips de B5).
+`dataset_v1.parquet` ya es real para langosta-SQ (arribos COBI). **Hecho (código):**
+- [x] `src/fishing_forecast/evaluation/metrics.py` — MAE, RMSE, sMAPE, error de suma de
+  temporada (puro, 7 tests).
+- [x] `experiments/exp1_baseline_retrain/baseline.py` — script reproducible: carga
+  `dataset_v1`, filtra langosta-SQ, serie diaria (NaN in-season→0, recorte al último día
+  con captura), corte **2020-07-01**, ajusta **ARIMA** (rejilla chica por AIC) y **Prophet**
+  (si está instalado), escribe `reports/metrics/exp1_*.json`, figura y `exp1_summary.md`.
 
-- [ ] Scripts `experiments/exp1_baseline_retrain/` por modelo. **Empezar por ARIMA y
-  Prophet** (solo `y`); LGBM/XGBoost/LSTM cuando haya oceanografía.
-- [ ] Partición temporal canónica corte **`2020-07-01`** + partición adicional
-  `2024-06-01`.
-- [ ] Métricas (MAE, RMSE, sMAPE, error de temporada) → `reports/metrics/exp1_*.json`.
-- [ ] Tabla comparativa contra los números del paper (criterio: ±10% en la partición
-  antigua). Cargar el `.h5` requiere agregar TensorFlow (pin tf 2.x) — diferir hasta el
-  modelo LSTM.
-- [ ] **Figura MHW** `reports/figures/mhw_timeline.png` (función `viz/mhw_plot` lista;
-  desbloqueada en cuanto haya OISST real).
+**Corrido (2026-06-21):** `uv run python experiments/exp1_baseline_retrain/baseline.py`
+con Prophet instalado. Resultados en `reports/metrics/exp1_baseline_*.json` y
+`reports/exp1_baseline_summary.md`:
+
+| modelo | MAE | RMSE | sMAPE% | suma temporada 2020-21 | suma temporada **2021-22** (crash) |
+|---|---|---|---|---|---|
+| ARIMA(3,0,3) | 345 | 463 | 138% | −26% | **+291%** |
+| Prophet | 372 | 576 | 129% | +62% | **+418%** |
+
+**Hallazgo**: ambos baselines (solo `y`) **sobrepredicen brutalmente la temporada
+2021-2022** (real 31 t; predicen 120-160 t) porque no "ven" la ola de calor marina que
+colapsó la captura. Esto **motiva todo el proyecto**: el error de suma de temporada que
+importa solo baja con el índice MHW + covariables oceanográficas (el ensamble del borrador
+lograba ~8.7%). Es el "piso" contra el cual comparar.
+
+**Pendiente:**
+- [x] **Deps en el lock**: resuelto. Las deps runtime del ETL (requests, beautifulsoup4,
+  lxml, xarray, netCDF4, matplotlib) se movieron al **core** de `pyproject.toml` (estaban en
+  el extra `etl`, lo que hacía que `uv sync --extra models` rompiera la CLI por falta de
+  `lxml`). `statsmodels`/`prophet`/`joblib` quedan fijados vía extra `models`. Sync correcto:
+  `uv sync --extra models --extra dev`.
+- [ ] Corte adicional `2024-06-01`: **no aplica** (no hay langosta-SQ tras 2022); ver §3.
+- [x] **Modelo con covariables corrido (Exp 2, 2026-06-22)**:
+  `experiments/exp2_covariates/covariate_model.py` (XGBoost + `features/covariates.py`,
+  SST/MHW desplazadas 90 días, sin leakage). Resultado de suma de temporada 2021-2022:
+  XGBoost **+368%** vs ARIMA +291% / Prophet +418% — **las covariables NO arreglan el crash
+  todavía** (el modelo sí usa `sst_roll90_lag90` y `mhw_category_roll365_lag90` en su top-5,
+  pero con solo ~3 temporadas de train no hay ejemplos suficientes de la relación MHW→captura).
+  MAE diario 327 (lig. mejor que ARIMA 345). **Hallazgo que motiva Fase 3**: el valor de las
+  covariables necesita más temporadas y/o pooling entre especies/UEs (modelo global).
+- [ ] Comparación formal vs el paper / LSTM del borrador: requiere **TensorFlow/Keras**
+  (el `.h5` ya está en `models/legacy/`; el borrador usaba tf 2.7) y el XGB joblib (zips B5).
+- [ ] **LGBM/LSTM** y tuning (Optuna) sobre el mismo setup — opcional; el cuello de botella
+  es la cantidad de temporadas, no el modelo.
+- [ ] **Figura MHW** `reports/figures/mhw_timeline.png`: ahora **producible** (ya hay SST
+  real 1982-2025). Falta correr `add_mhw(..., return_diagnostics=True)` sobre la serie de SQ
+  y pasarla a `viz/mhw_plot.plot_mhw_timeline` (el `aggregate ocean` actual no guarda
+  `clim`/`thresh`/`in_mhw`; añadir un flag o un pequeño script).
 
 ---
 
@@ -118,12 +169,20 @@ OISST). La comparación contra el `.h5` del borrador necesita además TensorFlow
 
 Resumen de lo que queda; detalle completo en `PLAN.md`.
 
-- [ ] **Fase 2 — Feature engineering + SHAP**: módulos `features/{lags,rolling_stats,
-  anomalies,calendar,interactions,pipeline}.py` + análisis SHAP + poda. **Crítico**: el
-  shift de 90 días vive aquí (no en ETL, §5.5), y los tests deben verificar no-leakage.
-- [ ] **Fase 3 — Modelo global multi-especie/UE**: el ETL ya soporta la granularidad
-  `(ds, species, economic_unit)`, así que no hay re-ETL; falta el modelado (skforecast o
-  darts) y la comparación global vs específico.
+- [~] **Fase 2 — Feature engineering + SHAP**: arrancado. `features/covariates.py`
+  (calendario + lags + SST/MHW desplazadas 90 días, sin leakage, testeado) es la base.
+  Falta el conjunto completo (`anomalies`, `interactions`, `rolling` configurable) + SHAP +
+  poda. El shift de 90 días ya vive aquí (§5.5), correcto.
+- [~] **Fase 3 — Modelo global multi-especie/UE**: marco + **multi-UE** (Exp 3, 2026-07-03).
+  Se agregó **Isla Cedros** (2ª UE, ~28°N) → 5 series `(especie, UE)`; SST/MHW por UE (amplié
+  el bbox de descarga Copernicus a lat 27°N). Resultados: (1) **transferencia positiva dentro
+  de especie entre UEs** (lobster@cedros mejora con el pool); (2) pooling todo-junto
+  **confundido por escala** (langosta cientos-de-kg domina sobre abulón unidades); (3) 2/5
+  (40%). **Pendiente**: (a) **partial pooling** — agrupar por especie entre UEs y/o
+  **normalizar `y` por serie** (log o escala) para que la escala no domine el loss; (b) **más
+  UEs** — El Rosario/Ensenada clusters (nombres en `economic_units.yaml`), confirmar bboxes por
+  oficina de arribo; (c) SHAP condicional por grupo (3.4); (d) migrar a skforecast/darts si
+  crecen las series.
 - [ ] **Fase 4 — CQR (intervalos calibrados)**: `mapie`, coverage empírico, CRPS,
   calibración condicional durante MHW, producto operativo para COBI.
 - [ ] **Fase 5 (opcional) — TFT**: ADR de justificación + `pytorch-forecasting`/`darts`.
@@ -146,12 +205,13 @@ en la raíz) sigue intocado. Antes de reusarlo:
 
 ## Ruta crítica recomendada
 
-1. **Ya, sin esperar nada**: arrancar **Fase 1.4 baseline estadístico** (ARIMA/Prophet)
-   sobre el `dataset_v1` de arribos COBI — da los primeros números reproducidos.
-2. Javier resuelve **B3** (bbox/shapefile) y confirma rango OISST → correr la descarga
-   OISST (§2) → `aggregate ocean` → SST/MHW en el dataset → figura MHW (Fase 1.3).
-3. En paralelo, **B1/B2** (credenciales) habilitan `x1..x16` → completan los modelos con
-   covariables (LGBM/XGBoost/LSTM) de Fase 1.4.
-4. Para comparar el LSTM del borrador: agregar TensorFlow y (si hace falta) bajar el XGB
-   joblib de los zips de B5.
-5. Recién con el dataset enriquecido tienen pleno sentido las Fases 2-5.
+Ya no hay bloqueadores de insumos; todo lo que sigue es código + correr cosas.
+
+1. ✅ Baseline estadístico (ARIMA/Prophet) corrido — fija el piso (ver §4).
+2. **Oceanografía** (desbloqueada): correr descarga OISST (§2) → `aggregate ocean` →
+   SST/MHW en el dataset → figura MHW (Fase 1.3). El bbox de SQ basta (B3 decidido).
+3. **Escribir `extract/copernicus.py` y `extract/globcolour.py`** (+ transforms) con las
+   credenciales ya válidas → columnas `x1..x16` → modelos con covariables (LGBM/XGBoost/
+   LSTM) de Fase 1.4.
+4. Comparar el LSTM del borrador: agregar TensorFlow y (si hace falta) el XGB joblib de B5.
+5. Con el dataset enriquecido, Fases 2-5.
