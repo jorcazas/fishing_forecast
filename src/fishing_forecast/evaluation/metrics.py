@@ -82,5 +82,5 @@ def all_metrics(y_true: object, y_pred: object) -> dict[str, float]:
         "mae": mae(y_true, y_pred),
         "rmse": rmse(y_true, y_pred),
         "smape": smape(y_true, y_pred),
-        "n": int(len(_aligned(y_true, y_pred)[0])),
+        "n": len(_aligned(y_true, y_pred)[0]),
     }

@@ -51,6 +51,22 @@ def _select_sst_var(dataset: xr.Dataset, sst_var: str | None) -> xr.DataArray:
     raise ValueError(f"No pude inferir la variable de SST entre {data_vars}; especifica `sst_var`.")
 
 
+def _to_celsius(da: xr.DataArray) -> xr.DataArray:
+    """Devuelve la SST en °C. OISST viene en °C; OSTIA/Copernicus en Kelvin.
+
+    Detecta por el atributo `units`; si falta, usa la magnitud (Kelvin ronda 270-310).
+    """
+    units = str(da.attrs.get("units", "")).strip().lower()
+    if units in ("kelvin", "k", "degk", "degrees_kelvin"):
+        return da - 273.15
+    if units in ("celsius", "c", "degc", "degree_celsius", "degrees_celsius", "deg_c"):
+        return da
+    # Sin units fiable: heurística por magnitud (una SST de >100 solo tiene sentido en K).
+    if float(da.max()) > 100.0:
+        return da - 273.15
+    return da
+
+
 def sst_bbox_mean(
     dataset: xr.Dataset,
     bbox: dict[str, float],
@@ -63,7 +79,7 @@ def sst_bbox_mean(
     Devuelve un DataFrame con columnas ``ds`` (datetime) y ``sst`` (float), ordenado por
     fecha. Promedia ignorando NaN (celdas de tierra / fuera de máscara).
     """
-    da = _select_sst_var(dataset, sst_var)
+    da = _to_celsius(_select_sst_var(dataset, sst_var))
     lat_name = _find_coord(da, _LAT_NAMES)
     lon_name = _find_coord(da, _LON_NAMES)
     time_name = _find_coord(da, _TIME_NAMES)
