@@ -36,6 +36,25 @@ def _make_dataset(*, lon_0_360: bool, n_days: int = 5) -> xr.Dataset:
     )
 
 
+def test_bbox_mean_converts_kelvin_to_celsius() -> None:
+    # OSTIA/Copernicus: analysed_sst en Kelvin con units="kelvin".
+    ds = _make_dataset(lon_0_360=False)
+    ds["sst"] = ds["sst"] + 293.0
+    ds["sst"].attrs["units"] = "kelvin"
+    df = sst_bbox_mean(ds, SQ_BBOX)
+    expected_c = np.mean([5.0, 6.0, 9.0, 10.0]) + 293.0 - 273.15
+    assert df["sst"].iloc[0] == pytest.approx(expected_c)
+
+
+def test_bbox_mean_kelvin_detected_by_magnitude_without_units() -> None:
+    # Sin atributo units: se detecta Kelvin por magnitud (>100).
+    ds = _make_dataset(lon_0_360=False)
+    ds["sst"] = ds["sst"] + 293.0  # sin units attr
+    df = sst_bbox_mean(ds, SQ_BBOX)
+    expected_c = np.mean([5.0, 6.0, 9.0, 10.0]) + 293.0 - 273.15
+    assert df["sst"].iloc[0] == pytest.approx(expected_c)
+
+
 def test_bbox_mean_selects_inbox_cells_180() -> None:
     ds = _make_dataset(lon_0_360=False)
     df = sst_bbox_mean(ds, SQ_BBOX)
