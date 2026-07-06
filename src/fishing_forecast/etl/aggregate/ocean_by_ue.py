@@ -80,10 +80,18 @@ def sst_bbox_mean(
     fecha. Promedia ignorando NaN (celdas de tierra / fuera de máscara).
     """
     da = _to_celsius(_select_sst_var(dataset, sst_var))
+    time_name = _find_coord(da, _TIME_NAMES)
+    series = _bbox_spatial_mean(da, bbox)
+    df = series.to_dataframe(name="sst").reset_index()[[time_name, "sst"]]
+    df = df.rename(columns={time_name: "ds"})
+    df["ds"] = pd.to_datetime(df["ds"])
+    return df.sort_values("ds").reset_index(drop=True)
+
+
+def _bbox_spatial_mean(da: xr.DataArray, bbox: dict[str, float]) -> xr.DataArray:
+    """Promedia una `DataArray` sobre el bbox (ignora NaN). Maneja convención 0-360 y wrap."""
     lat_name = _find_coord(da, _LAT_NAMES)
     lon_name = _find_coord(da, _LON_NAMES)
-    time_name = _find_coord(da, _TIME_NAMES)
-
     lat = da[lat_name]
     lon = da[lon_name]
     is_360 = float(lon.max()) > 180.0
@@ -91,27 +99,51 @@ def sst_bbox_mean(
     def to_conv(value: float) -> float:
         return value % 360 if is_360 else value
 
-    lon_lo = to_conv(bbox["lon_min"])
-    lon_hi = to_conv(bbox["lon_max"])
+    lon_lo, lon_hi = to_conv(bbox["lon_min"]), to_conv(bbox["lon_max"])
     lat_mask = (lat >= bbox["lat_min"]) & (lat <= bbox["lat_max"])
     if lon_lo <= lon_hi:
         lon_mask = (lon >= lon_lo) & (lon <= lon_hi)
-    else:  # bbox cruza el antimeridiano tras la conversión a 0-360
+    else:  # cruza el antimeridiano tras convertir a 0-360
         lon_mask = (lon >= lon_lo) | (lon <= lon_hi)
 
-    masked = da.where(lat_mask & lon_mask)
-    n_cells = int((lat_mask & lon_mask).sum())
-    if n_cells == 0:
-        logger.warning(
-            f"El bbox {bbox} no cae sobre ninguna celda del grid; SST será NaN. "
-            "Revisar coordenadas de la UE."
-        )
+    if int((lat_mask & lon_mask).sum()) == 0:
+        logger.warning(f"El bbox {bbox} no cae sobre ninguna celda del grid; será NaN.")
+    return da.where(lat_mask & lon_mask).mean(dim=[lat_name, lon_name], skipna=True)
 
-    series = masked.mean(dim=[lat_name, lon_name], skipna=True)
-    df = series.to_dataframe(name="sst").reset_index()[[time_name, "sst"]]
-    df = df.rename(columns={time_name: "ds"})
-    df["ds"] = pd.to_datetime(df["ds"])
-    return df.sort_values("ds").reset_index(drop=True)
+
+def bbox_means(dataset: xr.Dataset, bbox: dict[str, float]) -> pd.DataFrame:
+    """Promedio espacial diario de **todas las variables** del dataset dentro de `bbox`.
+
+    Para productos multi-variable (color del océano: CHL, KD490, SPM, ...). Devuelve un
+    DataFrame con `ds` + una columna por variable (nombre en minúsculas). Ignora variables
+    auxiliares de incertidumbre/flags.
+    """
+    data_vars = [
+        v for v in dataset.data_vars if not str(v).lower().endswith(("_uncertainty", "flags"))
+    ]
+    if not data_vars:
+        raise ValueError("El dataset no tiene variables de datos utilizables.")
+    time_name = _find_coord(dataset[data_vars[0]], _TIME_NAMES)
+    out = None
+    for var in data_vars:
+        series = _bbox_spatial_mean(dataset[var], bbox)
+        col = pd.to_datetime(series[time_name].to_index()).rename("ds")
+        s = pd.DataFrame({"ds": col, str(var).lower(): series.to_numpy()})
+        out = s if out is None else out.merge(s, on="ds", how="outer")
+    return out.sort_values("ds").reset_index(drop=True)
+
+
+def oc_series_for_bbox(paths: Iterable[Path], bbox: dict[str, float]) -> pd.DataFrame:
+    """Lee los netCDF de color del océano y devuelve un DataFrame diario (ds + variables)."""
+    paths = [Path(p) for p in paths]
+    if not paths:
+        raise ValueError("Sin netCDF de color del océano.")
+    merged = None
+    for p in paths:
+        with xr.open_dataset(p) as ds:
+            df = bbox_means(ds, bbox)
+        merged = df if merged is None else merged.merge(df, on="ds", how="outer")
+    return merged.sort_values("ds").reset_index(drop=True)
 
 
 def open_oisst(paths: Iterable[Path]) -> xr.Dataset:

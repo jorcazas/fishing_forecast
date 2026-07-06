@@ -34,6 +34,7 @@ class ProductSpec:
     short_name: str
     variables: list[str]
     region: dict[str, float]
+    start: str | None = None  # override de fecha inicial (p.ej. color del océano: ~1997+)
 
 
 def load_products(config_path: Path) -> list[ProductSpec]:
@@ -47,6 +48,7 @@ def load_products(config_path: Path) -> list[ProductSpec]:
                 short_name=p["short_name"],
                 variables=list(p["variables"]),
                 region=p["region"],
+                start=str(p["start"]) if p.get("start") is not None else None,
             )
         )
     if not products:
@@ -117,14 +119,17 @@ def download_product(
 
         subset_fn = copernicusmarine.subset
 
-    kwargs = build_subset_kwargs(product, start=start, end=end, output_dir=output_dir)
+    # Un producto puede fijar su propia fecha inicial (p.ej. color del océano ~1997+),
+    # distinta del baseline MHW de la SST.
+    eff_start = product.start or start
+    kwargs = build_subset_kwargs(product, start=eff_start, end=end, output_dir=output_dir)
     kwargs["overwrite"] = True
     # Pasa credenciales explícitas solo si están en .env; si no, el SDK usa su login file.
     if settings.copernicus_user.strip() and settings.copernicus_pass.strip():
         kwargs["username"] = settings.copernicus_user
         kwargs["password"] = settings.copernicus_pass
 
-    logger.info(f"[get ] {product.dataset_id} → {target.name} ({start}..{end})")
+    logger.info(f"[get ] {product.dataset_id} → {target.name} ({eff_start}..{end})")
     subset_fn(**kwargs)
     return target
 

@@ -72,6 +72,21 @@ def test_download_product_omits_credentials_when_absent(tmp_path: Path) -> None:
     assert "username" not in kwargs and "password" not in kwargs  # usa el login file del SDK
 
 
+def test_product_start_overrides_cli_start(tmp_path: Path) -> None:
+    subset = MagicMock()
+    settings = Settings(copernicus_user="u", copernicus_pass="p")
+    oc = ProductSpec(
+        dataset_id="cmems_obs-oc_glo_bgc-plankton_my_l4-gapfree-multi-4km_P1D",
+        short_name="oc_chl",
+        variables=["CHL"],
+        region=PRODUCT.region,
+        start="2015-01-01",
+    )
+    # El CLI pasaría start=1982 (baseline SST), pero el producto OC fija 2015.
+    download_product(oc, start="1982-01-01", end="2025-12-31", output_dir=tmp_path, settings=settings, subset_fn=subset)
+    assert subset.call_args.kwargs["start_datetime"] == "2015-01-01T00:00:00"
+
+
 def test_download_product_idempotent_skip(tmp_path: Path) -> None:
     (tmp_path / "sst_l4.nc").write_bytes(b"x")  # ya existe
     subset = MagicMock()

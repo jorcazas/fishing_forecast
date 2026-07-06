@@ -110,13 +110,15 @@ def consolidate(
     date_start: date,
     date_end: date,
     ocean_by_ue: dict[str, pd.DataFrame] | None = None,
+    oceancolor_by_ue: dict[str, pd.DataFrame] | None = None,
     etl_run_id: str | None = None,
 ) -> pd.DataFrame:
-    """Produce el DataFrame consolidado con el esquema §4.1.
+    """Produce el DataFrame consolidado con el esquema §4.1 (+ columnas de color del océano).
 
     `arribos` debe tener columnas `ds, y, species, economic_unit, region`.
     `ocean_by_ue` mapea `economic_unit → DataFrame(ds, sst, sst_anomaly, mhw_category,
-    mhw_intensity)` (salida de `aggregate/ocean_by_ue.py`). Puede ser None/parcial.
+    mhw_intensity)`. `oceancolor_by_ue` mapea `economic_unit → DataFrame(ds, chl, kd490, ...)`.
+    Ambos opcionales/parciales; sus columnas se broadcastean a todas las especies de la UE.
     """
     etl_run_id = etl_run_id or datetime.now().strftime("%Y-%m-%d_%H%M%S")
 
@@ -139,13 +141,14 @@ def consolidate(
 
     # Oceanografía por UE (broadcast a todas las especies de la UE).
     merged = _attach_ocean(merged, ocean_by_ue)
+    merged, oc_cols = _attach_oceancolor(merged, oceancolor_by_ue)
 
     merged["is_imputed_x"] = False
     merged["ocean_impute_method"] = "none"
-    merged["source_globcolour_files"] = np.int32(0)  # GlobColour aún no integrado
+    merged["source_globcolour_files"] = np.int32(0)  # placeholder; el OC viene de Copernicus
     merged["etl_run_id"] = etl_run_id
 
-    merged = merged[SCHEMA_COLUMNS]
+    merged = merged[SCHEMA_COLUMNS + oc_cols]
     return merged.sort_values(["species", "economic_unit", "ds"]).reset_index(drop=True)
 
 
@@ -172,6 +175,30 @@ def _attach_ocean(
         if col not in merged.columns:
             merged[col] = np.nan
     return merged
+
+
+def _attach_oceancolor(
+    merged: pd.DataFrame, oceancolor_by_ue: dict[str, pd.DataFrame] | None
+) -> tuple[pd.DataFrame, list[str]]:
+    """Une columnas de color del océano por UE (broadcast). Devuelve (df, columnas_añadidas)."""
+    if not oceancolor_by_ue:
+        return merged, []
+    frames: list[pd.DataFrame] = []
+    var_cols: set[str] = set()
+    for ue, df in oceancolor_by_ue.items():
+        sub = df.copy()
+        sub["ds"] = pd.to_datetime(sub["ds"]).dt.date
+        sub["economic_unit"] = ue
+        vcols = [c for c in sub.columns if c not in ("ds", "economic_unit")]
+        var_cols.update(vcols)
+        frames.append(sub[["ds", "economic_unit", *vcols]])
+    oc = pd.concat(frames, ignore_index=True)
+    merged = merged.merge(oc, on=["ds", "economic_unit"], how="left")
+    cols = sorted(var_cols)
+    for c in cols:
+        if c not in merged.columns:
+            merged[c] = np.nan
+    return merged, cols
 
 
 def write_dataset(df: pd.DataFrame, out_path: Path) -> Path:

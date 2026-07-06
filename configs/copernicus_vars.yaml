@@ -1,23 +1,53 @@
 # Productos de Copernicus Marine Service (post-migración a copernicusmarine).
-# Cada producto se descarga por separado y se agrega al `aggregate/ocean_by_ue`.
+# Cada producto se descarga por separado (subset servidor-side al bbox) y se agrega en
+# `aggregate/ocean_by_ue`. dataset_id verificados contra el catálogo (2026-07-05).
+
+# Región de descarga compartida = superconjunto de los bbox de todas las UEs.
+# lat_min = 27 para cubrir Isla Cedros (~27.7-28.4°N). Ampliar al sur si se agregan UEs
+# de Vizcaíno/Punta Abreojos (~26.7°N).
+_region: &region
+  lon_min: -117.0
+  lon_max: -112.5
+  lat_min: 27.0
+  lat_max: 32.0
 
 products:
-  # OSTIA global L4 SST reprocesado (producto SST_GLO_SST_L4_REP_OBSERVATIONS_010_011),
-  # 0.05° diario, 1981-presente. dataset_id verificado contra el catálogo (2026-06-21);
-  # el id viejo `cmems_obs-sst_glo_phy_my_l4_P1D-m` ya no existe (DatasetNotFound).
+  # --- SST (para el índice MHW) ---
+  # OSTIA global L4 SST reprocesado (SST_GLO_SST_L4_REP_OBSERVATIONS_010_011), 0.05° diario,
+  # 1981-presente. Sin `start` → usa el inicio del baseline MHW (1982) desde el CLI.
   - dataset_id: METOFFICE-GLO-SST-L4-REP-OBS-SST
     short_name: sst_l4
     description: Daily L4 SST global OSTIA reprocesado (1981-presente)
     variables:
       - analysed_sst
-    # Región de descarga = superconjunto de los bbox de todas las UEs. lat_min bajado a
-    # 27.0 para cubrir Isla Cedros (~27.7-28.4°N). Ampliar más al sur si se agregan UEs
-    # de Vizcaíno/Punta Abreojos (~26.7°N).
-    region:
-      lon_min: -117.0
-      lon_max: -112.5
-      lat_min: 27.0
-      lat_max: 32.0
-  # Pendiente: agregar productos de corrientes (uo, vo) y salinidad (so) cuando
-  # Javier confirme las credenciales y validemos qué producto es más confiable
-  # para la zona costera de Baja California.
+    region: *region
+
+  # --- Color del océano (GlobColour vía Copernicus, 4 km diario) ---
+  # Sustituye la descarga vía FTP de GlobColour (global, ~630 GB a 4 km sin subset). Estas
+  # variables son el núcleo biológico/óptico de las x1..x16 del borrador. `start` = 2015 (no
+  # necesitamos el baseline de 30 años para covariables; sí margen para lags de 90d + roll 365d).
+  # NO disponibles en Copernicus (atmosféricas): POC, PIC, PAR, aerosoles (T865/T550), nubosidad.
+  - dataset_id: cmems_obs-oc_glo_bgc-plankton_my_l4-gapfree-multi-4km_P1D
+    short_name: oc_chl
+    description: Clorofila-a (gap-free L4, Copernicus-GlobColour)
+    variables:
+      - CHL
+    start: "2015-01-01"
+    region: *region
+  - dataset_id: cmems_obs-oc_glo_bgc-transp_my_l3-multi-4km_P1D
+    short_name: oc_transp
+    description: Transparencia (Kd490, materia suspendida, disco de Secchi)
+    variables:
+      - KD490
+      - SPM
+      - ZSD
+    start: "2015-01-01"
+    region: *region
+  - dataset_id: cmems_obs-oc_glo_bgc-optics_my_l3-multi-4km_P1D
+    short_name: oc_optics
+    description: Ópticas inherentes (retrodispersión BBP, materia detrítica/disuelta CDM)
+    variables:
+      - BBP
+      - CDM
+    start: "2015-01-01"
+    region: *region

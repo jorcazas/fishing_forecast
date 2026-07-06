@@ -968,3 +968,44 @@ Multi-UE funciona end-to-end (mecánica lista para agregar más UEs: definir bbo
 La lección metodológica (transferencia intra-especie sí; pooling inter-escala no) apunta al
 siguiente paso: **partial pooling / normalización de `y` por serie**, y sumar más UEs
 (El Rosario, Ensenada) para robustecer la señal intra-especie.
+
+---
+
+## 2026-07-05 — Color del océano (GlobColour vía Copernicus) integrado a `dataset_v1`
+
+Ataqué el gap más grande: las variables ópticas `x1..x16` que el borrador usaba y que aún
+no estaban en el dataset nuevo.
+
+**Decisión de fuente** (exploré el FTP de GlobColour primero): `ftp.hermes.acri.fr` sirve
+archivos **globales, sin subset** — a 4 km son 18 MB/var/día → **~630 GB** para 16 vars × 6
+años. Inviable. La misma data GlobColour se re-distribuye por **Copernicus Marine** con
+subset server-side (como la SST), así que extendí `extract/copernicus.py` en vez de escribir
+un extractor FTP. Presenté la disyuntiva a Javier; eligió Copernicus.
+
+**Integradas 6 variables** ópticas/biológicas (4 km diario, 2015-2026, subset al bbox):
+CHL (plankton L4 gap-free), KD490/SPM/ZSD (transp), BBP/CDM (optics). No están en Copernicus
+(atmosféricas, se omiten): POC, PIC, PAR, aerosoles T865/T550, nubosidad.
+
+**Código**: `copernicus_vars.yaml` +3 productos con `start` por-producto (2015, distinto del
+baseline 1982 de la SST); `ProductSpec.start` + override en `download_product`.
+`aggregate/ocean_by_ue`: refactoricé el masking a `_bbox_spatial_mean` y añadí `bbox_means`
+(multi-variable, sin MHW) + `oc_series_for_bbox`. CLI `aggregate oceancolor`. `consolidate`
++ `_attach_oceancolor` (broadcast por UE, columnas extra al esquema). Fix: el glob
+`ocean_*.parquet` excluía mal `oceancolor_*`; corregido. `features/covariates.OCEAN_COLS`
++= las 6 OC. Tests: +2 (per-product start, OC en consolidate). **104/104 verde**, ruff limpio.
+
+**Pipeline corrido**: `extract copernicus` (OC ~1.3 GB) → `aggregate oceancolor` SQ + Cedros
+→ `consolidate`. `dataset_v1` ahora trae `chl,kd490,spm,zsd,bbp,cdm` (cobertura 88-100%).
+Validación de gradiente: **CHL San Quintín 0.94 vs Isla Cedros 0.62 mg/m³** (más surgencia
+costera en SQ) — la data OC captura variación espacial real.
+
+**Hallazgo de modelado (importante y honesto)**: re-corrí Exp 2 y Exp 3 con las OC. En la
+serie única (Exp 2) el desempeño **empeora** (MAE 327→424; error de temporada 2021-22
++368%→+399%) — **sobreajuste**: ~35 features con solo ~3 temporadas. El modelo SÍ usa las OC
+(`bbp/cdm/zsd_roll90_lag90` y `sst_roll90_lag90` en el top-5), pero sin más datos no ayudan.
+En Exp 3 (pooled) sigue 2/5, con la transferencia intra-especie langosta@cedros aún positiva.
+
+**Conclusión**: la data óptica ya está integrada y el pipeline es sólido; su valor requiere
+**selección de features (SHAP, Fase 2.3)** + **más datos** (más UEs/temporadas) y/o
+regularización. Objetivo #1 (recuperar las `x`) cumplido; ahora el cuello es data + selección,
+no disponibilidad de variables.

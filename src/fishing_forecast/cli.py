@@ -216,10 +216,13 @@ def aggregate_ocean(
     if source not in source_dirs:
         raise typer.BadParameter(f"source debe ser uno de {sorted(source_dirs)}.")
     nc_dir = source_dirs[source]
-    paths = sorted(nc_dir.glob("*.nc"))
+    # Solo los ficheros de SST (en copernicus/ conviven con los de color del océano `oc_*.nc`).
+    paths = (
+        sorted(nc_dir.glob("sst*.nc")) if source == "copernicus" else sorted(nc_dir.glob("*.nc"))
+    )
     if not paths:
         raise typer.BadParameter(
-            f"No hay netCDF en {nc_dir}. Corre primero `fishing-etl extract {source}`."
+            f"No hay netCDF de SST en {nc_dir}. Corre primero `fishing-etl extract {source}`."
         )
 
     ue_cfg = yaml.safe_load((settings.configs_root / "economic_units.yaml").read_text("utf-8"))
@@ -235,6 +238,33 @@ def aggregate_ocean(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(out_path, compression="zstd", index=False)
     print(f"[green]SST+MHW de {ue}: {len(df)} días → {out_path}[/]")
+
+
+@aggregate_app.command("oceancolor")
+def aggregate_oceancolor(
+    ue: str = typer.Option("litoral_bc_sur", help="Código de UE (clave en economic_units.yaml)."),
+) -> None:
+    """Color del océano por UE (promedio bbox de CHL/KD490/SPM/...) → interim/oceancolor_<ue>.parquet."""
+    import yaml
+
+    from fishing_forecast.etl.aggregate import ocean_by_ue
+
+    settings = get_settings()
+    paths = sorted((settings.raw_dir / "copernicus").glob("oc_*.nc"))
+    if not paths:
+        raise typer.BadParameter(
+            "No hay netCDF `oc_*.nc`. Corre primero `fishing-etl extract copernicus`."
+        )
+    ue_cfg = yaml.safe_load((settings.configs_root / "economic_units.yaml").read_text("utf-8"))
+    if ue not in ue_cfg or "bbox" not in ue_cfg[ue]:
+        raise typer.BadParameter(f"UE {ue!r} sin bbox en economic_units.yaml.")
+
+    df = ocean_by_ue.oc_series_for_bbox(paths, ue_cfg[ue]["bbox"])
+    out_path = settings.interim_dir / f"oceancolor_{ue}.parquet"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(out_path, compression="zstd", index=False)
+    cols = [c for c in df.columns if c != "ds"]
+    print(f"[green]Color del océano de {ue}: {len(df)} días, vars {cols} → {out_path}[/]")
 
 
 @transform_app.command("arribos")
@@ -355,13 +385,21 @@ def consolidate(version: str = typer.Option("v1")) -> None:
     seasons = yaml.safe_load((settings.configs_root / "season_calendars.yaml").read_text("utf-8"))
     date_range = etl_cfg["date_range"]
 
-    # Recoge los interims oceanográficos disponibles (ocean_<ue>.parquet).
+    # Interims de SST/MHW (`ocean_<ue>.parquet`) — excluye `oceancolor_*` que también matchea.
     ocean_by_ue = {
         p.stem.removeprefix("ocean_"): pd.read_parquet(p)
         for p in sorted(settings.interim_dir.glob("ocean_*.parquet"))
+        if not p.name.startswith("oceancolor_")
+    }
+    # Interims de color del océano (`oceancolor_<ue>.parquet`).
+    oceancolor_by_ue = {
+        p.stem.removeprefix("oceancolor_"): pd.read_parquet(p)
+        for p in sorted(settings.interim_dir.glob("oceancolor_*.parquet"))
     }
     if not ocean_by_ue:
-        print("[yellow]Sin interims oceanográficos (ocean_*.parquet); SST/MHW irán vacías.[/]")
+        print("[yellow]Sin interims de SST/MHW (ocean_*.parquet); SST/MHW irán vacías.[/]")
+    if not oceancolor_by_ue:
+        print("[yellow]Sin interims de color del océano (oceancolor_*.parquet).[/]")
 
     df = cons.consolidate(
         pd.read_parquet(arribos_path),
@@ -369,6 +407,7 @@ def consolidate(version: str = typer.Option("v1")) -> None:
         date_start=date_range["start"],  # PyYAML parsea YYYY-MM-DD como datetime.date
         date_end=date_range["end"],
         ocean_by_ue=ocean_by_ue or None,
+        oceancolor_by_ue=oceancolor_by_ue or None,
     )
     out_path = settings.processed_dir / f"dataset_{version}.parquet"
     cons.write_dataset(df, out_path)

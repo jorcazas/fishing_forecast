@@ -144,6 +144,25 @@ def test_export_lstm_csv_raises_when_empty(arribos: pd.DataFrame) -> None:
         export_lstm_csv(df, Path("/tmp/never.csv"), species="urchin_red")
 
 
+def test_consolidate_attaches_oceancolor(arribos: pd.DataFrame) -> None:
+    oc = pd.DataFrame(
+        {"ds": [date(2018, 11, 1)], "chl": [1.5], "kd490": [0.08], "spm": [2.0]}
+    )
+    df = consolidate(
+        arribos,
+        season_calendars=SEASONS,
+        date_start=date(2018, 1, 1),
+        date_end=date(2018, 12, 31),
+        oceancolor_by_ue={"litoral_bc_sur": oc},
+    )
+    assert {"chl", "kd490", "spm"} <= set(df.columns)  # columnas OC añadidas al esquema
+    on_day = df[df["ds"] == date(2018, 11, 1)]
+    # broadcast a todas las especies de la UE
+    assert (on_day["chl"] == 1.5).all()
+    # días sin OC → NaN
+    assert df[df["ds"] == date(2018, 11, 2)]["chl"].isna().all()
+
+
 def test_consolidate_no_ocean_fills_defaults(arribos: pd.DataFrame) -> None:
     df = consolidate(
         arribos,

@@ -24,8 +24,20 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-#: Columnas oceanográficas que se desplazan/agregan.
-OCEAN_COLS = ("sst", "sst_anomaly", "mhw_category", "mhw_intensity")
+#: Columnas oceanográficas que se desplazan/agregan (SST/MHW + color del océano).
+#: Las que no estén en el DataFrame se ignoran, así que es seguro listarlas todas.
+OCEAN_COLS = (
+    "sst",
+    "sst_anomaly",
+    "mhw_category",
+    "mhw_intensity",
+    "chl",
+    "kd490",
+    "spm",
+    "zsd",
+    "bbp",
+    "cdm",
+)
 
 #: Lags de `y` (días). 365/730 = misma época de 1 y 2 años atrás.
 Y_LAGS = (365, 730)

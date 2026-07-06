@@ -2,7 +2,7 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-06-21**.
+actualización: **2026-07-05**.
 
 Estado global:
 - **Código del ETL completo y testeado** (extract → transform → aggregate → consolidate →
@@ -31,7 +31,7 @@ descarga OISST**, no insumos externos.
 
 | # | Bloqueador | Qué desbloquea | Acción concreta |
 |---|---|---|---|
-| ~~B1~~ | ~~Credenciales GlobColour (FTP)~~ | **RESUELTO (2026-06-21)** | Credenciales nuevas en `.env` (`GLOBCOLOUR_USER`/`PASS`); **login FTP a `ftp.hermes.acri.fr` verificado OK**. Pendiente (código, ya desbloqueado): `extract/globcolour.py` + `transform/globcolour.py` → columnas `x1..x16`. |
+| ~~B1~~ | ~~GlobColour / color del océano (`x1..x16`)~~ | **RESUELTO vía Copernicus (2026-07-05)** | El FTP GlobColour da archivos **globales sin subset** (4 km = 18 MB/var/día → ~630 GB para 16 vars × 6 años: inviable). Se optó por la **misma data GlobColour re-distribuida por Copernicus** (server-side subset, como la SST). Integradas 6 variables ópticas/biológicas: **CHL, KD490, SPM, ZSD, BBP, CDM** (4 km diario, 2015-2026) → columnas en `dataset_v1` (cobertura 88-100%). No en Copernicus (atmosféricas, omitidas): POC, PIC, PAR, aerosoles, nubosidad. |
 | ~~B2~~ | ~~Credenciales Copernicus Marine~~ | **RESUELTO + SST/MHW en `dataset_v1` (2026-06-22)** | OSTIA SST **1982-01-01→2025-12-18** en `data/raw/copernicus/sst_l4.nc` (231 MB; el rango arranca en el baseline MHW). `aggregate ocean --source copernicus` → `interim/ocean_litoral_bc_sur.parquet` (SST °C + MHW Hobday con baseline 1982-2011) → `consolidate` → **`dataset_v1` ya trae `sst`/`sst_anomaly`/`mhw_category`/`mhw_intensity`** (langosta-SQ 96.5% SST no-nula). **Validado**: el Blob 2014-16 sale fuerte (2015: 293 días MHW). No hizo falta `transform/copernicus.py`: `aggregate/ocean_by_ue` lee el `.nc` directo (detecta `latitude`/`longitude` + var única, convierte Kelvin→°C). |
 | B3 | **Polígono TURF de San Quintín** | Recorte fino por UE en `aggregate/ocean_by_ue.py` | **COBI ya no está disponible** para entregar el shapefile. Busqué en internet (2026-06-21): el dataset público de TURFs de Villaseñor-Derbez (`jcvdav/ReserveEffect`) cubre Quintana Roo + Isla Natividad (lat 18.7-28.0°N), **NO San Quintín** (~30.4°N); el polígono de la cooperativa de SQ no es descargable públicamente. **Decisión pragmática**: a resolución OISST (0.25°≈27 km) y aun GlobColour (4 km) un **bbox costero de SQ basta** (es lo que hizo el borrador). Se mantiene el bbox de `economic_units.yaml` (lon −117..−115, lat 30..31.5). Polígono exacto = nice-to-have, no bloqueante. |
 | ~~B4~~ | ~~CSV legacy COBI `Arribos2017-2021.csv`~~ | **RESUELTO (2026-06-21)** | Archivo entregado en `data/raw/arribos/Arribos2017-2021.csv` (97k filas, 2016-2025). Se ingiere con `fishing-etl transform arribos --source cobi` (dialecto COBI). `dataset_v1` real generado: langosta-SQ reproduce el bache post-MHW 2021-2022. |
@@ -170,9 +170,13 @@ lograba ~8.7%). Es el "piso" contra el cual comparar.
 Resumen de lo que queda; detalle completo en `PLAN.md`.
 
 - [~] **Fase 2 — Feature engineering + SHAP**: arrancado. `features/covariates.py`
-  (calendario + lags + SST/MHW desplazadas 90 días, sin leakage, testeado) es la base.
-  Falta el conjunto completo (`anomalies`, `interactions`, `rolling` configurable) + SHAP +
-  poda. El shift de 90 días ya vive aquí (§5.5), correcto.
+  (calendario + lags + SST/MHW + **6 vars de color del océano** CHL/KD490/SPM/ZSD/BBP/CDM,
+  desplazadas 90 días, sin leakage, testeado). **Hallazgo (2026-07-05)**: al añadir las OC al
+  modelo de una sola serie (Exp 2) el desempeño **empeora** (MAE 327→424) — sobreajuste con
+  ~35 features y solo ~3 temporadas; el modelo SÍ usa las OC (`bbp/cdm/zsd_roll90_lag90` en el
+  top-5) pero sin más datos no ayudan. → **SHAP + poda de features es ahora prioritario** (no
+  opcional): seleccionar el subconjunto que generaliza. Falta también `anomalies`,
+  `interactions`, `rolling` configurable.
 - [~] **Fase 3 — Modelo global multi-especie/UE**: marco + **multi-UE** (Exp 3, 2026-07-03).
   Se agregó **Isla Cedros** (2ª UE, ~28°N) → 5 series `(especie, UE)`; SST/MHW por UE (amplié
   el bbox de descarga Copernicus a lat 27°N). Resultados: (1) **transferencia positiva dentro
