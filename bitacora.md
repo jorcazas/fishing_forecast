@@ -1009,3 +1009,53 @@ En Exp 3 (pooled) sigue 2/5, con la transferencia intra-especie langosta@cedros 
 **selección de features (SHAP, Fase 2.3)** + **más datos** (más UEs/temporadas) y/o
 regularización. Objetivo #1 (recuperar las `x`) cumplido; ahora el cuello es data + selección,
 no disponibilidad de variables.
+
+## 2026-07-05 — Exp 2.3: selección de features con SHAP
+
+`experiments/exp2_shap_selection/shap_prune.py`. Entrené XGBoost con las 35 features (langosta-SQ,
+corte 2020-07-01), calculé SHAP (`TreeExplainer`) sobre train y podé a las 16 con
+mean|SHAP| ≥ 1% del total, re-entrenando solo con esas. **Resultado honesto: la poda no ayuda.**
+
+| modelo | n features | MAE | RMSE | sMAPE% | error temp. 2021-22 |
+|---|---|---|---|---|---|
+| completo | 35 | 423.6 | 659.7 | 116.0 | +398.7% |
+| podado | 16 | 444.7 | 695.5 | 120.3 | +446.6% |
+
+El ranking SHAP es **coherente** (calendario `doy_sin`/`in_season` primero, luego
+`bbp_roll90_lag90`, `y_lag365`, `doy_cos`, `sst_lag90`, `y_lag730`, y varias OC rolling) — o sea
+las features tienen sentido físico. Pero podar empeora un poco: **el cuello no es *cuáles*
+features sino el volumen de datos** (~3 temporadas de langosta en SQ). Confirma el hallazgo de
+Exp 2: la selección de features sola no arregla el sobreajuste; hace falta **más datos (Fase 3:
+más UEs/temporadas, pooling con `y` normalizada)** y/o **regularización más fuerte**. Artefactos:
+`reports/metrics/exp2_shap_selection_2020-07-01.json`, `reports/figures/exp2_shap_selection_shap_bar.png`,
+`reports/exp2_shap_selection_summary.md`. ruff limpio.
+
+## 2026-07-17 — Exp 3.2: pooling con `y` normalizada por serie (el hallazgo que destraba Fase 3)
+
+`experiments/exp3_global_model/pooled_ynorm.py`. Exp 3 dejó el pooling todo-junto **confundido
+por escala** (langosta cientos de kg domina el loss cuadrático sobre abulón/erizo unidades). Aquí
+normalizo el objetivo **por serie antes de agrupar** y comparo, serie por serie, contra el modelo
+específico (y cruda): `pooled_raw` (=Exp 3), `pooled_log` (log1p(y)), `pooled_z` (z-score por serie
+con media/desv de **train** → sin leakage). Predicción invertida a kg antes de medir.
+
+RMSE diario (kg), corte 2020-07-01:
+
+| serie | específico | p_raw | p_log | p_z |
+|---|---|---|---|---|
+| abalone_black@SQ | 52.0 | 35.4 | **7.0** | 11.4 |
+| abalone_blue@SQ | 6.7 | 32.7 | **4.6** | 15.6 |
+| abalone_red@SQ | 7.3 | 34.9 | **3.5** | 10.6 |
+| lobster@cedros | 914.1 | 889.0 | 1131.4 | 916.6 |
+| lobster@SQ | 659.7 | 742.2 | **544.4** | 1013.9 |
+
+**Gana/empata vs específico:** p_raw 0.4, **p_log 0.8**, p_z 0.2 (de 5 series). **`pooled_log`
+cumple el criterio ≥0.60 de PLAN §3.1.** El log1p **rescata las series de escala chica** (abulón:
+raw 33-35 → log 3.5-7.0, mejor que el específico) porque el loss deja de estar dominado por
+langosta, y **mejora langosta@SQ** (544 vs 659). La única pérdida es langosta@Cedros (el log
+comprime de más la serie de mayor escala). El z-score queda peor que el log (varias series con
+pocos días de train → stats ruidosas).
+
+**Conclusión (destraba Fase 3):** el pooling multi-serie **sí funciona** una vez que se quita el
+confound de escala; **la transformación correcta es `log1p(y)`**, no el z-score. Este es el modelo
+global a llevar a producción/CQR. Artefactos: `reports/metrics/exp3_pooled_ynorm_2020-07-01.json`,
+`reports/exp3_pooled_ynorm_summary.md`. ruff limpio; sin cambios en `src/` (tests 104/104 intactos).

@@ -174,19 +174,25 @@ Resumen de lo que queda; detalle completo en `PLAN.md`.
   desplazadas 90 días, sin leakage, testeado). **Hallazgo (2026-07-05)**: al añadir las OC al
   modelo de una sola serie (Exp 2) el desempeño **empeora** (MAE 327→424) — sobreajuste con
   ~35 features y solo ~3 temporadas; el modelo SÍ usa las OC (`bbp/cdm/zsd_roll90_lag90` en el
-  top-5) pero sin más datos no ayudan. → **SHAP + poda de features es ahora prioritario** (no
-  opcional): seleccionar el subconjunto que generaliza. Falta también `anomalies`,
-  `interactions`, `rolling` configurable.
-- [~] **Fase 3 — Modelo global multi-especie/UE**: marco + **multi-UE** (Exp 3, 2026-07-03).
-  Se agregó **Isla Cedros** (2ª UE, ~28°N) → 5 series `(especie, UE)`; SST/MHW por UE (amplié
-  el bbox de descarga Copernicus a lat 27°N). Resultados: (1) **transferencia positiva dentro
-  de especie entre UEs** (lobster@cedros mejora con el pool); (2) pooling todo-junto
-  **confundido por escala** (langosta cientos-de-kg domina sobre abulón unidades); (3) 2/5
-  (40%). **Pendiente**: (a) **partial pooling** — agrupar por especie entre UEs y/o
-  **normalizar `y` por serie** (log o escala) para que la escala no domine el loss; (b) **más
-  UEs** — El Rosario/Ensenada clusters (nombres en `economic_units.yaml`), confirmar bboxes por
-  oficina de arribo; (c) SHAP condicional por grupo (3.4); (d) migrar a skforecast/darts si
-  crecen las series.
+  top-5) pero sin más datos no ayudan. **Exp 2.3 SHAP (2026-07-05)**: podar por SHAP
+  (mean|SHAP| ≥ 1% → 35→16 features) **NO** arregla el sobreajuste (MAE 424→445, error temp.
+  2021-22 399%→447%): un poco peor. Ranking SHAP coherente (calendario `doy_sin`/`in_season`
+  domina, luego `bbp_roll90_lag90`, `y_lag365`, SST/OC), o sea las features son razonables — el
+  cuello es **volumen de datos**, no cuáles features. → la selección de features sola no basta:
+  se necesita **más datos (Fase 3)** y/o **regularización más fuerte / y normalizada**. Falta
+  aún `anomalies`, `interactions`, `rolling` configurable.
+- [~] **Fase 3 — Modelo global multi-especie/UE**: marco + **multi-UE** (Exp 3, 2026-07-03) +
+  **normalización de `y` por serie (Exp 3.2, 2026-07-17)**. Se agregó **Isla Cedros** (2ª UE,
+  ~28°N) → 5 series `(especie, UE)`; SST/MHW por UE. Exp 3: pooling todo-junto **confundido por
+  escala** (2/5). **Exp 3.2 lo resuelve**: normalizar el objetivo por serie antes de agrupar.
+  `pooled_log` (log1p) **gana/empata vs específico en 4/5 series (0.8)** — cumple criterio ≥0.60;
+  rescata abulón (raw RMSE 33-35 → log 3.5-7) y mejora langosta@SQ (544 vs 659). `pooled_z`
+  (z-score por serie) queda peor (0.2). **→ el modelo global de producción es el pool sobre
+  `log1p(y)`.** **Pendiente**: (a) endurecer el ganador — Optuna sobre `pooled_log`, revisar por
+  qué langosta@Cedros pierde (¿serie de mayor escala sobre-comprimida?), quizá objetivo por-grupo
+  o pesos por serie; (b) **más UEs** — El Rosario/Ensenada (nombres en `economic_units.yaml`),
+  confirmar bboxes por oficina de arribo; (c) SHAP condicional por grupo (3.4); (d) migrar a
+  skforecast/darts si crecen las series; (e) llevar `pooled_log` a Fase 4 (CQR).
 - [ ] **Fase 4 — CQR (intervalos calibrados)**: `mapie`, coverage empírico, CRPS,
   calibración condicional durante MHW, producto operativo para COBI.
 - [ ] **Fase 5 (opcional) — TFT**: ADR de justificación + `pytorch-forecasting`/`darts`.
