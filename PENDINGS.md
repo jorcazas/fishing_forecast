@@ -2,7 +2,25 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-07-05**.
+actualización: **2026-07-20**.
+
+## Qué falta ahora (snapshot 2026-07-20, ordenado por prioridad)
+
+Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que queda:
+
+1. **Fase 4 — CQR (en curso)**: intervalos calibrados sobre el modelo global `pooled_log`
+   (el ganador de Exp 3.2). `mapie` CQR, coverage empírico vs nominal (80/90%), CRPS, ancho
+   de intervalo, y **coverage condicional durante MHW**. Producto operativo para COBI.
+2. **Fase 5 (opcional) — TFT**: prueba de techo; ADR de justificación + `pytorch-forecasting`/`darts`.
+3. **Endurecer `pooled_log`** (Fase 3 residual): Optuna sobre el pool log; investigar por qué
+   langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
+4. **Más datos** (mayor palanca real, según Exp 2/2.3): más UEs (El Rosario/Ensenada, en
+   `economic_units.yaml`, confirmar bboxes) y más temporadas; unión CONAPESCA+COBI.
+5. **Documentación de tesis**: falta incorporar el hallazgo **Exp 2.3 (SHAP)** a `final_work.tex`
+   (Exp 3.2 ya integrado, §6.7). Tarea corta (~10 min).
+6. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
+7. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
+8. **Higiene heredada** del borrador (§6) y `\bibitem{greff2017}` duplicado + fix natbib/latexmk.
 
 Estado global:
 - **Código del ETL completo y testeado** (extract → transform → aggregate → consolidate →
@@ -193,8 +211,11 @@ Resumen de lo que queda; detalle completo en `PLAN.md`.
   o pesos por serie; (b) **más UEs** — El Rosario/Ensenada (nombres en `economic_units.yaml`),
   confirmar bboxes por oficina de arribo; (c) SHAP condicional por grupo (3.4); (d) migrar a
   skforecast/darts si crecen las series; (e) llevar `pooled_log` a Fase 4 (CQR).
-- [ ] **Fase 4 — CQR (intervalos calibrados)**: `mapie`, coverage empírico, CRPS,
-  calibración condicional durante MHW, producto operativo para COBI.
+- [~] **Fase 4 — CQR (intervalos calibrados)**: **arrancado (2026-07-20)** sobre el modelo
+  global `pooled_log` de Exp 3.2. `experiments/exp4_cqr/`: regresión cuantílica conformalizada
+  con `mapie`, evaluación de **coverage empírico vs nominal** (80/90%), **CRPS**, ancho medio de
+  intervalo, y coverage **condicional durante MHW** (¿el intervalo se mantiene honesto en las
+  temporadas anómalas que rompieron el modelo puntual?). Producto operativo para COBI.
 - [ ] **Fase 5 (opcional) — TFT**: ADR de justificación + `pytorch-forecasting`/`darts`.
 
 ---
