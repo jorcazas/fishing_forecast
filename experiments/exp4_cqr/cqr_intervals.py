@@ -107,9 +107,9 @@ def main() -> None:
     settings = get_settings()
     raw = load_series()
     feat = build_multiseries_features(raw, group_col=GROUP)
-    feat["_series"] = feat["species"].astype(str) + "@" + feat["economic_unit"].astype(str)
 
-    base_cols = feature_columns(feat)
+    base_cols = feature_columns(feat)  # antes de añadir _series/one-hot/y_log
+    feat["_series"] = feat["species"].astype(str) + "@" + feat["economic_unit"].astype(str)
     onehot = pd.get_dummies(feat[GROUP], columns=GROUP)
     feat = pd.concat([feat, onehot], axis=1)
     cols = base_cols + list(onehot.columns)
