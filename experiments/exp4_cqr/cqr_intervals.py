@@ -191,7 +191,7 @@ def main() -> None:
     for label, idx in test.groupby("_series", observed=True).groups.items():
         pos = test.index.get_indexer(idx)
         per_series[label] = {
-            "n_test": int(len(pos)),
+            "n_test": len(pos),
             "coverage_0.90": round(coverage(y_test[pos], lo90[pos], hi90[pos]), 3),
             "crps": round(
                 crps_from_quantiles(y_test[pos], {q: p[pos] for q, p in grid_pred_kg.items()}), 2
@@ -246,7 +246,7 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
     median = grid_pred_kg[0.5][pos]
 
     fig, ax = plt.subplots(figsize=(11, 5))
-    for cl, color in zip((0.90, 0.80), ("#c6dbef", "#6baed6")):
+    for cl, color in zip((0.90, 0.80), ("#c6dbef", "#6baed6"), strict=True):
         lo, hi = ci_bounds[cl]
         ax.fill_between(ds, lo[pos], hi[pos], color=color, label=f"intervalo {int(cl * 100)}%")
     ax.plot(ds, median, color="#08519c", lw=1.2, label="mediana pronosticada")
