@@ -95,10 +95,10 @@ def _fit_quantile_grid(feat, cols, mask, levels):
 
 
 def _mhw_mask(test: pd.DataFrame) -> np.ndarray:
-    """Días de ola de calor marina en test (categoría Hobday >= 1)."""
-    if "mhw_category" not in test.columns:
+    """Días de ola de calor marina en test (categoría Hobday contemporánea >= 1)."""
+    if "mhw_now" not in test.columns:
         return np.zeros(len(test), dtype=bool)
-    return test["mhw_category"].fillna(0).to_numpy() >= 1
+    return test["mhw_now"].fillna(0).to_numpy() >= 1
 
 
 def main() -> None:
@@ -133,7 +133,8 @@ def main() -> None:
     # Rejilla de cuantiles (para CRPS) + modelos por nivel, en espacio log.
     grid_models = _fit_quantile_grid(feat, cols, train_mask, CRPS_GRID)
     median_model = grid_models[0.5]
-    X_conf, y_conf = feat.loc[conf_mask, cols], feat.loc[conf_mask, "y"]
+    X_conf = feat.loc[conf_mask, cols]
+    y_conf_log = feat.loc[conf_mask, "y_log"]  # conformalizar en espacio log (ver abajo)
     X_test = test[cols]
     y_test = test["y"].to_numpy()
 
@@ -143,35 +144,21 @@ def main() -> None:
     }
     crps_overall = crps_from_quantiles(y_test, grid_pred_kg)
 
-    # CQR por nivel: [lower, upper, median] prefit en log; conformalizar en kg tras invertir.
-    # mapie conformaliza sobre la escala en la que se entrega y_conf/predicción; para mantener
-    # todo consistente envolvemos los modelos en un wrapper que invierte a kg al predecir.
-    class _InvExpm1:
-        def __init__(self, model):
-            self.model = model
-
-        def fit(self, *a, **k):  # prefit=True → no se vuelve a ajustar
-            return self
-
-        def predict(self, X):
-            return np.clip(np.expm1(self.model.predict(X)), 0.0, None)
-
+    # CQR por nivel, **conformalizando en espacio log**: la corrección conformal es aditiva en
+    # log = multiplicativa en kg, así escala por serie (clave con langosta de miles de kg y
+    # abulón de unidades en el mismo pool). Los modelos cuantílicos ya viven en log; se
+    # conformaliza con `y` en log y se invierten las cotas con expm1 (monótona → preserva orden).
     intervals: dict[str, dict] = {}
     ci_bounds = {}  # nivel → (lo_arr, hi_arr) en kg para test
     for cl in CONF_LEVELS:
         a_lo, a_hi = (1.0 - cl) / 2.0, 1.0 - (1.0 - cl) / 2.0
-        lo_m = _InvExpm1(
-            grid_models[a_lo] if a_lo in grid_models else _fit_one(feat, cols, train_mask, a_lo)
-        )
-        hi_m = _InvExpm1(
-            grid_models[a_hi] if a_hi in grid_models else _fit_one(feat, cols, train_mask, a_hi)
-        )
-        med_m = _InvExpm1(median_model)
-        cqr = CQR(estimator=[lo_m, hi_m, med_m], confidence_level=cl, prefit=True)
-        cqr.conformalize(X_conf, y_conf)
+        lo_m = grid_models[a_lo] if a_lo in grid_models else _fit_one(feat, cols, train_mask, a_lo)
+        hi_m = grid_models[a_hi] if a_hi in grid_models else _fit_one(feat, cols, train_mask, a_hi)
+        cqr = CQR(estimator=[lo_m, hi_m, median_model], confidence_level=cl, prefit=True)
+        cqr.conformalize(X_conf, y_conf_log)
         _, iv = cqr.predict_interval(X_test)
-        lo, hi = iv[:, 0, 0], iv[:, 1, 0]
-        lo = np.clip(lo, 0.0, None)
+        lo = np.clip(np.expm1(iv[:, 0, 0]), 0.0, None)
+        hi = np.clip(np.expm1(iv[:, 1, 0]), 0.0, None)
         ci_bounds[cl] = (lo, hi)
         intervals[f"{cl:.2f}"] = {
             "nominal": cl,
