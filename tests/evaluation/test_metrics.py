@@ -71,3 +71,38 @@ def test_season_sum_errors_per_season() -> None:
     assert out.loc["2019_2020", "true_sum"] == 200.0
     assert out.loc["2019_2020", "pct_error"] == pytest.approx(-20.0)
     assert out.loc["2020_2021", "pct_error"] == pytest.approx(20.0)
+
+
+def test_coverage_counts_points_inside_interval() -> None:
+    y = [1.0, 2.0, 3.0, 4.0]
+    lo = [0.0, 0.0, 5.0, 3.5]  # 3.0 queda fuera (5>3), el resto dentro
+    hi = [2.0, 1.5, 6.0, 4.5]  # 2.0 dentro, pero 2.0<=1.5 falso → fuera
+    # dentro: y=1 (0..2 sí), y=2 (0..1.5 no), y=3 (5..6 no), y=4 (3.5..4.5 sí) → 2/4
+    assert coverage(y, lo, hi) == pytest.approx(0.5)
+
+
+def test_coverage_full_and_empty() -> None:
+    assert coverage([1.0, 2.0], [0.0, 0.0], [3.0, 3.0]) == 1.0
+    assert np.isnan(coverage([np.nan], [0.0], [1.0]))
+
+
+def test_mean_interval_width() -> None:
+    assert mean_interval_width([0.0, 1.0], [2.0, 5.0]) == pytest.approx(3.0)
+
+
+def test_pinball_loss_is_asymmetric() -> None:
+    # Subestimar penaliza más en un cuantil alto.
+    under = pinball_loss([10.0], [8.0], 0.9)  # 0.9 * 2
+    over = pinball_loss([10.0], [12.0], 0.9)  # 0.1 * 2
+    assert under == pytest.approx(1.8)
+    assert over == pytest.approx(0.2)
+    with pytest.raises(ValueError, match="quantile"):
+        pinball_loss([1.0], [1.0], 1.5)
+
+
+def test_crps_perfect_forecast_is_zero() -> None:
+    y = [5.0, 5.0]
+    qp = {0.25: [5.0, 5.0], 0.5: [5.0, 5.0], 0.75: [5.0, 5.0]}
+    assert crps_from_quantiles(y, qp) == pytest.approx(0.0)
+    with pytest.raises(ValueError, match="vac"):
+        crps_from_quantiles(y, {})
