@@ -110,6 +110,10 @@ def main() -> None:
 
     base_cols = feature_columns(feat)  # antes de añadir _series/one-hot/y_log
     feat["_series"] = feat["species"].astype(str) + "@" + feat["economic_unit"].astype(str)
+    # MHW contemporáneo (no es feature, solo para la cobertura condicional): el builder de
+    # covariables solo deja los MHW *desplazados*, así que traemos el estado del día objetivo.
+    mhw_now = raw[[*GROUP, "ds", "mhw_category"]].rename(columns={"mhw_category": "mhw_now"})
+    feat = feat.merge(mhw_now, on=[*GROUP, "ds"], how="left")
     onehot = pd.get_dummies(feat[GROUP], columns=GROUP)
     feat = pd.concat([feat, onehot], axis=1)
     cols = base_cols + list(onehot.columns)
