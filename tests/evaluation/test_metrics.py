@@ -8,7 +8,11 @@ import pytest
 
 from fishing_forecast.evaluation.metrics import (
     all_metrics,
+    coverage,
+    crps_from_quantiles,
     mae,
+    mean_interval_width,
+    pinball_loss,
     rmse,
     season_sum_errors,
     season_sum_percentage_error,

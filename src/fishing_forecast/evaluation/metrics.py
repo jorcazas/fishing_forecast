@@ -84,3 +84,57 @@ def all_metrics(y_true: object, y_pred: object) -> dict[str, float]:
         "smape": smape(y_true, y_pred),
         "n": len(_aligned(y_true, y_pred)[0]),
     }
+
+
+# ---------------------------------------------------------------------------
+# Métricas probabilísticas (Fase 4: CQR / cuantiles).
+# ---------------------------------------------------------------------------
+
+
+def coverage(y_true: object, lower: object, upper: object) -> float:
+    """Cobertura empírica: fracción de observaciones dentro de `[lower, upper]` (0-1).
+
+    Debe acercarse al nivel nominal del intervalo (p.ej. 0.90 para un intervalo al 90%).
+    """
+    yt = np.asarray(y_true, dtype=float)
+    lo = np.asarray(lower, dtype=float)
+    hi = np.asarray(upper, dtype=float)
+    mask = ~(np.isnan(yt) | np.isnan(lo) | np.isnan(hi))
+    if not mask.any():
+        return float("nan")
+    inside = (yt[mask] >= lo[mask]) & (yt[mask] <= hi[mask])
+    return float(np.mean(inside))
+
+
+def mean_interval_width(lower: object, upper: object) -> float:
+    """Ancho medio del intervalo (kg). Menor es mejor a igualdad de cobertura."""
+    lo = np.asarray(lower, dtype=float)
+    hi = np.asarray(upper, dtype=float)
+    mask = ~(np.isnan(lo) | np.isnan(hi))
+    if not mask.any():
+        return float("nan")
+    return float(np.mean(hi[mask] - lo[mask]))
+
+
+def pinball_loss(y_true: object, y_pred_q: object, quantile: float) -> float:
+    """Pérdida pinball (quantile loss) para un cuantil `quantile` en (0, 1)."""
+    if not 0.0 < quantile < 1.0:
+        raise ValueError(f"quantile debe estar en (0,1), no {quantile}.")
+    yt, yp = _aligned(y_true, y_pred_q)
+    diff = yt - yp
+    return float(np.mean(np.maximum(quantile * diff, (quantile - 1.0) * diff)))
+
+
+def crps_from_quantiles(
+    y_true: object, quantile_preds: dict[float, object]
+) -> float:
+    """CRPS aproximado a partir de predicciones por cuantil (descomposición pinball).
+
+    CRPS = 2 ∫₀¹ QL_τ dτ ≈ 2 · promedio de la pérdida pinball sobre una rejilla de
+    cuantiles τ. `quantile_preds` mapea nivel τ → vector de predicciones de ese cuantil.
+    Cuantos más niveles, mejor la aproximación.
+    """
+    if not quantile_preds:
+        raise ValueError("quantile_preds vacío.")
+    losses = [pinball_loss(y_true, yp, q) for q, yp in quantile_preds.items()]
+    return float(2.0 * np.mean(losses))
