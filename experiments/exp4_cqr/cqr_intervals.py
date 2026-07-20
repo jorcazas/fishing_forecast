@@ -66,7 +66,7 @@ def load_series() -> pd.DataFrame:
     df = df[df["species"].isin(SPECIES)].copy()
     df["ds"] = pd.to_datetime(df["ds"])
     frames = []
-    for (sp, ue), s in df.groupby(GROUP, observed=True):
+    for _key, s in df.groupby(GROUP, observed=True):
         s = s.sort_values("ds").copy()
         s["y"] = s["y"].fillna(0.0)
         if int((s["y"] > 0).sum()) < MIN_CATCH_DAYS:
