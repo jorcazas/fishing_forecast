@@ -34,8 +34,12 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    Tabla `extension_moredata` (langosta@SQ 40.6%→95.8% al corte 2024, marginal 94→95%, CRPS
    158→220); párrafo de cierre en Conclusión. Compila a 27 págs, refs resueltas; (b) confirmar
    consistencia del empalme 2021 COBI↔CONAPESCA;
-   (c) clústers Ensenada (~31.8°N) y Vizcaíno (El Tomatal, Punta Canoas) — aún más UEs; (d) parametrizar
-   el corte también en Exp 1-3 (hoy solo Exp 4 tiene `FF_CUT_DATE`).
+   (c) clústers Ensenada (~31.8°N) y Vizcaíno (El Tomatal, Punta Canoas) — aún más UEs; (d) ~~parametrizar
+   el corte también en Exp 1-3~~ **HECHO (2026-07-21)**: Exp 1/2/2.3 aceptan `FF_CUT_DATE` (como Exp 4).
+   Comparativa refrescada de modelos puntuales langosta@SQ sobre datos unidos (ambos cortes) en
+   `final_work.tex` §6.10 (Tabla `extension_comparativa`): de ~3 a ~7 temporadas de train el MAE cae
+   a la mitad (ARIMA 331→178, XGBoost 459→145); el orden se invierte (XGBoost supera a ARIMA con 7
+   temporadas); la poda SHAP cambia de signo (empeoraba pre-unión 424→445, ahora ayuda 145→104).
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
 6. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
 7. **Higiene heredada** del borrador (§6) y fix natbib/latexmk (error author-year no fatal a

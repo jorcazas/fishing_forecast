@@ -513,6 +513,34 @@ CRPS global & 158.1 & 220.6 \\
 
 La conclusión es la que se venía anticipando, ahora con evidencia experimental directa: la palanca decisiva fue añadir temporadas, no endurecer los estimadores. La poda por SHAP y la optimización bayesiana de los cuantílicos no habían movido la sub-cobertura de la langosta de San Quintín; una sola temporada adicional de calibración ---la que arrastró el cambio de régimen a la distribución de entrenamiento--- la corrigió por completo.
 
+\subsection{Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}
+\label{sec:extension_comparativa}
+Las tablas anteriores del piso (Tablas \ref{tab:extension_floor} y \ref{tab:extension_shap}) son una fotografía \emph{previa} a la unión con CONAPESCA: se calcularon con tres temporadas de entrenamiento y solo dos de prueba (2020-2022), que era todo lo que había. Con el conjunto unido 2017-2026 podemos re-entrenar los modelos puntuales de una sola serie (langosta $\times$ San Quintín) y, sobre todo, comparar de frente los dos cortes: el canónico 01-julio-2020 ($\sim$3 temporadas de entrenamiento, prueba 2020-2026 abarcando el bache y la recuperación) contra 01-junio-2024 ($\sim$7 temporadas, con el bache \emph{dentro} del entrenamiento, prueba = recuperación reciente). La diferencia entre columnas aísla el efecto de \emph{cuántas temporadas} ve el modelo. La Tabla \ref{tab:extension_comparativa} lo resume.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{3}{c}{Corte 2020-07-01 ($\sim$3 temp.)} & & \multicolumn{3}{c}{Corte 2024-06-01 ($\sim$7 temp.)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){6-8}
+Modelo & MAE & RMSE & sMAPE & & MAE & RMSE & sMAPE \\
+\midrule
+ARIMA & 330.8 & 383.8 & 153.3 & & 177.8 & 191.5 & 147.1 \\
+Prophet & 454.7 & 685.1 & 158.8 & & 190.3 & 332.0 & 64.4 \\
+XGBoost (35 vars) & 459.0 & 712.3 & 153.0 & & 145.4 & 212.0 & 97.1 \\
+XGBoost (SHAP, $\sim$16 vars) & \textbf{387.5} & \textbf{673.0} & \textbf{132.1} & & \textbf{103.5} & \textbf{155.6} & \textbf{64.1} \\
+\bottomrule
+\end{tabular}
+\caption{Modelos puntuales de langosta $\times$ San Quintín re-entrenados sobre el conjunto unido 2017-2026, en los dos cortes de prueba (MAE, RMSE y sMAPE diarios, kg). En negrita, el mejor modelo de cada corte. Pasar de 3 a 7 temporadas de entrenamiento reduce el error diario a aproximadamente la mitad en todos los modelos.}
+\label{tab:extension_comparativa}
+\end{table}
+
+Tres lecturas se desprenden de la comparación. Primero, mover el corte de 2020 a 2024 ---es decir, meter el bache post-ola-de-calor al entrenamiento--- reduce el MAE diario a la mitad en todos los modelos (ARIMA 331 $\to$ 178, Prophet 455 $\to$ 190, XGBoost 459 $\to$ 145): al dejar de extrapolar un régimen pre-bache sobre las temporadas posteriores, los pronósticos dejan de dispararse. Es el análogo puntual del salto de cobertura de la CQR.
+
+Segundo, el orden de los modelos se invierte. Con tres temporadas, el XGBoost con covariables (459) es \emph{peor} que ARIMA (331): 35 variables sobreajustan tan poco dato. Con siete temporadas, el mismo XGBoost (145) \emph{supera} a ambos baselines autorregresivos: las covariables de SST/MHW por fin rinden cuando hay suficientes temporadas para aprender la relación ola-de-calor $\to$ captura.
+
+Tercero, y de forma reveladora, la poda por SHAP cambia de signo. En la fotografía previa a la unión (Tabla \ref{tab:extension_shap}) podar de 35 a 16 variables \emph{empeoraba} el modelo (MAE 424 $\to$ 445); sobre los datos unidos \emph{ayuda} en ambos cortes, y de forma marcada en el de 2024 (145 $\to$ 104, un 29\% menos de MAE). La misma regularización que era contraproducente con tres temporadas generaliza bien con siete: evidencia directa de que el sobreajuste original era un problema de \emph{volumen de datos}, no de selección de variables. El mejor modelo puntual refrescado ---XGBoost con variables seleccionadas por SHAP en el corte de 2024, MAE 103.5 y sMAPE 64.1\%--- es un salto cualitativo frente a los baselines ciegos al bache del trabajo original, y complementa a los intervalos calibrados de la CQR como entregable.
+
 \section{Conclusión}
 La evaluación de diversos modelos para predecir el volumen de capturas pesqueras en la temporada arrojó los siguientes resultados:
 

@@ -1257,3 +1257,35 @@ se regeneró acotada a sus 2 temporadas documentadas (hasta 2022-02-16; MAE 421.
 citan (Tablas `extension_floor`/`extension_shap`), no se tocan. Refrescar todo el conjunto de
 baselines single-series sobre datos unidos sería una cascada mayor (Exp 1/2/SHAP + tablas de tesis);
 queda como decisión abierta para Javier.
+
+---
+
+## 2026-07-21 (noche, cont.) — Comparativa: baselines puntuales refrescados sobre datos unidos
+
+Javier eligió refrescar los baselines single-series y presentarlo como **sección comparativa nueva**
+(no pisar las tablas del snapshot pre-unión). Hecho:
+
+- **Parametrizado el corte** en Exp 1/2/2.3 (`FF_CUT_DATE`, como Exp 4) → cierra PENDINGS 4d.
+  Corridos langosta@SQ en ambos cortes sobre `dataset_v1` unido (2017-2026).
+- **Resultados** (MAE/RMSE/sMAPE diario, kg):
+
+  | modelo | corte 2020 (~3 temp.) | corte 2024 (~7 temp.) |
+  |---|---|---|
+  | ARIMA | 330.8 / 383.8 / 153.3 | 177.8 / 191.5 / 147.1 |
+  | Prophet | 454.7 / 685.1 / 158.8 | 190.3 / 332.0 / 64.4 |
+  | XGBoost (35 vars) | 459.0 / 712.3 / 153.0 | 145.4 / 212.0 / 97.1 |
+  | XGBoost (SHAP ~16) | 387.5 / 673.0 / 132.1 | **103.5 / 155.6 / 64.1** |
+
+- **Tres hallazgos**: (1) de 3→7 temporadas de train el MAE cae ~a la mitad en todos los modelos
+  (análogo puntual del salto de cobertura CQR); (2) el orden se invierte — con 3 temporadas XGBoost
+  (459) < ARIMA (331), con 7 XGBoost (145) > ARIMA (178): las covariables SST/MHW por fin rinden con
+  suficientes temporadas; (3) **la poda SHAP cambia de signo** — empeoraba pre-unión (424→445), ahora
+  ayuda en ambos cortes y marcadamente en 2024 (145→104, −29%): el sobreajuste original era volumen de
+  datos, no selección de variables.
+- **Tesis**: nueva subsección `final_work.tex` §6.10 (Tabla `extension_comparativa`, encabezados
+  agrupados por corte con `\cmidrule`). Compila a **29 págs**, refs resueltas. Las Tablas
+  `extension_floor`/`extension_shap` (snapshot pre-unión) se conservan intactas.
+
+**Nota**: al refrescar Exp 2/2.3 se regeneraron sus figuras/summary/JSON sobre la ventana completa
+(2020-2026), consistente con la dirección elegida. Defaults (figuras/summary sin corte en el nombre)
+= corte canónico (se corre 2024 primero, canónico al final).
