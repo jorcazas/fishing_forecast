@@ -17,6 +17,7 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
 
 import numpy as np
 import pandas as pd
@@ -29,7 +30,8 @@ from fishing_forecast.features.covariates import build_covariate_features, featu
 EXP_ID = "exp2_shap_selection"
 SPECIES = "lobster_red"
 ECONOMIC_UNIT = "litoral_bc_sur"
-CUT_DATE = pd.Timestamp("2020-07-01")
+#: Corte de test. Canónico 2020-07-01; `FF_CUT_DATE=2024-06-01` deja el crash en train (unión CONAPESCA).
+CUT_DATE = pd.Timestamp(os.environ.get("FF_CUT_DATE", "2020-07-01"))
 THRESHOLD_FRAC = 0.01  # conservar features con mean|SHAP| >= 1% del total (PLAN §2.3)
 SEED = 42
 

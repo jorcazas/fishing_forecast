@@ -20,6 +20,7 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -33,7 +34,8 @@ from fishing_forecast.features.covariates import build_covariate_features, featu
 EXP_ID = "exp2_covariates"
 SPECIES = "lobster_red"
 ECONOMIC_UNIT = "litoral_bc_sur"
-CUT_DATE = pd.Timestamp("2020-07-01")
+#: Corte de test. Canónico 2020-07-01; `FF_CUT_DATE=2024-06-01` deja el crash en train (unión CONAPESCA).
+CUT_DATE = pd.Timestamp(os.environ.get("FF_CUT_DATE", "2020-07-01"))
 SEED = 42
 
 XGB_PARAMS = dict(

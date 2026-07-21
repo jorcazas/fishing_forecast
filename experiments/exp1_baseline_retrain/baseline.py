@@ -12,8 +12,8 @@ Decisiones (documentadas; ver `docs/etl_design.md` §4.4 y ADR-0001):
   en esta capa de modelado.
 - La serie se recorta al último día con captura > 0 (la UE deja de reportar langosta tras
   la temporada 2021-2022; modelar el vacío posterior no aporta).
-- Corte de test canónico **2020-07-01** (comparable con el borrador). El corte adicional
-  2024-06-01 no aplica: no hay langosta-SQ después de 2022.
+- Corte de test canónico **2020-07-01** (comparable con el borrador). Con la unión CONAPESCA
+  (langosta-SQ hasta 2026) el corte **2024-06-01** ya aplica (`FF_CUT_DATE=2024-06-01`).
 
 Uso:
     uv run python experiments/exp1_baseline_retrain/baseline.py
@@ -22,6 +22,7 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,7 +37,9 @@ from fishing_forecast.evaluation.metrics import all_metrics, season_sum_errors
 EXP_ID = "exp1_baseline"
 SPECIES = "lobster_red"
 ECONOMIC_UNIT = "litoral_bc_sur"
-CUT_DATE = pd.Timestamp("2020-07-01")
+#: Corte de test. Canónico 2020-07-01; con la unión CONAPESCA (langosta-SQ hasta 2026) el corte
+#: 2024-06-01 ya aplica y deja el crash+recuperación en train. Override: `FF_CUT_DATE=2024-06-01`.
+CUT_DATE = pd.Timestamp(os.environ.get("FF_CUT_DATE", "2020-07-01"))
 SEED = 42
 
 # Rejilla pequeña y principista para ARIMA (AIC en train), no la 50x50x50 del borrador.
