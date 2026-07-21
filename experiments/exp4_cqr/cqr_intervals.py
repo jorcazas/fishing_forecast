@@ -30,6 +30,7 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
 
 import numpy as np
 import pandas as pd
@@ -43,7 +44,9 @@ from fishing_forecast.features.covariates import build_multiseries_features, fea
 EXP_ID = "exp4_cqr"
 SPECIES = ("lobster_red", "abalone_blue", "abalone_red", "abalone_black", "urchin_red")
 GROUP = ["species", "economic_unit"]
-CUT_DATE = pd.Timestamp("2020-07-01")
+#: Corte de test. Canónico 2020-07-01; con los datos 2022-2026 conviene también 2024-06-01
+#: (crash + recuperación quedan en train/calibración). Override: `FF_CUT_DATE=2024-06-01`.
+CUT_DATE = pd.Timestamp(os.environ.get("FF_CUT_DATE", "2020-07-01"))
 CONF_FRAC = 0.25  # fracción final del periodo pre-corte reservada a conformalización
 MIN_CATCH_DAYS = 20
 CONF_LEVELS = (0.80, 0.90)  # niveles nominales de los intervalos

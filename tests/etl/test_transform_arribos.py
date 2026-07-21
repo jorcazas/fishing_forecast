@@ -15,6 +15,7 @@ import yaml
 
 from fishing_forecast.etl.transform.arribos import (
     COBI_DIALECT,
+    CONAPESCA_DIALECT,
     build_species_lookup,
     build_ue_lookup,
     clean_arribos,
