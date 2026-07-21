@@ -36,6 +36,7 @@ import pandas as pd
 from loguru import logger
 
 from fishing_forecast.config import get_settings
+from fishing_forecast.evaluation.conformal import mondrian_cqr, sorted_quantile_preds
 from fishing_forecast.evaluation.metrics import coverage, crps_from_quantiles
 from fishing_forecast.features.covariates import build_multiseries_features, feature_columns
 
@@ -98,99 +99,11 @@ def _fit_quantile_grid(feat, cols, mask, levels):
     return models
 
 
-def _sorted_quantile_preds(grid_models: dict, X) -> dict[float, np.ndarray]:
-    """Predice cada cuantil de la rejilla y reordena por fila para eliminar el cruce de cuantiles.
-
-    Regresores cuantílicos independientes pueden cruzarse (q0.1 > q0.9 en algunas filas). Se
-    ordena cada fila de forma ascendente (rearrangement, Chernozhukov et al. 2010), que preserva
-    la cobertura y garantiza monotonía → intervalos anidados entre niveles.
-    """
-    levels = sorted(grid_models)
-    preds = np.column_stack([grid_models[q].predict(X) for q in levels])
-    preds = np.sort(preds, axis=1)
-    return {q: preds[:, i] for i, q in enumerate(levels)}
-
-
 def _mhw_mask(test: pd.DataFrame) -> np.ndarray:
     """Días de ola de calor marina en test (categoría Hobday contemporánea >= 1)."""
     if "mhw_now" not in test.columns:
         return np.zeros(len(test), dtype=bool)
     return test["mhw_now"].fillna(0).to_numpy() >= 1
-
-
-def _conformal_quantile(scores: np.ndarray, alpha: float) -> float:
-    """Cuantil conformal finito-muestral `ceil((n+1)(1-alpha))/n` de los scores."""
-    n = len(scores)
-    k = int(np.ceil((n + 1) * (1.0 - alpha)))
-    k = min(max(k, 1), n)
-    return float(np.sort(scores)[k - 1])
-
-
-def _split_cqr(
-    lo_conf: np.ndarray,
-    hi_conf: np.ndarray,
-    y_conf: np.ndarray,
-    lo_test: np.ndarray,
-    hi_test: np.ndarray,
-    alpha: float,
-    *,
-    normalize: bool = False,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Split-CQR (Romano et al. 2019): ajusta las cotas cuantílicas con la corrección conformal.
-
-    Trabaja en la escala en que se le pasan las cotas (aquí, espacio log). El score de
-    conformidad es `E_i = max(lo(x_i) - y_i, y_i - hi(x_i))`; se toma el cuantil finito-muestral
-    `ceil((n+1)(1-alpha))/n` y se ensancha simétricamente. Garantiza cobertura marginal
-    >= 1-alpha e intervalos **anidados** entre niveles (alpha mayor → Q menor).
-
-    Con `normalize=True` (CQR **localmente adaptativo**): el score se divide por el ancho base
-    del intervalo `w = hi - lo` (con un piso), y el ensanchamiento en test es `Q · w(x)`. Así el
-    ensanche es **proporcional a la incertidumbre local** en vez de una constante — estrecha los
-    días de baja dispersión (fuera de temporada) y evita que una constante infle todo por igual.
-    """
-    if normalize:
-        w_conf = hi_conf - lo_conf
-        floor = max(1e-3, 0.1 * float(np.median(w_conf)))  # evita dividir entre ~0
-        w_conf = np.maximum(w_conf, floor)
-        scores = np.maximum(lo_conf - y_conf, y_conf - hi_conf) / w_conf
-        q = _conformal_quantile(scores, alpha)
-        w_test = np.maximum(hi_test - lo_test, floor)
-        return lo_test - q * w_test, hi_test + q * w_test
-    scores = np.maximum(lo_conf - y_conf, y_conf - hi_conf)
-    q = _conformal_quantile(scores, alpha)
-    return lo_test - q, hi_test + q
-
-
-def _mondrian_cqr(
-    conf_series: np.ndarray,
-    test_series: np.ndarray,
-    lo_conf: np.ndarray,
-    hi_conf: np.ndarray,
-    y_conf: np.ndarray,
-    lo_test: np.ndarray,
-    hi_test: np.ndarray,
-    alpha: float,
-    *,
-    normalize: bool = False,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Split-CQR **por serie** (Mondrian): una corrección conformal por `(especie, UE)`.
-
-    Un único `Q` global lo fija la serie peor calibrada y, al invertir el log, infla las series
-    de gran escala (langosta). Calibrar por serie da cobertura ~nominal *dentro* de cada serie y
-    anchos acordes a su escala — el análogo conformal de la normalización de `y` de Exp 3.2.
-    `normalize` propaga la variante localmente adaptativa a cada serie.
-    """
-    lo_out = np.empty_like(lo_test, dtype=float)
-    hi_out = np.empty_like(hi_test, dtype=float)
-    for s in np.unique(test_series):
-        c, t = conf_series == s, test_series == s
-        if not c.any():  # sin puntos de conformalización → sin corrección (cae al cuantil crudo)
-            lo_out[t], hi_out[t] = lo_test[t], hi_test[t]
-            continue
-        lo_out[t], hi_out[t] = _split_cqr(
-            lo_conf[c], hi_conf[c], y_conf[c], lo_test[t], hi_test[t], alpha, normalize=normalize
-        )
-    return lo_out, hi_out
 
 
 def main() -> None:
@@ -235,8 +148,8 @@ def main() -> None:
 
     # Predicciones cuantílicas en espacio log (conf y test). Se corrige el cruce de cuantiles
     # (regresores independientes) reordenando cada fila de forma monótona (Chernozhukov 2010).
-    grid_log_conf = _sorted_quantile_preds(grid_models, X_conf)
-    grid_log_test = _sorted_quantile_preds(grid_models, X_test)
+    grid_log_conf = sorted_quantile_preds(grid_models, X_conf)
+    grid_log_test = sorted_quantile_preds(grid_models, X_test)
 
     # CRPS en kg desde la rejilla (invertir log), y punto = mediana.
     grid_pred_kg = {q: np.clip(np.expm1(p), 0.0, None) for q, p in grid_log_test.items()}
@@ -250,7 +163,7 @@ def main() -> None:
     def _interval(cl: float, normalize: bool):
         alpha = 1.0 - cl
         a_lo, a_hi = round(alpha / 2.0, 4), round(1.0 - alpha / 2.0, 4)
-        lo_log, hi_log = _mondrian_cqr(
+        lo_log, hi_log = mondrian_cqr(
             conf_series,
             test_series,
             grid_log_conf[a_lo],

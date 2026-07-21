@@ -30,6 +30,47 @@ isla_cedros:
     Isla Cedros; ~2.5° al sur de San Quintín → prueba el gradiente biogeográfico. Pendiente
     polígono TURF real. El nombre debe coincidir exacto con `unidad_economica` del crudo COBI.
 
+# --- Clúster EL ROSARIO (~29.6-30.4°N), justo al sur de San Quintín ---
+# Cooperativas con langosta roja cuya oficina de arribo es EL ROSARIO y cuya zona de captura
+# (nombre_lugarcaptura del crudo COBI) cae en la costa de El Rosario: Bahía del Rosario, San
+# Carlos, Punta San Antonio, El Socorro, Isla San Gerónimo. Comparten un mismo bbox costero
+# (a resolución OISST/GlobColour el bbox basta; pendiente polígono TURF por cooperativa). Cada
+# cooperativa es su propia UE (serie) pero comparte la oceanografía del bbox — más señal para
+# el pooling (Exp 3.2). El bbox está dentro de la descarga Copernicus (lat 27-32, lon -117..-112.5).
+er_scpp_ensenada:
+  name: "SCPP ENSENADA SCL"
+  region: el_rosario
+  bbox: &el_rosario_bbox
+    lon_min: -116.1
+    lon_max: -115.3
+    lat_min: 29.6
+    lat_max: 30.4
+  notes: "Langosta ~758 t 2017-2021 (mayor que la UE del paper). Captura: Bahía del Rosario, La Lobera."
+
+er_mortera_leyva:
+  name: "ASOCIACION PESQUERA MORTERA DE LEYVA SPR DE RL"
+  region: el_rosario
+  bbox: *el_rosario_bbox
+  notes: "Langosta ~186 t. Captura: San Carlos, Campo Nuevo."
+
+er_el_chute:
+  name: "PESCADORES EL CHUTE SPR DE RL"
+  region: el_rosario
+  bbox: *el_rosario_bbox
+  notes: "Langosta ~175 t. Captura: Valle Tranquilo, El Chute."
+
+er_regasa:
+  name: "SPR ASOCIACION PESQUERA REGASA NO 2 DE RL"
+  region: el_rosario
+  bbox: *el_rosario_bbox
+  notes: "Langosta ~120 t. Captura: Punta San Antonio, Piedra San Antonio."
+
+er_isla_san_geronimo:
+  name: "ISLA SAN GERONIMO SPR DE RL"
+  region: el_rosario
+  bbox: *el_rosario_bbox
+  notes: "Langosta ~93 t. Captura: El Socorro, El Chute (Isla San Gerónimo ~29.78°N)."
+
 # Más UEs se agregan aquí conforme se confirmen ubicaciones (oficina de arribo da la zona):
-# EL ROSARIO (~30.0°N): SCPP ENSENADA SCL, REGASA, MORTERA DE LEYVA, ...
 # ENSENADA  (~31.8°N): SANTO TOMAS, HERMANOS VIERA, AJUSCO, BAHIA DE TODOS SANTOS, ...
+# VIZCAINO/central (~28-29°N): PESQUERA EL TOMATAL, SPR PUNTA CANOAS, ...

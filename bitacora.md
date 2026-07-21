@@ -1114,3 +1114,65 @@ conf→test (el test cruza el crash post-MHW 2021-22, catches bajos). **El ancho
 lo fija el modelo cuantílico base (q0.95 en log + expm1), no el conformal** → afinar más requiere
 mejores cuantiles/más datos, no otro envoltorio conformal. Artefactos regenerados
 (`exp4_cqr_*`). ruff limpio, tests 109/109.
+
+## 2026-07-21 (noche) — Exp 4b: endurecer los cuantílicos base (Optuna) + corrección honesta
+
+Objetivo: estrechar el ancho p90 (días pico) de la CQR afinando los **modelos cuantílicos base**
+(que son los que fijan el ancho, no el conformal). `experiments/exp4_cqr/tune_quantiles.py`: Optuna
+(40 trials, seed fija) minimizando la pérdida pinball en el 30% final del pre-corte (en temporada),
+sin tocar test; luego compara default vs afinado con el pipeline de Exp 4.
+
+**Resultado NEGATIVO (honesto).** La pinball de validación bajó (0.146→0.139) pero en test el
+afinado **empeoró catastróficamente las series de gran escala**: langosta@SQ ancho p90 36,003 →
+**401,985 kg**, CRPS 218→2825, cobertura 53%→45%; langosta@Cedros p90 6,966→83,732. El abulón
+(escala chica) sí se estrechó (p90 ~17→~7) pero ya estaba bien. Causa: el afinado sobreajusta el
+periodo de validación (pre-crash) y, en espacio log, un q0.95 apenas mayor **explota al exponenciar**
+en los días pico del test. **Conclusión: HPO sobre pinball NO es la palanca; estrechar requiere más
+temporadas / mejores cuantílicos, no otro tuning.** No se adoptan los params afinados.
+
+**Corrección honesta de un reporte previo:** al revisar la cobertura **por serie** del Exp 4 actual
+(conf en temporada) descubrí que **langosta@SQ sub-cubre al 53.4%**, no el ~99% que reporté antes en
+la sesión (ese número era de la versión con conf en *todos* los días, previa al fix). O sea: calibrar
+en temporada arregló la sobre-cobertura marginal (97.5%→86%) pero dejó a langosta@SQ **sub-cubierta**
+—la caída post-MHW 2021-22 cae por debajo de la cota inferior calibrada con 2019-20—. El 86% marginal
+promedia abulón sobre-cubriendo (99%) y langosta sub-cubriendo (53%). Es, de nuevo, el cuello de
+datos: **una sola temporada de calibración no cubre un cambio de régimen**. Actualicé la tesis
+(§CQR) con esta salvedad y con el resultado negativo del tuning.
+
+**Refactor de higiene:** moví las utilidades conformal (`split_cqr`, `mondrian_cqr`,
+`conformal_quantile`, `sorted_quantile_preds`) de `exp4_cqr.py` a **`src/fishing_forecast/evaluation/
+conformal.py`** (reusables + testeables); Exp 4 y Exp 4b las importan de ahí (sin hacks de `sys.path`;
+Exp 4b se corre como módulo `python -m ...`). +5 tests de conformal. **114/114 tests, ruff limpio.**
+Artefactos: `reports/metrics/exp4_cqr_tuned_2020-07-01.json`, `reports/exp4_cqr_tuned_summary.md`.
+
+## 2026-07-21 (noche, cont.) — Más UEs: clúster El Rosario (5 cooperativas de langosta)
+
+Ataqué el cuello de datos por el lado factible. Exploré el crudo COBI: **"más temporadas" NO es
+posible** (el export es 2017-2021; 0 filas 2022-2024, 2 en 2025 — las temporadas 2022-25 siguen
+sin conseguirse). **"Más UEs" SÍ**: hay varias cooperativas con langosta roja en el Pacífico.
+Usando `nombre_oficina`/`nombre_lugarcaptura` del crudo identifiqué el **clúster El Rosario**
+(~29.6-30.4°N, justo al sur de San Quintín): SCPP ENSENADA SCL (758 t, ¡mayor que la UE del
+paper!), MORTERA DE LEYVA (186 t), EL CHUTE (175 t), REGASA Nº2 (120 t), ISLA SAN GERONIMO (93 t).
+
+**Implementación** (per-cooperativa, bbox El Rosario compartido — decisión del usuario): 5 UEs
+nuevas en `economic_units.yaml` con bbox anclado (`&el_rosario_bbox`, dentro de la caja Copernicus
+ya descargada). `transform arribos` (7812 filas mapeadas vs ~pocas antes) → `aggregate ocean`/
+`oceancolor` una vez para el bbox compartido, copiado a los 5 códigos (evita releer el `.nc` 5x) →
+`consolidate`. **`dataset_v1`: langosta pasa de 2 a 7 series** (185-384 días de captura c/u, SST 96.5%).
+
+**Resultados (el pooling con más datos SÍ ayuda):**
+- **Exp 3.2 (pooled)**: **langosta@SQ RMSE 659.7 → 313.5** (~52% menos) al agrupar con las UEs de
+  langosta nuevas — el payoff directo de más series. Con 14 series (antes 5) el win-rate se
+  reordena: **z-score gana 0.93** (13/14), raw 0.64, log 0.43 (antes log ganaba 0.8, z 0.2): con
+  más series comparables, estandarizar por serie se vuelve la mejor normalización.
+- **Exp 4 (CQR)**: cobertura marginal 90% **85.9% → 92.9%** (cerca de nominal), ancho p90 **9776 →
+  3812 kg** (colas mucho más angostas), CRPS 218 → 188. **Pero langosta@SQ sigue sub-cubriendo
+  (~47%)**: la CQR calibra por serie (Mondrian) y langosta@SQ sigue con **una sola temporada
+  pre-crash** de calibración → el crash post-MHW queda fuera de distribución. Más UEs no añaden
+  puntos de calibración a langosta@SQ; eso necesita más **temporadas** de langosta@SQ.
+
+**Síntesis honesta:** más UEs mejoran mucho el **modelo puntual** (langosta@SQ a la mitad) y la
+**calibración marginal + ancho de colas** de la CQR; el hueco específico de langosta@SQ en el crash
+es un problema de temporadas, no de UEs. Confirma el diagnóstico: la palanca es volumen de datos, y
+sumar UEs es la vía factible (las temporadas 2022-25 siguen bloqueadas). 114/114 tests, ruff limpio.
+Artefactos exp3/exp4 regenerados.

@@ -8,13 +8,15 @@ actualización: **2026-07-21**.
 
 Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que queda:
 
-1. **Cuantiles base más apretados (Fase 4 residual)**: la CQR ya está **calibrada** (Exp 4 +
-   afinado 2026-07-21: calibrar en temporada bajó la cobertura de 97.5% a ~86% en el nivel 90%,
-   cerca de nominal; el conformal `normalized` mejora un poco a `split`). Lo que queda ancho es la
-   **cota superior en días pico**, y eso lo fija el **modelo cuantílico base** (q0.95 en log +
-   `expm1`), no el conformal → afinar requiere mejores cuantiles/más datos (regularizar, Optuna
-   sobre los cuantílicos, o más temporadas), no otro envoltorio conformal. Además: leve
-   sub-cobertura (86%<90%) por shift conf→test (el test cruza el crash post-MHW).
+1. **Más temporadas de calibración (Fase 4 — el techo real)**: intenté endurecer los cuantílicos
+   base con Optuna sobre pinball (Exp 4b, 2026-07-21) para estrechar el ancho de días pico →
+   **NO funciona** (empeora langosta: p90 36k→402k kg, sobreajusta validación; ver bitácora).
+   Además, la cobertura **por serie** del Exp 4 es heterogénea: **langosta@SQ sub-cubre al 53%**
+   (el crash post-MHW cae bajo la cota inferior calibrada con una sola temporada previa), el 86%
+   marginal promedia con el abulón sobre-cubriendo. **Ambos problemas son el mismo cuello: pocas
+   temporadas de calibración.** No hay palanca de código/tuning; la mejora real es **más datos**
+   (ver #4). Opcional de bajo retorno: conformal adaptativo por régimen (MHW), pero con 1 temporada
+   de calibración por serie es poco robusto.
 2. **Fase 5 (opcional) — TFT**: prueba de techo; ADR de justificación + `pytorch-forecasting`/`darts`.
 3. **Endurecer `pooled_log`** (Fase 3 residual): Optuna sobre el pool log; investigar por qué
    langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
