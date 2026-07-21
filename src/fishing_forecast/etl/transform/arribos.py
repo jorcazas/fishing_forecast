@@ -26,9 +26,9 @@ publica con otro separador, el QC de columnas faltantes lo detecta de inmediato.
 from __future__ import annotations
 
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 import yaml
@@ -131,17 +131,38 @@ def build_ue_lookup(economic_units: dict) -> dict[str, tuple[str, str | None]]:
     return lookup
 
 
+def _detect_skiprows(path: Path, dialect: ArribosDialect, max_scan: int = 14) -> int:
+    """Localiza la fila de encabezado buscando la columna de UE (preámbulo variable).
+
+    Los exports de CONAPESCA traen 2 o 4 líneas de título según el año; en vez de fijar
+    ``preamble_lines`` se busca la primera línea que contenga ``col_ue``. Si no se encuentra,
+    se cae al ``preamble_lines`` del dialecto.
+    """
+    try:
+        with path.open(encoding=dialect.encoding) as fh:
+            for i in range(max_scan):
+                line = fh.readline()
+                if not line:
+                    break
+                if dialect.col_ue in line:
+                    return i
+    except OSError:
+        pass
+    return dialect.preamble_lines
+
+
 def read_source_csv(path: Path, dialect: ArribosDialect) -> pd.DataFrame:
     """Lee un CSV crudo de arribos según ``dialect`` (encoding/preámbulo/separador).
 
     Pura respecto a la lógica de negocio: solo lee bytes → DataFrame crudo (sin mapear).
-    Revienta con mensaje claro si faltan las columnas clave (separador/encoding malos).
+    El preámbulo se autodetecta (buscando la fila de encabezado) para tolerar los distintos
+    formatos de CONAPESCA. Revienta con mensaje claro si faltan las columnas clave.
     """
     df = pd.read_csv(
         path,
         sep=dialect.sep,
         encoding=dialect.encoding,
-        skiprows=dialect.preamble_lines,
+        skiprows=_detect_skiprows(path, dialect),
         dtype=str,
         low_memory=False,
     )
@@ -179,6 +200,8 @@ def clean_arribos(
     keep_species: Iterable[str] | None = None,
     keep_units: Iterable[str] | None = None,
     dialect: ArribosDialect = CONAPESCA_DIALECT,
+    date_min: object | None = None,
+    date_max: object | None = None,
 ) -> pd.DataFrame:
     """Limpia un DataFrame crudo de arribos a la tabla long-tidy de salida.
 
@@ -187,7 +210,9 @@ def clean_arribos(
          Filas sin mapeo se descartan (con conteo).
       2. Filtra a ``keep_species`` / ``keep_units`` si se proveen (None = sin filtro).
       3. Parsea ``ds`` a fecha y ``y`` a float (kg) según ``dialect``.
-      4. Agrega sumando ``y`` por ``(ds, species, economic_unit, region)``.
+      4. Filtra a ``[date_min, date_max]`` (inclusivo) si se proveen — para unir fuentes por
+         rango de fecha sin doble conteo.
+      5. Agrega sumando ``y`` por ``(ds, species, economic_unit, region)``.
 
     No imputa nada ni introduce ceros. ``region`` se deriva del mapping UE.
     """
@@ -219,6 +244,11 @@ def clean_arribos(
         logger.warning(f"{bad_dates} fila(s) con fecha no parseable; se descartan.")
     df = df[df["ds"].notna()]
 
+    if date_min is not None:
+        df = df[df["ds"] >= pd.Timestamp(date_min).date()]
+    if date_max is not None:
+        df = df[df["ds"] <= pd.Timestamp(date_max).date()]
+
     grouped = (
         df.groupby(["ds", "species", "economic_unit", "region"], dropna=False, observed=True)["y"]
         .sum(min_count=1)
@@ -244,11 +274,14 @@ def transform(
     keep_units: Iterable[str] | None = None,
     out_path: Path | None = None,
     dialect: ArribosDialect = CONAPESCA_DIALECT,
+    date_min: object | None = None,
+    date_max: object | None = None,
 ) -> pd.DataFrame:
     """Orquestador: lee varios CSV crudos, los limpia y consolida en una tabla long-tidy.
 
-    ``dialect`` selecciona la fuente (CONAPESCA o COBI). Si ``out_path`` se provee, escribe
-    el resultado a Parquet (zstd). Devuelve siempre el DataFrame consolidado.
+    ``dialect`` selecciona la fuente (CONAPESCA o COBI). ``date_min``/``date_max`` acotan el
+    rango de fechas (para unir fuentes sin solape). Si ``out_path`` se provee, escribe el
+    resultado a Parquet (zstd). Devuelve siempre el DataFrame consolidado.
     """
     species_lookup = build_species_lookup(_load_yaml(species_mapping_path))
     ue_lookup = build_ue_lookup(_load_yaml(economic_units_path))
@@ -265,6 +298,8 @@ def transform(
                 keep_species=keep_species,
                 keep_units=keep_units,
                 dialect=dialect,
+                date_min=date_min,
+                date_max=date_max,
             )
         )
 

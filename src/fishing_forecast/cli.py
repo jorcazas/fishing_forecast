@@ -271,7 +271,7 @@ def aggregate_oceancolor(
 def transform_arribos(
     source: str = typer.Option(
         "conapesca",
-        help="Fuente de arribos: 'conapesca' (CSV descargados) o 'cobi' (export local).",
+        help="Fuente: 'conapesca', 'cobi', o 'union' (COBI ≤2021 + CONAPESCA cosecha ≥2022).",
     ),
     all_species: bool = typer.Option(
         False,
@@ -286,22 +286,82 @@ def transform_arribos(
 ) -> None:
     """Transforma los CSV crudos de arribos → data/interim/arribos.parquet.
 
-    `--source conapesca` lee los CSV descargados; `--source cobi` lee el export local
-    configurado en `etl.yaml: sources.arribos_cobi.csv_path`.
+    `--source conapesca` lee los CSV descargados; `--source cobi` lee el export local;
+    `--source union` empalma COBI (≤2021-12-31) con los AVISOS COSECHA de CONAPESCA
+    (`data/raw/arribos/cosecha_2022_2026/`, cada archivo acotado a su propio año → ≥2022),
+    sin doble conteo, para sumar las temporadas 2021-22…2025-26.
     """
+    import re
+
     import yaml
 
     from fishing_forecast.etl.transform import arribos as tr_arribos
 
     settings = get_settings()
     etl_cfg = yaml.safe_load((settings.configs_root / "etl.yaml").read_text(encoding="utf-8"))
+    economic_units_path = settings.configs_root / "economic_units.yaml"
+    species_mapping_path = settings.configs_root / "species_mapping.yaml"
+    keep_species = None if all_species else etl_cfg.get("dataset_v1_species")
+    keep_units = None
+    if not all_units:
+        ue_cfg = yaml.safe_load(economic_units_path.read_text(encoding="utf-8")) or {}
+        keep_units = list(ue_cfg.keys())
+    out_path = settings.interim_dir / "arribos.parquet"
+    common = dict(
+        species_mapping_path=species_mapping_path,
+        economic_units_path=economic_units_path,
+        keep_species=keep_species,
+        keep_units=keep_units,
+    )
+
+    if source == "union":
+        cobi_csv = settings.configs_root.parent / etl_cfg["sources"]["arribos_cobi"]["csv_path"]
+        cosecha_dir = settings.raw_dir / "arribos" / "cosecha_2022_2026"
+        cosecha_files = sorted(cosecha_dir.glob("cosecha_*.csv"))
+        if not cobi_csv.exists():
+            raise typer.BadParameter(f"No existe el CSV COBI en {cobi_csv}.")
+        if not cosecha_files:
+            raise typer.BadParameter(f"No hay archivos cosecha_*.csv en {cosecha_dir}.")
+        frames = [
+            tr_arribos.transform(
+                [cobi_csv], dialect=tr_arribos.COBI_DIALECT, date_max="2021-12-31", **common
+            )
+        ]
+        for f in cosecha_files:
+            m = re.search(r"(\d{4})", f.stem)
+            if not m:
+                continue
+            yr = int(m.group(1))  # acotar cada archivo a su propio año (sin solape de frontera)
+            frames.append(
+                tr_arribos.transform(
+                    [f],
+                    dialect=tr_arribos.CONAPESCA_DIALECT,
+                    date_min=f"{yr}-01-01",
+                    date_max=f"{yr}-12-31",
+                    **common,
+                )
+            )
+        combined = (
+            pd.concat(frames, ignore_index=True)
+            .groupby(["ds", "species", "economic_unit", "region"], dropna=False, observed=True)["y"]
+            .sum(min_count=1)
+            .reset_index()
+            .sort_values(["species", "economic_unit", "ds"])
+            .reset_index(drop=True)[tr_arribos.OUTPUT_COLUMNS]
+        )
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        combined.to_parquet(out_path, compression="zstd", index=False)
+        print(
+            f"[green]Unión COBI(≤2021)+CONAPESCA({len(cosecha_files)} años) → "
+            f"{len(combined)} filas en {out_path}[/]"
+        )
+        return
 
     if source not in tr_arribos.DIALECTS:
-        raise typer.BadParameter(f"source debe ser uno de {sorted(tr_arribos.DIALECTS)}.")
+        raise typer.BadParameter(f"source debe ser uno de {sorted(tr_arribos.DIALECTS)} o 'union'.")
     dialect = tr_arribos.DIALECTS[source]
 
     if source == "cobi":
-        # csv_path en config es relativo a la raíz del repo (= configs_root.parent).
         csv_path = settings.configs_root.parent / etl_cfg["sources"]["arribos_cobi"]["csv_path"]
         if not csv_path.exists():
             raise typer.BadParameter(f"No existe el CSV legacy COBI en {csv_path}.")
@@ -314,23 +374,7 @@ def transform_arribos(
                 f"No hay CSV en {raw_dir}. Corre primero `fishing-etl extract conapesca`."
             )
 
-    keep_species = None if all_species else etl_cfg.get("dataset_v1_species")
-    economic_units_path = settings.configs_root / "economic_units.yaml"
-    keep_units = None
-    if not all_units:
-        ue_cfg = yaml.safe_load(economic_units_path.read_text(encoding="utf-8")) or {}
-        keep_units = list(ue_cfg.keys())
-
-    out_path = settings.interim_dir / "arribos.parquet"
-    df = tr_arribos.transform(
-        csv_paths,
-        species_mapping_path=settings.configs_root / "species_mapping.yaml",
-        economic_units_path=economic_units_path,
-        keep_species=keep_species,
-        keep_units=keep_units,
-        out_path=out_path,
-        dialect=dialect,
-    )
+    df = tr_arribos.transform(csv_paths, out_path=out_path, dialect=dialect, **common)
     print(
         f"[green]Transformadas {len(csv_paths)} CSV ({source}) → {len(df)} filas en {out_path}[/]"
     )
