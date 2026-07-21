@@ -51,7 +51,8 @@ CONF_FRAC = 0.25  # fracción final del periodo pre-corte reservada a conformali
 MIN_CATCH_DAYS = 20
 CONF_LEVELS = (0.80, 0.90)  # niveles nominales de los intervalos
 CRPS_GRID = (0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95)
-FOCUS_SERIES = "lobster_red@litoral_bc_sur"  # serie insignia para el fan chart
+FOCUS_SERIES = "lobster_red@litoral_bc_sur"  # serie insignia para el fan chart individual
+GRID_SPECIES = "lobster_red"  # el grid muestra todas las series de esta especie (7 UEs)
 SEED = 42
 
 QUANTILE_XGB = dict(
@@ -238,12 +239,15 @@ def main() -> None:
     (metrics_dir / f"{EXP_ID}_{CUT_DATE.date()}.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False)
     )
-    _fan_chart(
+    figures_dir = settings.reports_root / "figures"
+    _fan_chart(test, y_test, grid_pred_kg, ci_bounds, figures_dir / f"{EXP_ID}_fan_chart.png")
+    _fan_grid(
         test,
         y_test,
         grid_pred_kg,
         ci_bounds,
-        settings.reports_root / "figures" / f"{EXP_ID}_fan_chart.png",
+        per_series,
+        figures_dir / f"{EXP_ID}_fan_grid_{CUT_DATE.date()}.png",
     )
     _write_summary(summary, settings.reports_root / f"{EXP_ID}_summary.md")
     print(_console(summary))
@@ -281,6 +285,59 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
     ax.set_ylabel("captura diaria (kg)")
     ax.legend(loc="upper right", fontsize=8)
     fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=120)
+    plt.close(fig)
+
+
+def _fan_grid(test, y_test, grid_pred_kg, ci_bounds, per_series, out_path) -> None:
+    """Grid observado-vs-pronosticado (mediana + bandas 80/90%) por serie de `GRID_SPECIES`.
+
+    Muestra el nuevo alcance: las 7 series de langosta (2 → 7 UEs) sobre la línea de tiempo
+    ampliada 2017-2026. Cada panel recorta el eje y a 3x el máximo observado (la cota superior
+    al 90% se dispara en días pico al exponenciar el espacio log) y anota su cobertura empírica.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    labels = sorted(lbl for lbl in per_series if str(lbl).startswith(GRID_SPECIES + "@"))
+    if not labels:
+        return
+    ncols = 2 if len(labels) <= 4 else 3
+    nrows = (len(labels) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(6.2 * ncols, 3.0 * nrows), squeeze=False)
+    lo90, hi90 = ci_bounds[0.90]
+    lo80, hi80 = ci_bounds[0.80]
+
+    for ax, label in zip(axes.ravel(), labels, strict=False):
+        sub = (test["_series"] == label).to_numpy()
+        pos = np.where(sub)[0]
+        ds = pd.to_datetime(test.loc[sub, "ds"]).to_numpy()
+        order = np.argsort(ds)
+        ds, pos = ds[order], pos[order]
+        ax.fill_between(ds, lo90[pos], hi90[pos], color="#c6dbef", label="90%")
+        ax.fill_between(ds, lo80[pos], hi80[pos], color="#6baed6", label="80%")
+        ax.plot(ds, grid_pred_kg[0.5][pos], color="#08519c", lw=1.0, label="mediana")
+        ax.scatter(ds, y_test[pos], s=6, color="#252525", label="observado", zorder=5)
+        obs_max = float(np.nanmax(y_test[pos])) if len(pos) else 1.0
+        ax.set_ylim(-0.05 * obs_max, max(3.0 * obs_max, 1.0))
+        cov = per_series[label]["coverage_0.90"]
+        ue = label.split("@", 1)[1]
+        ax.set_title(f"{ue}  —  cobertura 90%: {cov:.0%}", fontsize=9)
+        ax.tick_params(labelsize=7)
+
+    for ax in axes.ravel()[len(labels) :]:
+        ax.set_visible(False)
+    axes.ravel()[0].legend(loc="upper right", fontsize=7)
+    fig.suptitle(
+        f"CQR — langosta observada vs. pronosticada, {len(labels)} UEs "
+        f"(test desde {CUT_DATE.date()}; eje y recortado a 3x el máx. observado)",
+        fontsize=11,
+    )
+    fig.supylabel("captura diaria (kg)", fontsize=9)
+    fig.tight_layout(rect=(0.01, 0, 1, 0.98))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=120)
     plt.close(fig)

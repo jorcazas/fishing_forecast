@@ -28,8 +28,12 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
      CONAPESCA ≥2022, sin doble conteo) → **`dataset_v1` 2017-2026; langosta@SQ ~9 temporadas**.
      Impacto: en corte **2024-06-01** (crash en train) **langosta@SQ cobertura CQR 41%→95.8%** —
      arregla la sub-cobertura que ningún tuning logró. CRPS 188→158.
-   **Pendiente**: (a) **reflejar en la tesis** las temporadas nuevas, las 7 series y el corte
-   2024-06-01 con el salto de cobertura; (b) confirmar consistencia del empalme 2021 COBI↔CONAPESCA;
+   **Pendiente**: (a) ~~reflejar en la tesis las temporadas nuevas, las 7 series y el corte
+   2024-06-01 con el salto de cobertura~~ **HECHO (2026-07-21)**: `final_work.tex` §Datos-y-ETL
+   actualizado (union COBI+CONAPESCA, 2017-2026); nueva subsección §La-hipótesis-de-datos con
+   Tabla `extension_moredata` (langosta@SQ 40.6%→95.8% al corte 2024, marginal 94→95%, CRPS
+   158→220); párrafo de cierre en Conclusión. Compila a 27 págs, refs resueltas; (b) confirmar
+   consistencia del empalme 2021 COBI↔CONAPESCA;
    (c) clústers Ensenada (~31.8°N) y Vizcaíno (El Tomatal, Punta Canoas) — aún más UEs; (d) parametrizar
    el corte también en Exp 1-3 (hoy solo Exp 4 tiene `FF_CUT_DATE`).
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.

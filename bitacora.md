@@ -1206,5 +1206,28 @@ según el año).
 
 **Síntesis:** el cuello de datos que atravesó toda la fase se **destrabó por el lado de las
 temporadas**. La CQR queda bien calibrada en el corte 2024-06-01 (producto operativo real para COBI).
-116/116 tests, ruff limpio. **Pendiente**: reflejar en la tesis (nuevas temporadas + corte 2024-06-01
-+ el salto de cobertura de langosta@SQ); confirmar consistencia del empalme 2021 COBI↔CONAPESCA.
+116/116 tests, ruff limpio.
+
+---
+
+## 2026-07-21 (noche, cont.) — Reflejado en la tesis (`final_work.tex`)
+
+Escrito lo que faltaba en la tesis (PENDINGS 4a):
+
+- **§Datos y ETL actualizados**: reescrito para describir la **unión COBI (2016-2021) + CONAPESCA
+  AVISOS COSECHA (2022-2026)** por prioridad temporal (COBI ≤2021, CONAPESCA ≥2022, sin doble
+  conteo en la costura 2021), la autodetección de encabezado (preámbulo 2/4 líneas) y el rango
+  consolidado **2017-2026** (langosta@SQ de ~5 a ~9 temporadas).
+- **Nueva subsección §La hipótesis de datos, puesta a prueba** (`sec:extension_moredata`): dos
+  frentes de "más datos" — (1) clúster El Rosario (langosta 2→7 series; corte 2020: pooling@SQ RMSE
+  659→313, marginal 90% 86%→93%, ancho p90 9776→3812 kg); (2) temporadas 2022-2026 → corte
+  2024-06-01 con el crash en train. Tabla `extension_moredata`: langosta@SQ cobertura 40.6%→95.8%,
+  marginal 94→95%, MHW 94.1→90.2%, ancho mediano@SQ 21→471 kg, CRPS 158→220 (sube porque el test 2024
+  concentra la recuperación, más difícil).
+- **Conclusión**: párrafo de cierre — la hipótesis "el cuello es el volumen de datos" dejó de ser
+  conjetura; ni SHAP ni Optuna movieron la sub-cobertura, una temporada más de calibración la resolvió.
+
+Compila a **27 págs** (era 26), refs resueltas; solo queda el warning natbib author-year (no fatal a
+`pdflatex`, ver PENDINGS §7). HTML de resultados generado en `reports/resultados.html`.
+
+**Pendiente**: confirmar consistencia del empalme 2021 COBI↔CONAPESCA.

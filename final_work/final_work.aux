@@ -36,13 +36,13 @@
 \@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para las dos temporadas 2020-2021 y 2021-2022}}{11}{table.5}\protected@file@percent }
 \newlabel{tab:catch_comparison}{{5}{11}{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para las dos temporadas 2020-2021 y 2021-2022}{table.5}{}}
 \citation{villasenor2024}
-\citation{hobday2016}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Extensión 2026: índice de olas de calor marinas y modelos multi-especie}{12}{section.6}\protected@file@percent }
 \newlabel{sec:extension2026}{{6}{12}{}{section.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Datos y ETL actualizados}{12}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Índice de olas de calor marinas (MHW)}{12}{subsection.6.2}\protected@file@percent }
+\citation{hobday2016}
 \citation{villasenor2024}
 \citation{villasenor2024}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Índice de olas de calor marinas (MHW)}{13}{subsection.6.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3}El bache de la temporada 2021-2022 se explica por olas de calor}{13}{subsection.6.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Re-entrenamiento del baseline y modelo con covariables}{13}{subsection.6.4}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Baseline re-derivado sobre datos reales y modelo con covariables SST/MHW. Todos sobreestiman fuertemente la temporada del bache (2021-2022).}}{13}{table.6}\protected@file@percent }
@@ -55,31 +55,35 @@
 \@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series.}}{15}{table.8}\protected@file@percent }
 \newlabel{tab:extension_global}{{8}{15}{Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series}{table.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Normalización de la variable objetivo por serie}{15}{subsection.6.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log  (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila.}}{15}{table.9}\protected@file@percent }
-\newlabel{tab:extension_ynorm}{{9}{15}{Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila}{table.9}{}}
 \citation{romano2019}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log  (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila.}}{16}{table.9}\protected@file@percent }
+\newlabel{tab:extension_ynorm}{{9}{16}{Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila}{table.9}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Pronóstico probabilístico con regresión cuantílica conformalizada}{16}{subsection.6.8}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Cobertura empírica de la CQR (modelo global $\log  (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas.}}{16}{table.10}\protected@file@percent }
-\newlabel{tab:extension_cqr}{{10}{16}{Cobertura empírica de la CQR (modelo global $\log (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas}{table.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Cobertura empírica de la CQR (modelo global $\log  (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas.}}{17}{table.10}\protected@file@percent }
+\newlabel{tab:extension_cqr}{{10}{17}{Cobertura empírica de la CQR (modelo global $\log (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas}{table.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}La hipótesis de datos, puesta a prueba: más unidades y más temporadas}{17}{subsection.6.9}\protected@file@percent }
+\newlabel{sec:extension_moredata}{{6.9}{17}{}{subsection.6.9}{}}
 \citation{villasenor2024}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusión}{17}{section.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{19}{figure.5}\protected@file@percent }
-\newlabel{fig:enter-label}{{5}{19}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{19}{figure.6}\protected@file@percent }
-\newlabel{fig:enter-label}{{6}{19}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{20}{figure.7}\protected@file@percent }
-\newlabel{fig:enter-label}{{7}{20}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{20}{figure.8}\protected@file@percent }
-\newlabel{fig:enter-label}{{8}{20}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{21}{figure.9}\protected@file@percent }
-\newlabel{fig:enter-label}{{9}{21}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{21}{figure.10}\protected@file@percent }
-\newlabel{fig:enter-label}{{10}{21}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.10}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{22}{figure.11}\protected@file@percent }
-\newlabel{fig:enter-label}{{11}{22}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {.1}Descripción de los datos}{23}{subsection.Alph0.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Muestra de conjunto de datos}}{23}{table.11}\protected@file@percent }
-\newlabel{tab:datos}{{11}{23}{Muestra de conjunto de datos}{table.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Efecto de mover el corte de prueba para incluir las temporadas 2022-2026 (union COBI+CONAPESCA) en el entrenamiento y la calibración. La langosta de San Quintín pasa de sub-cubrir gravemente a quedar bien calibrada; la cobertura durante olas de calor se mantiene cerca del nominal. El CRPS global aumenta porque el conjunto de prueba de 2024 concentra las temporadas de recuperación, intrínsecamente más difíciles.}}{18}{table.11}\protected@file@percent }
+\newlabel{tab:extension_moredata}{{11}{18}{Efecto de mover el corte de prueba para incluir las temporadas 2022-2026 (union COBI+CONAPESCA) en el entrenamiento y la calibración. La langosta de San Quintín pasa de sub-cubrir gravemente a quedar bien calibrada; la cobertura durante olas de calor se mantiene cerca del nominal. El CRPS global aumenta porque el conjunto de prueba de 2024 concentra las temporadas de recuperación, intrínsecamente más difíciles}{table.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusión}{18}{section.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{20}{figure.5}\protected@file@percent }
+\newlabel{fig:enter-label}{{5}{20}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{20}{figure.6}\protected@file@percent }
+\newlabel{fig:enter-label}{{6}{20}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{21}{figure.7}\protected@file@percent }
+\newlabel{fig:enter-label}{{7}{21}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{21}{figure.8}\protected@file@percent }
+\newlabel{fig:enter-label}{{8}{21}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{22}{figure.9}\protected@file@percent }
+\newlabel{fig:enter-label}{{9}{22}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{22}{figure.10}\protected@file@percent }
+\newlabel{fig:enter-label}{{10}{22}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{23}{figure.11}\protected@file@percent }
+\newlabel{fig:enter-label}{{11}{23}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {.1}Descripción de los datos}{24}{subsection.Alph0.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Muestra de conjunto de datos}}{24}{table.12}\protected@file@percent }
+\newlabel{tab:datos}{{12}{24}{Muestra de conjunto de datos}{table.12}{}}
 \citation{globcolour2020}
 \bibcite{adibi2020}{{1}{}{{}}{{}}}
 \bibcite{chen2016}{{2}{}{{}}{{}}}
@@ -102,4 +106,4 @@
 \bibcite{yoon2020}{{19}{}{{}}{{}}}
 \bibcite{zhao2021}{{20}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{26}
+\gdef \@abspage@last{27}
