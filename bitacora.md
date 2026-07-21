@@ -1176,3 +1176,35 @@ ya descargada). `transform arribos` (7812 filas mapeadas vs ~pocas antes) → `a
 es un problema de temporadas, no de UEs. Confirma el diagnóstico: la palanca es volumen de datos, y
 sumar UEs es la vía factible (las temporadas 2022-25 siguen bloqueadas). 114/114 tests, ruff limpio.
 Artefactos exp3/exp4 regenerados.
+
+## 2026-07-21 (noche, cont.) — ¡Desbloqueadas las temporadas 2022-2026! (unión COBI+CONAPESCA)
+
+Javier señaló 5 CSV en Downloads: **AVISOS MAYORES/MENORES COSECHA 2022-2026** (CONAPESCA nacional,
+~160 MB/año, iso-8859-1). Exploré: **SÍ traen langosta de nuestras UEs para 2022-2026** (el hueco
+que llevábamos toda la sesión lamentando). Mismo esquema que el export COBI (columnas en MAYÚSCULAS),
+`nombre_oficina`/`nombre_lugarcaptura` permiten filtrar BC Pacífico. Preámbulo variable (2 o 4 líneas
+según el año).
+
+**Integración** (decisión del usuario: COBI ≤2021-12-31 + CONAPESCA >2021-12-31, sin doble conteo):
+- `read_source_csv` ahora **autodetecta la fila de encabezado** (`_detect_skiprows`, busca `col_ue`)
+  → tolera el preámbulo variable sin romper COBI/CONAPESCA previos.
+- `clean_arribos`/`transform` aceptan `date_min`/`date_max`.
+- CLI `transform arribos --source union`: COBI acotado a ≤2021-12-31 + cada `cosecha_YYYY.csv`
+  acotado a su propio año (→ ≥2022, sin solape de frontera), unidos. Archivos en
+  `data/raw/arribos/cosecha_2022_2026/` (gitignored). +2 tests (autodetección de header, filtro de fechas).
+- Pipeline: `transform arribos --source union` (5361 filas) → `consolidate`. **`dataset_v1` ahora
+  2017→2026; langosta@SQ pasa de ~5 a ~9 temporadas** (1110 días de captura vs 693).
+
+**Resultados — las temporadas SÍ arreglan lo que el tuning no pudo:**
+- Corte canónico 2020-07-01: CRPS global 188→**158**, cobertura marginal 90% ~94%; pero langosta@SQ
+  sigue sub-cubriendo (~41%) **porque las temporadas nuevas caen todas en test** (la calibración sigue
+  siendo pre-2020).
+- **Corte 2024-06-01** (crash + recuperación quedan en train/calibración; `FF_CUT_DATE` override):
+  **langosta@SQ cobertura 90% pasa de ~41% a 95.8%**, todas las series de langosta 94-99%, marginal
+  95%, MHW-condicional 0.90 vs 0.95. **Este es el arreglo real de la sub-cobertura**: con más
+  temporadas el crash post-MHW ya no está fuera de la distribución aprendida.
+
+**Síntesis:** el cuello de datos que atravesó toda la fase se **destrabó por el lado de las
+temporadas**. La CQR queda bien calibrada en el corte 2024-06-01 (producto operativo real para COBI).
+116/116 tests, ruff limpio. **Pendiente**: reflejar en la tesis (nuevas temporadas + corte 2024-06-01
++ el salto de cobertura de langosta@SQ); confirmar consistencia del empalme 2021 COBI↔CONAPESCA.
