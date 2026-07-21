@@ -400,6 +400,27 @@ XGBoost (SST+MHW) & 327 & 558 & 126 & $+53\%$ & $+368\%$ \\
 
 Los modelos autorregresivos (ARIMA, Prophet), que solo usan el historial de $y$, sobreestiman la temporada 2021-2022 por factores de 3 a 4, pues no ``ven'' la ola de calor. El modelo XGBoost con covariables sí selecciona las variables de MHW entre sus más importantes (por ejemplo, la media móvil de anomalía de SST y de categoría MHW del año previo), pero con únicamente tres temporadas de entrenamiento no logra aún corregir la sobreestimación. Esto confirma el diagnóstico del trabajo original: el cuello de botella no es la complejidad del modelo, sino la escasez de temporadas.
 
+\subsection{Color del océano y selección de variables con SHAP}
+Para enriquecer el conjunto de regresoras se integraron seis variables ópticas y biológicas de color del océano, re-distribuidas por Copernicus Marine a partir del acervo GlobColour: clorofila (CHL), coeficiente de atenuación difusa (KD490), materia particulada en suspensión (SPM), profundidad de disco de Secchi (ZSD), retrodispersión de partículas (BBP) y materia orgánica coloreada disuelta y detritos (CDM). Al igual que la SST se desplazan 90 días y se agregan medias móviles, con lo que el conjunto crece a unas 35 variables. Sin embargo, añadirlas al modelo de una sola serie \emph{empeora} el desempeño (MAE de 327 a 424; error de la temporada 2021-2022 de $+368\%$ a $+399\%$): un caso claro de sobreajuste con 35 variables y solo tres temporadas.
+
+Para verificar si el problema era el exceso de variables, se aplicó una selección basada en valores SHAP \cite{lundberg2017} (\emph{TreeExplainer}): se ordenaron las variables por su importancia media absoluta $|$SHAP$|$ y se conservaron las que aportaban al menos el 1\% del total, reduciendo de 35 a 16. El ordenamiento es coherente y físicamente interpretable ---dominan el calendario (\texttt{doy\_sin}, \texttt{in\_season}), seguido de la retrodispersión de partículas rezagada (\texttt{bbp\_roll90\_lag90}), el rezago anual de $y$ y variables de SST/color del océano---, lo que indica que las variables tienen sentido. No obstante, podar \emph{no} corrige el sobreajuste (Tabla \ref{tab:extension_shap}): el modelo reducido es incluso ligeramente peor.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Modelo & N.\ variables & MAE & RMSE & sMAPE (\%) & Error temp. 2021-22 \\
+\midrule
+Completo & 35 & 423.6 & 659.7 & 116.0 & $+398.7\%$ \\
+Podado (SHAP) & 16 & 444.7 & 695.5 & 120.3 & $+446.6\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Selección de variables con SHAP sobre langosta $\times$ San Quintín (corte 01-julio-2020). Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: el cuello de botella no es \emph{cuáles} variables se usan, sino el volumen de datos.}
+\label{tab:extension_shap}
+\end{table}
+
+La conclusión metodológica es importante: la selección de variables por sí sola no resuelve el sobreajuste, porque el factor limitante no es la dimensionalidad sino la cantidad de temporadas. Esto refuerza que la palanca real está en \emph{sumar datos} ---más unidades económicas y más temporadas---, motivando el modelo global de la siguiente sección.
+
 \subsection{Modelo global multi-especie y multi-unidad económica}
 Para atacar la escasez de datos por serie se entrenó un único modelo global sobre varias series (especie, unidad económica), con codificación one-hot de especie y de unidad económica y la oceanografía compartida, y se comparó contra modelos específicos entrenados por serie. Se incorporó una segunda unidad económica, Isla Cedros ($\sim$28$^\circ$N), además de San Quintín ($\sim$30.5$^\circ$N), lo que introduce variación a lo largo del gradiente biogeográfico. La Tabla \ref{tab:extension_global} muestra la comparación por serie.
 
@@ -444,6 +465,27 @@ langosta @ San Quintín & 659.7 & 742.2 & \textbf{544.4} \\
 
 El resultado confirma la hipótesis: al normalizar el objetivo, el pooling \emph{sí} supera a los modelos específicos, ganando o empatando en 4 de 5 series con la transformación $\log(1+y)$, frente a solo 2 de 5 del pooling crudo. El efecto es más marcado en las series de escala pequeña —el abulón, cuyo RMSE cae de $\sim$33--35 (pooling crudo, dominado por la langosta) a 3.5--7.0 kg, por debajo incluso de su modelo específico— y también mejora la serie insignia de langosta en San Quintín (544 vs. 659 kg). La única serie que empeora es la langosta de Isla Cedros, la de mayor escala, donde el logaritmo comprime en exceso. La estandarización por serie queda por detrás del logaritmo, previsiblemente porque con pocas temporadas las estadísticas de escala por serie son ruidosas. La conclusión operativa es que el \emph{partial pooling con la variable objetivo en escala logarítmica} es el modelo global a consolidar y el candidato natural a envolver en un esquema de predicción probabilística (regresión cuantílica conformalizada) en la siguiente fase.
 
+\subsection{Pronóstico probabilístico con regresión cuantílica conformalizada}
+Con tres temporadas, cualquier pronóstico puntual es ruidoso; lo honesto ---y lo útil para una cooperativa que planea insumos--- es entregar un \emph{rango} calibrado en lugar de un solo número. Se envolvió el modelo global $\log(1+y)$ en una regresión cuantílica conformalizada (CQR, \citealp{romano2019}): regresores cuantílicos de gradient boosting en escala logarítmica y una corrección conformal de conjunto de calibración, con las cotas invertidas a kilogramos. La calibración se hace \emph{por serie} (variante de Mondrian) y \emph{solo con días en temporada}: los días fuera de temporada, con captura nula y cuantiles base cercanos a cero, tienen residuo de conformidad nulo y, por su abundancia, anulaban la corrección; restringir la calibración a la temporada la vuelve informativa. La partición temporal es estricta (calibración anterior al corte de prueba 01-julio-2020).
+
+La Tabla \ref{tab:extension_cqr} muestra la cobertura empírica y el ancho de los intervalos. La cobertura marginal queda cerca del nivel nominal (86\% para el intervalo nominal del 90\%, 81\% para el del 80\%), y la variante \emph{normalizada} (ensanchamiento proporcional a la dispersión local) es ligeramente mejor que la de corrección constante. Es notable que la cobertura se mantiene durante las olas de calor marinas (0.89 en días de MHW frente a 0.85 fuera): el intervalo sigue siendo honesto precisamente en el régimen anómalo que hacía fracasar al pronóstico puntual.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Intervalo nominal & Cobertura empírica & Cobertura en días de MHW \\
+\midrule
+80\% & 80.8\% & --- \\
+90\% & 85.9\% & 89.1\% (vs.\ 85.4\% fuera de MHW) \\
+\bottomrule
+\end{tabular}
+\caption{Cobertura empírica de la CQR (modelo global $\log(1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas.}
+\label{tab:extension_cqr}
+\end{table}
+
+La limitación honesta es que la cota superior de los días pico sigue siendo ancha: eso lo determina el modelo cuantílico base (el cuantil 0.95 en escala logarítmica, amplificado al exponenciar), no la envoltura conformal, y estrecharlo requiere mejores estimadores cuantílicos o más temporadas, no otro esquema de conformalización. Aun así, el producto ---un rango calibrado de captura diaria/estacional por especie y unidad económica--- es directamente entregable a las cooperativas y constituye el resultado operativo de esta fase.
+
 \section{Conclusión}
 La evaluación de diversos modelos para predecir el volumen de capturas pesqueras en la temporada arrojó los siguientes resultados:
 
@@ -460,6 +502,8 @@ En ese sentido, alcanzar un modelo aplicable a varias zonas de pesca y a varias 
 La extensión de 2026 refuerza y precisa estas conclusiones. En primer lugar, la caída atípica de la temporada 2021-2022 —que el trabajo original no lograba explicar y que sesgaba la evaluación de los modelos— se atribuye ahora a las olas de calor marinas de 2019-2021, un mecanismo ambiental documentado para Baja California \cite{villasenor2024} y reproducible con el índice de MHW que se incorporó al pipeline. De aquí se desprende una recomendación concreta: incluir siempre una variable de anomalía térmica de largo plazo (idealmente un índice de MHW) entre las covariables, pues es la señal que permite anticipar los años atípicos.
 
 En segundo lugar, los experimentos con modelos multivariados y con un modelo global multi-especie confirman que el factor limitante sigue siendo la cantidad de temporadas y de series disponibles, no la sofisticación del modelo. La evidencia de transferencia positiva dentro de una misma especie entre unidades económicas es alentadora, y el enfoque jerárquico de \emph{partial pooling} que señalaba el camino a seguir quedó validado: al normalizar la variable objetivo por serie con $\log(1+y)$ —evitando que las series de mayor volumen dominen el ajuste— el modelo global pasa a ganar o empatar contra los modelos específicos en 4 de 5 series, rescatando en particular a las especies de escala pequeña. Escalar a más unidades económicas y acumular más temporadas —junto con el índice de MHW como covariable estándar y el objetivo en escala logarítmica— constituye la ruta más prometedora hacia un modelo operativo y transferible.
+
+En tercer lugar, y como respuesta directa a esa escasez de datos, el pronóstico se reformuló en términos probabilísticos: una regresión cuantílica conformalizada sobre el modelo global entrega intervalos con cobertura cercana a la nominal y estable incluso durante las olas de calor marinas. Para una cooperativa pesquera, un rango calibrado de captura esperada es más accionable ---y más honesto--- que un único número puntual, y representa el producto operativo concreto de esta extensión. Su principal limitación actual, la amplitud del intervalo en los días de mayor captura, remite de nuevo al mismo cuello de botella: se estrechará con más temporadas y mejores estimadores cuantílicos, no con más maquinaria estadística.
 % % Acknowledgements should go at the end, before appendices and references
 
 % \acks{We would like to acknowledge support for this project
@@ -627,7 +671,7 @@ Ho, S.L., Xie, M. (1999). The use of ARIMA models for reliability forecasting an
 \bibitem{hobday2016}
 Hobday, A.J., et al. (2016). A hierarchical approach to defining marine heatwaves. Progress in Oceanography, 141, 227-238. \url{https://doi.org/10.1016/j.pocean.2015.12.014}
 
-\bibitem{greff2017}
+\bibitem{hyndman2021}
 Hyndman, R.J., Athanasopoulos, G. (2021) Forecasting: principles and practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3. Accessed on November 10, 2023 \url{https://otexts.com/fpp3/}
 
 \bibitem{ke2017}
@@ -636,11 +680,17 @@ Ke, G., et al. (2017). LightGBM: A Highly Efficient Gradient Boosting Decision T
 \bibitem{lindemann2021}
 Lindemann, B., et al. (2021). A survey on long short-term memory networks for time series prediction. Institute of Industrial Automation and Software Engineering, University of Stuttgart. Available online 3 May 2021. \url{https://doi.org/10.1016/j.procir.2021.03.088}
 
+\bibitem{lundberg2017}
+Lundberg, S.M., Lee, S.-I. (2017). A Unified Approach to Interpreting Model Predictions. In Advances in Neural Information Processing Systems 30 (NIPS 2017). \url{https://papers.nips.cc/paper/7062-a-unified-approach-to-interpreting-model-predictions}
+
 \bibitem{makwinja2021}
 Makwinja, R., et al. (2021). Modeling of Lake Malombe Annual Fish Landings and Catch per Unit Effort (CPUE). Forecasting, 3(1), 39-55. \url{https://doi.org/10.3390/forecast3010004}
 
 \bibitem{petropoulos2022}
 Petropoulos, F., et al. (2022). Forecasting: theory and practice. Available online 20 January 2022. \url{https://doi.org/10.1016/j.ijforecast.2021.11.001}
+
+\bibitem{romano2019}
+Romano, Y., Patterson, E., Candès, E.J. (2019). Conformalized Quantile Regression. In Advances in Neural Information Processing Systems 32 (NeurIPS 2019). \url{https://doi.org/10.48550/arXiv.1905.03222}
 
 \bibitem{shi2022}
 Shi, Z., et al. (2022). Attention-based CNN-LSTM and XGBoost hybrid model for stock prediction. arXiv:2204.02623 [q-fin.ST]. \url{https://doi.org/10.48550/arXiv.2204.02623}

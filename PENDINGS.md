@@ -20,11 +20,16 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
 4. **Más datos** (mayor palanca real, según Exp 2/2.3): más UEs (El Rosario/Ensenada, en
    `economic_units.yaml`, confirmar bboxes) y más temporadas; unión CONAPESCA+COBI.
-5. **Documentación de tesis**: falta incorporar **Exp 2.3 (SHAP)** y **Exp 4 (CQR)** a
-   `final_work.tex` (Exp 3.2 ya integrado, §6.7). Tarea corta.
-6. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
-7. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
-8. **Higiene heredada** del borrador (§6) y `\bibitem{greff2017}` duplicado + fix natbib/latexmk.
+5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
+6. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
+7. **Higiene heredada** del borrador (§6) y fix natbib/latexmk (error author-year no fatal a
+   `pdflatex`); labels placeholder duplicados del borrador original (`fig:enter-label`,
+   `tab:catch_comparison`) — renombrar por unicidad.
+
+**Hecho (2026-07-21)** — documentación de tesis: **Exp 2.3 (SHAP)** y **Exp 4 (CQR)** integrados a
+`final_work.tex` (nuevas subsecciones + Tablas `extension_shap`/`extension_cqr` + conclusión).
+Añadidas refs `romano2019`, `lundberg2017`; corregido el `\bibitem{greff2017}` duplicado (el 2º era
+Hyndman, re-etiquetado `hyndman2021`). Compila a 26 págs, citas resueltas.
 
 Estado global:
 - **Código del ETL completo y testeado** (extract → transform → aggregate → consolidate →
