@@ -34,4 +34,4 @@ Corte **2020-07-01**; conformalización desde **2019-08-16**; test n=25619. Mode
 | urchin_red@er_regasa | 2069 | 96.6% | 3036.9 | 231.8 |
 | urchin_red@er_scpp_ensenada | 2069 | 91.6% | 1430.6 | 667.64 |
 
-> Figura: `reports/figures/exp4_cqr_fan_chart.png` (bandas 80/90% + mediana + observado para lobster_red@litoral_bc_sur). La CQR da la garantía de cobertura marginal sin asumir la forma de la distribución; es el producto operativo para COBI (rango esperado de captura).
+> Figuras: `reports/figures/exp4_cqr_fan_chart.png` (serie insignia lobster_red@litoral_bc_sur) y `reports/figures/exp4_cqr_fan_grid_2020-07-01.png` (grid observado-vs-pronosticado de las 7 UEs de langosta, bandas 80/90% + mediana + observado). La CQR da la garantía de cobertura marginal sin asumir la forma de la distribución; es el producto operativo para COBI (rango esperado de captura).

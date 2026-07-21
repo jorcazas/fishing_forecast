@@ -411,9 +411,11 @@ def _write_summary(s: dict, out_path) -> None:
         )
     rows += [
         "",
-        "> Figura: `reports/figures/exp4_cqr_fan_chart.png` (bandas 80/90% + mediana + observado "
-        f"para {FOCUS_SERIES}). La CQR da la garantía de cobertura marginal sin asumir la forma de "
-        "la distribución; es el producto operativo para COBI (rango esperado de captura).",
+        "> Figuras: `reports/figures/exp4_cqr_fan_chart.png` (serie insignia " + FOCUS_SERIES + ") y "
+        f"`reports/figures/exp4_cqr_fan_grid_{s['cut_date']}.png` (grid observado-vs-pronosticado de "
+        "las 7 UEs de langosta, bandas 80/90% + mediana + observado). La CQR da la garantía de "
+        "cobertura marginal sin asumir la forma de la distribución; es el producto operativo para "
+        "COBI (rango esperado de captura).",
     ]
     out_path.write_text("\n".join(rows))
     logger.info(f"Resumen → {out_path}")

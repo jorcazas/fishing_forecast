@@ -1231,3 +1231,29 @@ Compila a **27 págs** (era 26), refs resueltas; solo queda el warning natbib au
 `pdflatex`, ver PENDINGS §7). HTML de resultados generado en `reports/resultados.html`.
 
 **Pendiente**: confirmar consistencia del empalme 2021 COBI↔CONAPESCA.
+
+---
+
+## 2026-07-21 (noche, cont.) — Visualizaciones observado-vs-pronosticado con el nuevo alcance
+
+Regeneradas las figuras de real-vs-predicho para reflejar el dataset ampliado (2017-2026, 7 series
+de langosta):
+
+- **Grid de fan charts** (`_fan_grid` en `exp4_cqr/cqr_intervals.py`): un panel por UE de langosta
+  (7 UEs), con observado (puntos) + mediana + bandas 80/90% y la cobertura empírica anotada por
+  panel. Generado en **ambos cortes**: `exp4_cqr_fan_grid_2020-07-01.png` y
+  `..._2024-06-01.png`. El contraste es la figura estrella: langosta@SQ pasa de **41%** (corte
+  2020, los puntos del crash 2022-2026 caen bajo la banda inferior) a **96%** (corte 2024, el crash
+  entra a train/calibración); las otras 6 UEs cubren 94-100% en ambos cortes.
+- Eje y por panel recortado a 3x el máximo observado (la cota 90% se dispara en días pico al
+  exponenciar el espacio log). El fan chart individual (`exp4_cqr_fan_chart.png`) se mantiene.
+
+**Hallazgo (empalme 2021, PENDINGS 4b)**: al intentar regenerar la figura single-series de Exp 2
+sobre el dataset actual, las métricas del baseline cambiaron (la unión CONAPESCA reemplazó los
+valores de `y` de ene-feb 2022, moviendo el error de suma de temporada 2021-2022 de +399% a +359%).
+Confirma que **el empalme COBI↔CONAPESCA sí altera el límite 2021-2022**. Decisión: la figura de Exp 2
+se regeneró acotada a sus 2 temporadas documentadas (hasta 2022-02-16; MAE 421.5 ≈ 423.6 documentado,
+2020-21 +101% exacto), y los números del piso en la tesis se dejan como el **snapshot pre-unión** que
+citan (Tablas `extension_floor`/`extension_shap`), no se tocan. Refrescar todo el conjunto de
+baselines single-series sobre datos unidos sería una cascada mayor (Exp 1/2/SHAP + tablas de tesis);
+queda como decisión abierta para Javier.
