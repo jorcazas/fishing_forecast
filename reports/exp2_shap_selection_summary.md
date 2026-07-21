@@ -4,8 +4,8 @@ Corte **2020-07-01**. Features: completo **35** â†’ podado **16** (mean|SHAP| â‰
 
 | modelo | n features | MAE | RMSE | sMAPE% | error temp. 2021-22 |
 |---|---|---|---|---|---|
-| completo | 35 | 423.6 | 659.7 | 116.0 | 398.7% |
-| podado | 16 | 444.7 | 695.5 | 120.3 | 446.6% |
+| completo | 35 | 459.0 | 712.3 | 153.0 | 358.6% |
+| podado | 16 | 387.5 | 673.0 | 132.1 | 390.3% |
 
 Features conservadas (por SHAP): doy_sin, in_season, bbp_roll90_lag90, y_lag365, doy_cos, sst_lag90, y_lag730, cdm_roll90_lag90, bbp_lag90, zsd_roll90_lag90, spm_roll90_lag90, sst_roll90_lag90, mhw_category_roll365_lag90, chl_lag90, mhw_intensity_lag90, cdm_lag90
 
