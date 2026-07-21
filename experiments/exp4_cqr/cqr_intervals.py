@@ -3,8 +3,11 @@
 Envuelve el modelo global ganador de Exp 3.2 (**pool sobre `log1p(y)`**) en una CQR (Romano et
 al. 2019) para entregar **intervalos calibrados** en vez de un punto. Motivación: con ~3
 temporadas el punto es ruidoso, así que lo honesto —y lo útil para COBI— es cuantificar la
-incertidumbre. Se usa `mapie.regression.ConformalizedQuantileRegressor` con regresores cuantílicos
-de XGBoost (objetivo `reg:quantileerror`) ajustados en **espacio log** y luego invertidos a kg.
+incertidumbre. Se usan regresores cuantílicos de XGBoost (objetivo `reg:quantileerror`) en
+**espacio log** y una CQR de conformalización dividida **por serie (Mondrian)**, con las cotas
+invertidas a kg. (Se prefirió la CQR explícita sobre `mapie` porque con modelos cuantílicos
+independientes + inversión `expm1` producía intervalos no anidados; la versión propia garantiza
+anidamiento y calibración por serie, en línea con la normalización de `y` de Exp 3.2.)
 
 Partición temporal estricta (sin leakage):
 - **test**: `ds >= CUT_DATE` (2020-07-01, corte canónico).
@@ -28,11 +31,7 @@ import pandas as pd
 from loguru import logger
 
 from fishing_forecast.config import get_settings
-from fishing_forecast.evaluation.metrics import (
-    coverage,
-    crps_from_quantiles,
-    mean_interval_width,
-)
+from fishing_forecast.evaluation.metrics import coverage, crps_from_quantiles
 from fishing_forecast.features.covariates import build_multiseries_features, feature_columns
 
 EXP_ID = "exp4_cqr"
@@ -94,6 +93,19 @@ def _fit_quantile_grid(feat, cols, mask, levels):
     return models
 
 
+def _sorted_quantile_preds(grid_models: dict, X) -> dict[float, np.ndarray]:
+    """Predice cada cuantil de la rejilla y reordena por fila para eliminar el cruce de cuantiles.
+
+    Regresores cuantílicos independientes pueden cruzarse (q0.1 > q0.9 en algunas filas). Se
+    ordena cada fila de forma ascendente (rearrangement, Chernozhukov et al. 2010), que preserva
+    la cobertura y garantiza monotonía → intervalos anidados entre niveles.
+    """
+    levels = sorted(grid_models)
+    preds = np.column_stack([grid_models[q].predict(X) for q in levels])
+    preds = np.sort(preds, axis=1)
+    return {q: preds[:, i] for i, q in enumerate(levels)}
+
+
 def _mhw_mask(test: pd.DataFrame) -> np.ndarray:
     """Días de ola de calor marina en test (categoría Hobday contemporánea >= 1)."""
     if "mhw_now" not in test.columns:
@@ -101,9 +113,59 @@ def _mhw_mask(test: pd.DataFrame) -> np.ndarray:
     return test["mhw_now"].fillna(0).to_numpy() >= 1
 
 
-def main() -> None:
-    from mapie.regression import ConformalizedQuantileRegressor as CQR
+def _split_cqr(
+    lo_conf: np.ndarray,
+    hi_conf: np.ndarray,
+    y_conf: np.ndarray,
+    lo_test: np.ndarray,
+    hi_test: np.ndarray,
+    alpha: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Split-CQR (Romano et al. 2019): ajusta las cotas cuantílicas con la corrección conformal.
 
+    Trabaja en la escala en que se le pasan las cotas (aquí, espacio log). El score de
+    conformidad es `E_i = max(lo(x_i) - y_i, y_i - hi(x_i))`; se toma el cuantil finito-muestral
+    `ceil((n+1)(1-alpha))/n` de los scores y se ensancha simétricamente. Garantiza cobertura
+    marginal >= 1-alpha e intervalos **anidados** entre niveles (alpha mayor → Q menor).
+    """
+    scores = np.maximum(lo_conf - y_conf, y_conf - hi_conf)
+    n = len(scores)
+    k = int(np.ceil((n + 1) * (1.0 - alpha)))
+    k = min(max(k, 1), n)  # clip al rango válido
+    q = np.sort(scores)[k - 1]
+    return lo_test - q, hi_test + q
+
+
+def _mondrian_cqr(
+    conf_series: np.ndarray,
+    test_series: np.ndarray,
+    lo_conf: np.ndarray,
+    hi_conf: np.ndarray,
+    y_conf: np.ndarray,
+    lo_test: np.ndarray,
+    hi_test: np.ndarray,
+    alpha: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Split-CQR **por serie** (Mondrian): una corrección conformal por `(especie, UE)`.
+
+    Un único `Q` global lo fija la serie peor calibrada y, al invertir el log, infla las series
+    de gran escala (langosta). Calibrar por serie da cobertura ~nominal *dentro* de cada serie y
+    anchos acordes a su escala — el análogo conformal de la normalización de `y` de Exp 3.2.
+    """
+    lo_out = np.empty_like(lo_test, dtype=float)
+    hi_out = np.empty_like(hi_test, dtype=float)
+    for s in np.unique(test_series):
+        c, t = conf_series == s, test_series == s
+        if not c.any():  # sin puntos de conformalización → sin corrección (cae al cuantil crudo)
+            lo_out[t], hi_out[t] = lo_test[t], hi_test[t]
+            continue
+        lo_out[t], hi_out[t] = _split_cqr(
+            lo_conf[c], hi_conf[c], y_conf[c], lo_test[t], hi_test[t], alpha
+        )
+    return lo_out, hi_out
+
+
+def main() -> None:
     settings = get_settings()
     raw = load_series()
     feat = build_multiseries_features(raw, group_col=GROUP)
@@ -132,38 +194,49 @@ def main() -> None:
 
     # Rejilla de cuantiles (para CRPS) + modelos por nivel, en espacio log.
     grid_models = _fit_quantile_grid(feat, cols, train_mask, CRPS_GRID)
-    median_model = grid_models[0.5]
     X_conf = feat.loc[conf_mask, cols]
-    y_conf_log = feat.loc[conf_mask, "y_log"]  # conformalizar en espacio log (ver abajo)
+    y_conf_log = feat.loc[conf_mask, "y_log"].to_numpy()  # se conformaliza en espacio log
+    conf_series = feat.loc[conf_mask, "_series"].to_numpy()
     X_test = test[cols]
     y_test = test["y"].to_numpy()
+    test_series = test["_series"].to_numpy()
 
-    # Predicciones de la rejilla en kg (invertir log) → CRPS y punto (mediana).
-    grid_pred_kg = {
-        q: np.clip(np.expm1(m.predict(X_test)), 0.0, None) for q, m in grid_models.items()
-    }
+    # Predicciones cuantílicas en espacio log (conf y test). Se corrige el cruce de cuantiles
+    # (regresores independientes) reordenando cada fila de forma monótona (Chernozhukov 2010).
+    grid_log_conf = _sorted_quantile_preds(grid_models, X_conf)
+    grid_log_test = _sorted_quantile_preds(grid_models, X_test)
+
+    # CRPS en kg desde la rejilla (invertir log), y punto = mediana.
+    grid_pred_kg = {q: np.clip(np.expm1(p), 0.0, None) for q, p in grid_log_test.items()}
     crps_overall = crps_from_quantiles(y_test, grid_pred_kg)
 
-    # CQR por nivel, **conformalizando en espacio log**: la corrección conformal es aditiva en
-    # log = multiplicativa en kg, así escala por serie (clave con langosta de miles de kg y
-    # abulón de unidades en el mismo pool). Los modelos cuantílicos ya viven en log; se
-    # conformaliza con `y` en log y se invierten las cotas con expm1 (monótona → preserva orden).
+    # CQR por nivel, **conformalizando en espacio log y por serie (Mondrian)**: la corrección
+    # es aditiva en log = multiplicativa en kg, y separada por `(especie, UE)` para que la escala
+    # de langosta no infle a abulón. Se invierten las cotas con expm1 (monótona).
     intervals: dict[str, dict] = {}
     ci_bounds = {}  # nivel → (lo_arr, hi_arr) en kg para test
     for cl in CONF_LEVELS:
-        a_lo, a_hi = (1.0 - cl) / 2.0, 1.0 - (1.0 - cl) / 2.0
-        lo_m = grid_models[a_lo] if a_lo in grid_models else _fit_one(feat, cols, train_mask, a_lo)
-        hi_m = grid_models[a_hi] if a_hi in grid_models else _fit_one(feat, cols, train_mask, a_hi)
-        cqr = CQR(estimator=[lo_m, hi_m, median_model], confidence_level=cl, prefit=True)
-        cqr.conformalize(X_conf, y_conf_log)
-        _, iv = cqr.predict_interval(X_test)
-        lo = np.clip(np.expm1(iv[:, 0, 0]), 0.0, None)
-        hi = np.clip(np.expm1(iv[:, 1, 0]), 0.0, None)
+        alpha = 1.0 - cl
+        a_lo, a_hi = round(alpha / 2.0, 4), round(1.0 - alpha / 2.0, 4)
+        lo_log, hi_log = _mondrian_cqr(
+            conf_series,
+            test_series,
+            grid_log_conf[a_lo],
+            grid_log_conf[a_hi],
+            y_conf_log,
+            grid_log_test[a_lo],
+            grid_log_test[a_hi],
+            alpha,
+        )
+        lo = np.clip(np.expm1(lo_log), 0.0, None)
+        hi = np.clip(np.expm1(hi_log), 0.0, None)
         ci_bounds[cl] = (lo, hi)
+        # El ancho *medio* en kg no tiene sentido aquí: al exponenciar el espacio log unos pocos
+        # días pico inflan la media (media >> mediana). Se reporta la **mediana** (robusta).
         intervals[f"{cl:.2f}"] = {
             "nominal": cl,
             "coverage": round(coverage(y_test, lo, hi), 3),
-            "mean_width": round(mean_interval_width(lo, hi), 1),
+            "median_width": round(float(np.median(hi - lo)), 1),
         }
 
     # Cobertura condicional MHW vs no-MHW (usando el intervalo al 90%).
@@ -184,6 +257,7 @@ def main() -> None:
         per_series[label] = {
             "n_test": len(pos),
             "coverage_0.90": round(coverage(y_test[pos], lo90[pos], hi90[pos]), 3),
+            "median_width_0.90": round(float(np.median(hi90[pos] - lo90[pos])), 1),
             "crps": round(
                 crps_from_quantiles(y_test[pos], {q: p[pos] for q, p in grid_pred_kg.items()}), 2
             ),
@@ -214,12 +288,6 @@ def main() -> None:
     print(_console(summary))
 
 
-def _fit_one(feat, cols, mask, alpha):
-    m = _quantile_model(alpha)
-    m.fit(feat.loc[mask, cols], feat.loc[mask, "y_log"])
-    return m
-
-
 def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
     import matplotlib
 
@@ -242,7 +310,11 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
         ax.fill_between(ds, lo[pos], hi[pos], color=color, label=f"intervalo {int(cl * 100)}%")
     ax.plot(ds, median, color="#08519c", lw=1.2, label="mediana pronosticada")
     ax.scatter(ds, y_test[pos], s=8, color="#252525", label="observado", zorder=5)
-    ax.set_title(f"CQR — {FOCUS_SERIES} (test desde {CUT_DATE.date()})")
+    # La cota superior al 90% se dispara en días pico (expansión exponencial del espacio log);
+    # se recorta el eje para que observado/mediana/80% sean legibles (el 90% se sale por arriba).
+    obs_max = float(np.nanmax(y_test[pos])) if len(pos) else 1.0
+    ax.set_ylim(-0.05 * obs_max, max(3.0 * obs_max, 1.0))
+    ax.set_title(f"CQR — {FOCUS_SERIES} (test desde {CUT_DATE.date()}; eje y recortado a 3x el máx. observado)")
     ax.set_ylabel("captura diaria (kg)")
     ax.legend(loc="upper right", fontsize=8)
     fig.tight_layout()
@@ -254,19 +326,20 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
 def _console(s: dict) -> str:
     lines = ["", f"CQR intervalos calibrados (pool log1p), corte {s['cut_date']}:"]
     lines.append(f"  conformalización desde {s['conf_start']}, test n={s['n_test']}")
-    lines.append(f"\n  {'nominal':>8}{'cobertura':>11}{'ancho medio (kg)':>18}")
+    lines.append(f"\n  {'nominal':>8}{'cobertura':>11}{'ancho mediano (kg)':>20}")
     for _, iv in s["intervals"].items():
-        lines.append(f"  {iv['nominal']:>8.0%}{iv['coverage']:>11.1%}{iv['mean_width']:>18.1f}")
+        lines.append(f"  {iv['nominal']:>8.0%}{iv['coverage']:>11.1%}{iv['median_width']:>20.1f}")
     c = s["mhw_conditional_0.90"]
     lines.append(
         f"\n  cobertura 90% en MHW: {c['coverage_mhw']} ({c['n_mhw_days']} días) "
         f"vs no-MHW: {c['coverage_non_mhw']}"
     )
     lines.append(f"  CRPS global: {s['crps_overall']}")
-    lines.append("\n  cobertura 90% por serie:")
+    lines.append("\n  cobertura 90% por serie (ancho mediano kg):")
     for label, r in s["per_series"].items():
         lines.append(
-            f"    {label:<32}{r['coverage_0.90']:>7.1%}  (n={r['n_test']}, CRPS={r['crps']})"
+            f"    {label:<32}{r['coverage_0.90']:>7.1%}  (n={r['n_test']}, "
+            f"ancho~{r['median_width_0.90']}, CRPS={r['crps']})"
         )
     return "\n".join(lines)
 
@@ -276,14 +349,15 @@ def _write_summary(s: dict, out_path) -> None:
         "# Exp 4 — Pronóstico probabilístico con CQR",
         "",
         f"Corte **{s['cut_date']}**; conformalización desde **{s['conf_start']}**; test n={s['n_test']}. "
-        "Modelo: pool global sobre `log1p(y)` (Exp 3.2) envuelto en Conformalized Quantile "
-        "Regression (`mapie`), con regresores cuantílicos XGBoost en espacio log invertidos a kg.",
+        "Modelo: pool global sobre `log1p(y)` (Exp 3.2) con Conformalized Quantile Regression "
+        "**por serie (Mondrian)** en espacio log, invertida a kg. Se reporta el ancho **mediano** "
+        "(la media en kg la inflan unos pocos días pico al exponenciar el espacio log).",
         "",
-        "| intervalo nominal | cobertura empírica | ancho medio (kg) |",
+        "| intervalo nominal | cobertura empírica marginal | ancho mediano (kg) |",
         "|---|---|---|",
     ]
     for _, iv in s["intervals"].items():
-        rows.append(f"| {iv['nominal']:.0%} | {iv['coverage']:.1%} | {iv['mean_width']:.1f} |")
+        rows.append(f"| {iv['nominal']:.0%} | {iv['coverage']:.1%} | {iv['median_width']:.1f} |")
     c = s["mhw_conditional_0.90"]
     rows += [
         "",
@@ -294,11 +368,14 @@ def _write_summary(s: dict, out_path) -> None:
         "",
         f"**CRPS global**: {s['crps_overall']} (menor es mejor).",
         "",
-        "| serie (especie@UE) | n test | cobertura 90% | CRPS |",
-        "|---|---|---|---|",
+        "| serie (especie@UE) | n test | cobertura 90% | ancho mediano (kg) | CRPS |",
+        "|---|---|---|---|---|",
     ]
     for label, r in s["per_series"].items():
-        rows.append(f"| {label} | {r['n_test']} | {r['coverage_0.90']:.1%} | {r['crps']} |")
+        rows.append(
+            f"| {label} | {r['n_test']} | {r['coverage_0.90']:.1%} | "
+            f"{r['median_width_0.90']} | {r['crps']} |"
+        )
     rows += [
         "",
         "> Figura: `reports/figures/exp4_cqr_fan_chart.png` (bandas 80/90% + mediana + observado "

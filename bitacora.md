@@ -1059,3 +1059,34 @@ pocos días de train → stats ruidosas).
 confound de escala; **la transformación correcta es `log1p(y)`**, no el z-score. Este es el modelo
 global a llevar a producción/CQR. Artefactos: `reports/metrics/exp3_pooled_ynorm_2020-07-01.json`,
 `reports/exp3_pooled_ynorm_summary.md`. ruff limpio; sin cambios en `src/` (tests 104/104 intactos).
+
+## 2026-07-21 — Fase 4: pronóstico probabilístico con CQR (intervalos calibrados)
+
+`experiments/exp4_cqr/cqr_intervals.py`. Envuelve el modelo global `pooled_log` (Exp 3.2) en una
+**Conformalized Quantile Regression**: regresores cuantílicos XGBoost (`reg:quantileerror`) en
+espacio log + corrección conformal split. Partición temporal estricta: proper-train (más antiguo)
+| conformalización (último 25% pre-corte, desde 2019-08-15) | test (≥ 2020-07-01). Métricas nuevas
+en `evaluation/metrics.py` (con tests): `coverage`, `mean_interval_width`, `pinball_loss`,
+`crps_from_quantiles`.
+
+**Dos decisiones de diseño (aprendidas corrigiendo bugs):** (1) **conformalizar en espacio log,
+no en kg** — la corrección aditiva en log es multiplicativa en kg, así escala por serie (un solo
+`Q` en kg lo fijaba langosta e inflaba abulón); (2) **Mondrian (un `Q` por serie)** — es el
+análogo conformal de la normalización de `y` de Exp 3.2. Además se reordenan los cuantiles por fila
+(rearrangement) para quitar el cruce de regresores independientes → intervalos **anidados**. Se
+prefirió CQR propia sobre `mapie` (1.3) porque `mapie` con modelos cuantílicos prefit + inversión
+`expm1` daba intervalos **no anidados** (80% más ancho que 90%).
+
+Resultados (corte 2020-07-01): cobertura marginal **80%→94.1%, 90%→97.5%** (conservador, sobre-
+cubre). **Cobertura condicional durante MHW (int. 90%): 0.987 (313 días) vs 0.973 fuera** — el
+intervalo **se mantiene honesto en las temporadas anómalas** que rompieron el modelo puntual (no
+pierde calibración post-MHW). Por serie (cob. 90% / ancho mediano kg / CRPS): abulón
+99.2-99.5% / ~4 / <1; langosta@Cedros **91.9%** / ~21 / 542; langosta@SQ 99.5% / ~23 / 329. Todas
+≥ nominal. **Limitación honesta:** los intervalos **sobre-cubren y son anchos** (la cota superior
+al 90% se dispara en días pico por la expansión exponencial del log + conservadurismo conformal con
+pocas temporadas + shift conf→test que cruza el crash post-MHW). Artefactos:
+`reports/metrics/exp4_cqr_2020-07-01.json`, `reports/exp4_cqr_summary.md`,
+`reports/figures/exp4_cqr_fan_chart.png` (fan chart langosta@SQ, eje recortado 3x máx observado).
+ruff limpio, **tests 109/109** (+5 métricas probabilísticas). **Próximo:** calibración más fina
+(conformal adaptativo/normalizado, más datos de conformalización) para reducir el ancho sin perder
+cobertura; entregar a COBI el rango por temporada.
