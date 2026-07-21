@@ -193,3 +193,38 @@ def test_transform_deduplicates_across_files(sample_csv: Path) -> None:
     assert len(df) == 4  # mismas 4 combinaciones (ds, species, ue)
     lobster = df[(df["species"] == "lobster_red") & (df["ds"] == date(2024, 11, 15))]
     assert lobster["y"].iloc[0] == pytest.approx(401.0)  # 200.5 sumado dos veces
+
+
+def test_read_source_csv_autodetects_header_with_two_line_preamble(tmp_path: Path) -> None:
+    # Los AVISOS COSECHA de CONAPESCA traen 2 líneas de título (no 4); el header debe
+    # autodetectarse buscando la columna de UE, sin importar el preámbulo del dialecto.
+    csv = tmp_path / "cosecha_variable_preamble.csv"
+    csv.write_text(
+        "PRODUCCION PESQUERA (CORTE DIC),,,\n"
+        "(disclaimer),,,\n"
+        "UNIDAD ECONOMICA,NOMBRE ESPECIE,PERIODO FIN,PESO DESEMBARCADO_KILOGRAMOS\n"
+        "LITORAL DE BAJA CALIFORNIA S DE PR DE RL,LANGOSTA ROJA ENT. FCA.,15/11/2022,10.0\n",
+        encoding="iso-8859-1",
+    )
+    raw = read_source_csv(csv, CONAPESCA_DIALECT)  # dialecto dice preamble=4, hay 2
+    assert len(raw) == 1
+    assert {"UNIDAD ECONOMICA", "NOMBRE ESPECIE", "PERIODO FIN"} <= set(raw.columns)
+
+
+def test_clean_arribos_date_range_filter(sample_csv: Path) -> None:
+    raw = read_conapesca_csv(sample_csv)
+    common = dict(
+        species_lookup=build_species_lookup(
+            yaml.safe_load(SPECIES_MAPPING.read_text(encoding="utf-8"))
+        ),
+        ue_lookup=build_ue_lookup(yaml.safe_load(ECONOMIC_UNITS.read_text(encoding="utf-8"))),
+        keep_units=["litoral_bc_sur"],
+    )
+    # El sample tiene langosta el 15/11/2024 y abulón el 10-11/03/2024.
+    only_nov = clean_arribos(raw, date_min="2024-11-01", **common)
+    assert (only_nov["ds"] >= date(2024, 11, 1)).all()
+    assert set(only_nov["species"]) == {"lobster_red"}  # el abulón de marzo queda fuera
+
+    up_to_mar = clean_arribos(raw, date_max="2024-03-31", **common)
+    assert (up_to_mar["ds"] <= date(2024, 3, 31)).all()
+    assert "lobster_red" not in set(up_to_mar["species"])  # la langosta de nov queda fuera
