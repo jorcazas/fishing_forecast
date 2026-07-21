@@ -20,8 +20,14 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
 2. **Fase 5 (opcional) — TFT**: prueba de techo; ADR de justificación + `pytorch-forecasting`/`darts`.
 3. **Endurecer `pooled_log`** (Fase 3 residual): Optuna sobre el pool log; investigar por qué
    langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
-4. **Más datos** (mayor palanca real, según Exp 2/2.3): más UEs (El Rosario/Ensenada, en
-   `economic_units.yaml`, confirmar bboxes) y más temporadas; unión CONAPESCA+COBI.
+4. **Más datos** (mayor palanca real): **clúster El Rosario AÑADIDO (2026-07-21)** — 5
+   cooperativas de langosta (SCPP Ensenada, Mortera de Leyva, El Chute, Regasa, Isla San Gerónimo),
+   langosta pasa de 2 a **7 series**. Impacto: langosta@SQ RMSE 659→313 (pooled), CQR marginal 90%
+   86%→93%, ancho p90 9776→3812 kg. **Pendiente**: (a) **más temporadas** (2022-2025) — **bloqueado**:
+   el export COBI termina en 2021, hay que conseguir datos nuevos (COBI no disponible); es lo único
+   que arregla la sub-cobertura de langosta@SQ en el crash. (b) clústers Ensenada (~31.8°N) y
+   Vizcaíno/central (El Tomatal, Punta Canoas) — más UEs pero fuera del clúster El Rosario. (c)
+   unión CONAPESCA+COBI. (d) reflejar las 7 series de langosta en la tesis (hoy documenta 2 UEs).
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
 6. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
 7. **Higiene heredada** del borrador (§6) y fix natbib/latexmk (error author-year no fatal a
