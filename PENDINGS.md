@@ -8,10 +8,13 @@ actualización: **2026-07-21**.
 
 Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que queda:
 
-1. **Afinar CQR (Fase 4 residual)**: la CQR ya corre y calibra (Exp 4), pero **sobre-cubre y
-   los intervalos son anchos** (cota sup. 90% se dispara en días pico). Reducir ancho sin perder
-   cobertura: conformal **normalizado/adaptativo** (escalar el score por una estimación de
-   dispersión), más datos de conformalización, o cuantiles-objetivo internos más apretados.
+1. **Cuantiles base más apretados (Fase 4 residual)**: la CQR ya está **calibrada** (Exp 4 +
+   afinado 2026-07-21: calibrar en temporada bajó la cobertura de 97.5% a ~86% en el nivel 90%,
+   cerca de nominal; el conformal `normalized` mejora un poco a `split`). Lo que queda ancho es la
+   **cota superior en días pico**, y eso lo fija el **modelo cuantílico base** (q0.95 en log +
+   `expm1`), no el conformal → afinar requiere mejores cuantiles/más datos (regularizar, Optuna
+   sobre los cuantílicos, o más temporadas), no otro envoltorio conformal. Además: leve
+   sub-cobertura (86%<90%) por shift conf→test (el test cruza el crash post-MHW).
 2. **Fase 5 (opcional) — TFT**: prueba de techo; ADR de justificación + `pytorch-forecasting`/`darts`.
 3. **Endurecer `pooled_log`** (Fase 3 residual): Optuna sobre el pool log; investigar por qué
    langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
@@ -215,11 +218,12 @@ Resumen de lo que queda; detalle completo en `PLAN.md`.
 - [x] **Fase 4 — CQR (intervalos calibrados)**: **hecho (2026-07-21)**, `experiments/exp4_cqr/`.
   CQR sobre `pooled_log` (Exp 3.2): cuantiles XGBoost en log + conformal split **Mondrian (por
   serie)**, invertido a kg. Métricas nuevas en `metrics.py` (coverage, pinball, CRPS; con tests).
-  Cobertura marginal 80%→94.1%, 90%→97.5% (conservador); **condicional MHW 0.987 vs 0.973 fuera**
-  (se mantiene honesto en el régimen anómalo); por serie todas ≥ nominal. **Residual (ver arriba,
-  #1)**: sobre-cubre / intervalos anchos → afinar con conformal normalizado/adaptativo + más datos.
-  Nota: se implementó CQR propia (no `mapie`) porque `mapie` 1.3 con cuantiles prefit + `expm1`
-  daba intervalos no anidados.
+  **Afinado (2026-07-21)**: calibrar **solo en temporada** (los días fuera fijaban `Q`=0) llevó la
+  cobertura de 97.5% a **~86% (nivel 90%) / ~81% (80%)**, cerca de nominal; se añadió la variante
+  conformal **normalized** (adaptativa) que mejora un poco a `split`. Condicional MHW 0.891 vs
+  0.854 fuera (honesto). **Residual (ver arriba, #1)**: el ancho en días pico lo fija el cuantil
+  base, no el conformal. Nota: CQR propia (no `mapie`) porque `mapie` 1.3 con cuantiles prefit +
+  `expm1` daba intervalos no anidados.
 - [ ] **Fase 5 (opcional) — TFT**: ADR de justificación + `pytorch-forecasting`/`darts`.
 
 ---

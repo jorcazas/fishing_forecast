@@ -1090,3 +1090,27 @@ pocas temporadas + shift conf→test que cruza el crash post-MHW). Artefactos:
 ruff limpio, **tests 109/109** (+5 métricas probabilísticas). **Próximo:** calibración más fina
 (conformal adaptativo/normalizado, más datos de conformalización) para reducir el ancho sin perder
 cobertura; entregar a COBI el rango por temporada.
+
+## 2026-07-21 (tarde) — Afinar la CQR: calibrar en temporada + conformal normalizado
+
+Objetivo: corregir la **sobre-cobertura** de Exp 4 (90% nominal → 97.5% empírico, intervalos
+anchos). Añadí a `exp4_cqr`: (1) variante **normalized**
+(localmente adaptativa, ensanche ∝ ancho base del intervalo) además de la `split` (constante),
+comparadas lado a lado; (2) **conformalización solo en temporada**.
+
+**Diagnóstico clave (por qué normalized *sola* no cambiaba nada):** el cuantil conformal `Q` salía
+**exactamente 0** en todas las series → la corrección era nula y split==normalized. Causa: el set
+de conformalización estaba dominado por **días fuera de temporada** (captura 0, cuantiles base ≈ 0,
+score de conformidad = 0); esa masa de ceros fijaba el percentil-90 de los scores en 0. La
+cobertura base de los cuantiles XGBoost ya era 93-100% (sobre-dispersos), así que el conformal no
+tenía nada que ensanchar.
+
+**Fix:** calibrar **solo en días en temporada** (`in_season==1`). Resultado: la cobertura pasó de
+97.5% (muy conservadora) a **~86% (90% nominal) / ~81% (80% nominal)** — cerca de lo nominal — y
+**normalized ahora sí mejora a split** (90%: cobertura 85.9% vs 84.9%; ancho p90 80%: 2249 vs 2440
+kg, mantiene angostos los días fuera de temporada). MHW-condicional 0.891 (en MHW) vs 0.854 (fuera)
+— honesto y cerca de nominal. Queda una **leve sub-cobertura** (86% < 90%) atribuible al shift
+conf→test (el test cruza el crash post-MHW 2021-22, catches bajos). **El ancho grande en días pico
+lo fija el modelo cuantílico base (q0.95 en log + expm1), no el conformal** → afinar más requiere
+mejores cuantiles/más datos, no otro envoltorio conformal. Artefactos regenerados
+(`exp4_cqr_*`). ruff limpio, tests 109/109.

@@ -12,10 +12,15 @@ anidamiento y calibración por serie, en línea con la normalización de `y` de 
 Partición temporal estricta (sin leakage):
 - **test**: `ds >= CUT_DATE` (2020-07-01, corte canónico).
 - dentro de train: **proper-train** (más antiguo) + **conformalización** (el `CONF_FRAC` final
-  de fechas pre-corte) — la calibración conformal solo ve datos anteriores al test.
+  de fechas pre-corte, **solo días en temporada**) — la calibración solo ve datos anteriores al
+  test. Se calibra en temporada porque los días fuera (captura 0, cuantiles ≈ 0) tienen score
+  conformal 0 y, siendo mayoría, anulaban la corrección (fijaban `Q`=0).
 
-Métricas (CLAUDE.md Fase 4): cobertura empírica vs nominal (80/90%), ancho medio de intervalo,
-CRPS (descomposición pinball sobre rejilla de cuantiles), y **cobertura condicional durante MHW**
+Se comparan dos variantes conformal: `split` (corrección constante) y `normalized` (localmente
+adaptativa, ensanche ∝ dispersión local) — la normalizada es la de producción.
+
+Métricas (CLAUDE.md Fase 4): cobertura empírica vs nominal (80/90%), ancho de intervalo, CRPS
+(descomposición pinball sobre rejilla de cuantiles), y **cobertura condicional durante MHW**
 (¿el intervalo se mantiene honesto en las temporadas anómalas que rompieron el modelo puntual?).
 
 Uso:
@@ -113,6 +118,14 @@ def _mhw_mask(test: pd.DataFrame) -> np.ndarray:
     return test["mhw_now"].fillna(0).to_numpy() >= 1
 
 
+def _conformal_quantile(scores: np.ndarray, alpha: float) -> float:
+    """Cuantil conformal finito-muestral `ceil((n+1)(1-alpha))/n` de los scores."""
+    n = len(scores)
+    k = int(np.ceil((n + 1) * (1.0 - alpha)))
+    k = min(max(k, 1), n)
+    return float(np.sort(scores)[k - 1])
+
+
 def _split_cqr(
     lo_conf: np.ndarray,
     hi_conf: np.ndarray,
@@ -120,19 +133,31 @@ def _split_cqr(
     lo_test: np.ndarray,
     hi_test: np.ndarray,
     alpha: float,
+    *,
+    normalize: bool = False,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Split-CQR (Romano et al. 2019): ajusta las cotas cuantílicas con la corrección conformal.
 
     Trabaja en la escala en que se le pasan las cotas (aquí, espacio log). El score de
     conformidad es `E_i = max(lo(x_i) - y_i, y_i - hi(x_i))`; se toma el cuantil finito-muestral
-    `ceil((n+1)(1-alpha))/n` de los scores y se ensancha simétricamente. Garantiza cobertura
-    marginal >= 1-alpha e intervalos **anidados** entre niveles (alpha mayor → Q menor).
+    `ceil((n+1)(1-alpha))/n` y se ensancha simétricamente. Garantiza cobertura marginal
+    >= 1-alpha e intervalos **anidados** entre niveles (alpha mayor → Q menor).
+
+    Con `normalize=True` (CQR **localmente adaptativo**): el score se divide por el ancho base
+    del intervalo `w = hi - lo` (con un piso), y el ensanchamiento en test es `Q · w(x)`. Así el
+    ensanche es **proporcional a la incertidumbre local** en vez de una constante — estrecha los
+    días de baja dispersión (fuera de temporada) y evita que una constante infle todo por igual.
     """
+    if normalize:
+        w_conf = hi_conf - lo_conf
+        floor = max(1e-3, 0.1 * float(np.median(w_conf)))  # evita dividir entre ~0
+        w_conf = np.maximum(w_conf, floor)
+        scores = np.maximum(lo_conf - y_conf, y_conf - hi_conf) / w_conf
+        q = _conformal_quantile(scores, alpha)
+        w_test = np.maximum(hi_test - lo_test, floor)
+        return lo_test - q * w_test, hi_test + q * w_test
     scores = np.maximum(lo_conf - y_conf, y_conf - hi_conf)
-    n = len(scores)
-    k = int(np.ceil((n + 1) * (1.0 - alpha)))
-    k = min(max(k, 1), n)  # clip al rango válido
-    q = np.sort(scores)[k - 1]
+    q = _conformal_quantile(scores, alpha)
     return lo_test - q, hi_test + q
 
 
@@ -145,12 +170,15 @@ def _mondrian_cqr(
     lo_test: np.ndarray,
     hi_test: np.ndarray,
     alpha: float,
+    *,
+    normalize: bool = False,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Split-CQR **por serie** (Mondrian): una corrección conformal por `(especie, UE)`.
 
     Un único `Q` global lo fija la serie peor calibrada y, al invertir el log, infla las series
     de gran escala (langosta). Calibrar por serie da cobertura ~nominal *dentro* de cada serie y
     anchos acordes a su escala — el análogo conformal de la normalización de `y` de Exp 3.2.
+    `normalize` propaga la variante localmente adaptativa a cada serie.
     """
     lo_out = np.empty_like(lo_test, dtype=float)
     hi_out = np.empty_like(hi_test, dtype=float)
@@ -160,7 +188,7 @@ def _mondrian_cqr(
             lo_out[t], hi_out[t] = lo_test[t], hi_test[t]
             continue
         lo_out[t], hi_out[t] = _split_cqr(
-            lo_conf[c], hi_conf[c], y_conf[c], lo_test[t], hi_test[t], alpha
+            lo_conf[c], hi_conf[c], y_conf[c], lo_test[t], hi_test[t], alpha, normalize=normalize
         )
     return lo_out, hi_out
 
@@ -182,13 +210,17 @@ def main() -> None:
     feat["y_log"] = np.log1p(feat["y"])
 
     # Partición temporal: proper-train | conformalización | test.
+    # La conformalización se restringe a días **en temporada**: los días fuera de temporada
+    # (captura 0, cuantiles base ≈ 0) tienen score de conformidad exactamente 0 y, al ser mayoría,
+    # fijaban el cuantil conformal en 0 (la corrección quedaba anulada). Calibrar solo en
+    # temporada hace que `Q` refleje los días de captura, que son los que importan.
     pre_cut = feat[feat["ds"] < CUT_DATE]
     conf_start = pre_cut["ds"].quantile(1.0 - CONF_FRAC)
     train_mask = feat["ds"] < conf_start
-    conf_mask = (feat["ds"] >= conf_start) & (feat["ds"] < CUT_DATE)
+    conf_mask = (feat["ds"] >= conf_start) & (feat["ds"] < CUT_DATE) & (feat["in_season"] == 1)
     test = feat[feat["ds"] >= CUT_DATE].copy()
     logger.info(
-        f"proper-train={int(train_mask.sum())}, conf={int(conf_mask.sum())} "
+        f"proper-train={int(train_mask.sum())}, conf(en temporada)={int(conf_mask.sum())} "
         f"(desde {conf_start.date()}), test={len(test)}, features={len(cols)}"
     )
 
@@ -211,11 +243,11 @@ def main() -> None:
     crps_overall = crps_from_quantiles(y_test, grid_pred_kg)
 
     # CQR por nivel, **conformalizando en espacio log y por serie (Mondrian)**: la corrección
-    # es aditiva en log = multiplicativa en kg, y separada por `(especie, UE)` para que la escala
-    # de langosta no infle a abulón. Se invierten las cotas con expm1 (monótona).
-    intervals: dict[str, dict] = {}
-    ci_bounds = {}  # nivel → (lo_arr, hi_arr) en kg para test
-    for cl in CONF_LEVELS:
+    # es aditiva en log = multiplicativa en kg, y separada por `(especie, UE)`. Se comparan dos
+    # variantes: `split` (constante, ensancha todo por igual → sobre-cubre e infla días pico) y
+    # `normalized` (adaptativa, ensanche ∝ dispersión local). La normalizada es la de producción.
+    # Se invierten las cotas con expm1 (monótona → intervalos anidados).
+    def _interval(cl: float, normalize: bool):
         alpha = 1.0 - cl
         a_lo, a_hi = round(alpha / 2.0, 4), round(1.0 - alpha / 2.0, 4)
         lo_log, hi_log = _mondrian_cqr(
@@ -227,19 +259,31 @@ def main() -> None:
             grid_log_test[a_lo],
             grid_log_test[a_hi],
             alpha,
+            normalize=normalize,
         )
-        lo = np.clip(np.expm1(lo_log), 0.0, None)
-        hi = np.clip(np.expm1(hi_log), 0.0, None)
-        ci_bounds[cl] = (lo, hi)
-        # El ancho *medio* en kg no tiene sentido aquí: al exponenciar el espacio log unos pocos
-        # días pico inflan la media (media >> mediana). Se reporta la **mediana** (robusta).
-        intervals[f"{cl:.2f}"] = {
-            "nominal": cl,
-            "coverage": round(coverage(y_test, lo, hi), 3),
-            "median_width": round(float(np.median(hi - lo)), 1),
-        }
+        return np.clip(np.expm1(lo_log), 0.0, None), np.clip(np.expm1(hi_log), 0.0, None)
 
-    # Cobertura condicional MHW vs no-MHW (usando el intervalo al 90%).
+    # El ancho *medio* en kg no aplica (al exponenciar el log unos pocos días pico inflan la
+    # media ≫ mediana); se reporta la **mediana** (robusta).
+    methods = {"split": False, "normalized": True}
+    method_intervals: dict[str, dict] = {m: {} for m in methods}
+    prod_bounds = {}  # nivel → (lo, hi) del método de producción (normalized)
+    for cl in CONF_LEVELS:
+        for name, norm in methods.items():
+            lo, hi = _interval(cl, norm)
+            width = hi - lo
+            method_intervals[name][f"{cl:.2f}"] = {
+                "nominal": cl,
+                "coverage": round(coverage(y_test, lo, hi), 3),
+                "median_width": round(float(np.median(width)), 1),
+                "p90_width": round(float(np.percentile(width, 90)), 1),  # días pico
+            }
+            if norm:
+                prod_bounds[cl] = (lo, hi)
+    intervals = method_intervals["normalized"]  # producción
+    ci_bounds = prod_bounds
+
+    # Cobertura condicional MHW vs no-MHW (usando el intervalo al 90% de producción).
     mhw = _mhw_mask(test)
     lo90, hi90 = ci_bounds[0.90]
     cond = {
@@ -269,6 +313,7 @@ def main() -> None:
         "n_test": len(test),
         "crps_overall": round(crps_overall, 2),
         "intervals": intervals,
+        "method_comparison": method_intervals,
         "mhw_conditional_0.90": cond,
         "per_series": per_series,
     }
@@ -314,7 +359,9 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
     # se recorta el eje para que observado/mediana/80% sean legibles (el 90% se sale por arriba).
     obs_max = float(np.nanmax(y_test[pos])) if len(pos) else 1.0
     ax.set_ylim(-0.05 * obs_max, max(3.0 * obs_max, 1.0))
-    ax.set_title(f"CQR — {FOCUS_SERIES} (test desde {CUT_DATE.date()}; eje y recortado a 3x el máx. observado)")
+    ax.set_title(
+        f"CQR — {FOCUS_SERIES} (test desde {CUT_DATE.date()}; eje y recortado a 3x el máx. observado)"
+    )
     ax.set_ylabel("captura diaria (kg)")
     ax.legend(loc="upper right", fontsize=8)
     fig.tight_layout()
@@ -326,9 +373,16 @@ def _fan_chart(test, y_test, grid_pred_kg, ci_bounds, out_path) -> None:
 def _console(s: dict) -> str:
     lines = ["", f"CQR intervalos calibrados (pool log1p), corte {s['cut_date']}:"]
     lines.append(f"  conformalización desde {s['conf_start']}, test n={s['n_test']}")
-    lines.append(f"\n  {'nominal':>8}{'cobertura':>11}{'ancho mediano (kg)':>20}")
-    for _, iv in s["intervals"].items():
-        lines.append(f"  {iv['nominal']:>8.0%}{iv['coverage']:>11.1%}{iv['median_width']:>20.1f}")
+    lines.append(
+        f"\n  {'método':>11}{'nominal':>9}{'cobertura':>11}{'ancho med.':>12}{'ancho p90':>12}"
+    )
+    for name, ivs in s["method_comparison"].items():
+        for _, iv in ivs.items():
+            lines.append(
+                f"  {name:>11}{iv['nominal']:>9.0%}{iv['coverage']:>11.1%}"
+                f"{iv['median_width']:>12.1f}{iv['p90_width']:>12.1f}"
+            )
+    lines.append("  (producción = normalized; ancho en kg)")
     c = s["mhw_conditional_0.90"]
     lines.append(
         f"\n  cobertura 90% en MHW: {c['coverage_mhw']} ({c['n_mhw_days']} días) "
@@ -353,11 +407,17 @@ def _write_summary(s: dict, out_path) -> None:
         "**por serie (Mondrian)** en espacio log, invertida a kg. Se reporta el ancho **mediano** "
         "(la media en kg la inflan unos pocos días pico al exponenciar el espacio log).",
         "",
-        "| intervalo nominal | cobertura empírica marginal | ancho mediano (kg) |",
-        "|---|---|---|",
+        "**Comparación de métodos conformal** (`split` = corrección constante; `normalized` = "
+        "adaptativa, ensanche ∝ dispersión local; producción = normalized):",
+        "",
+        "| método | nominal | cobertura marginal | ancho mediano (kg) |",
+        "|---|---|---|---|",
     ]
-    for _, iv in s["intervals"].items():
-        rows.append(f"| {iv['nominal']:.0%} | {iv['coverage']:.1%} | {iv['median_width']:.1f} |")
+    for name, ivs in s["method_comparison"].items():
+        for _, iv in ivs.items():
+            rows.append(
+                f"| {name} | {iv['nominal']:.0%} | {iv['coverage']:.1%} | {iv['median_width']:.1f} |"
+            )
     c = s["mhw_conditional_0.90"]
     rows += [
         "",
