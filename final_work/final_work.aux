@@ -14,16 +14,16 @@
 \citation{villasenor2024}
 \citation{hobday2016}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Metodología}{4}{section.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Selección de modelos y sus características}}{4}{table.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}}{5}{figure.1}\protected@file@percent }
-\newlabel{fig:enter-label}{{1}{5}{División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}{figure.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Datos}{6}{section.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Selección de modelos y sus características}}{5}{table.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}}{6}{figure.1}\protected@file@percent }
+\newlabel{fig:enter-label}{{1}{6}{División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Datos}{7}{section.4}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces ETL de datos de GlobColour y COBI}}{7}{figure.2}\protected@file@percent }
 \newlabel{fig:enter-label}{{2}{7}{ETL de datos de GlobColour y COBI}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}}{7}{figure.3}\protected@file@percent }
-\newlabel{fig:enter-label}{{3}{7}{Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}{figure.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}}{8}{figure.4}\protected@file@percent }
-\newlabel{fig:enter-label}{{4}{8}{Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}}{8}{figure.3}\protected@file@percent }
+\newlabel{fig:enter-label}{{3}{8}{Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}}{9}{figure.4}\protected@file@percent }
+\newlabel{fig:enter-label}{{4}{9}{Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}{figure.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Resultados}{10}{section.5}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Modelos seleccionados y su composición}}{10}{table.2}\protected@file@percent }
 \newlabel{tab:catch_comparison}{{2}{10}{Modelos seleccionados y su composición}{table.2}{}}
@@ -43,51 +43,57 @@
 \citation{villasenor2024}
 \citation{villasenor2024}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Índice de olas de calor marinas (MHW)}{13}{subsection.6.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Serie diaria de SST en el bbox de San Quintín (negro) contra su climatología (azul continuo) y el umbral del percentil 90 (azul discontinuo), con baseline 1982-2011 (Hobday et al. 2016). Las áreas sombreadas marcan los eventos de ola de calor marina. Destacan el ``Blob'' de 2014-2016 y el régimen cálido de 2019-2021 que precede al colapso de la captura de langosta de la temporada 2021-2022.}}{13}{figure.5}\protected@file@percent }
+\newlabel{fig:mhw_timeline}{{5}{13}{Serie diaria de SST en el bbox de San Quintín (negro) contra su climatología (azul continuo) y el umbral del percentil 90 (azul discontinuo), con baseline 1982-2011 (Hobday et al. 2016). Las áreas sombreadas marcan los eventos de ola de calor marina. Destacan el ``Blob'' de 2014-2016 y el régimen cálido de 2019-2021 que precede al colapso de la captura de langosta de la temporada 2021-2022}{figure.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3}El bache de la temporada 2021-2022 se explica por olas de calor}{13}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Re-entrenamiento del baseline y modelo con covariables}{13}{subsection.6.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Baseline re-derivado sobre datos reales y modelo con covariables SST/MHW. Todos sobreestiman fuertemente la temporada del bache (2021-2022).}}{13}{table.6}\protected@file@percent }
-\newlabel{tab:extension_floor}{{6}{13}{Baseline re-derivado sobre datos reales y modelo con covariables SST/MHW. Todos sobreestiman fuertemente la temporada del bache (2021-2022)}{table.6}{}}
-\citation{lundberg2017}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Re-entrenamiento del baseline y modelo con covariables}{14}{subsection.6.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Baseline re-derivado sobre datos reales y modelo con covariables SST/MHW. Todos sobreestiman fuertemente la temporada del bache (2021-2022).}}{14}{table.6}\protected@file@percent }
+\newlabel{tab:extension_floor}{{6}{14}{Baseline re-derivado sobre datos reales y modelo con covariables SST/MHW. Todos sobreestiman fuertemente la temporada del bache (2021-2022)}{table.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Color del océano y selección de variables con SHAP}{14}{subsection.6.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020). Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: el cuello de botella no es \emph  {cuáles} variables se usan, sino el volumen de datos.}}{14}{table.7}\protected@file@percent }
-\newlabel{tab:extension_shap}{{7}{14}{Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020). Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: el cuello de botella no es \emph {cuáles} variables se usan, sino el volumen de datos}{table.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Modelo global multi-especie y multi-unidad económica}{14}{subsection.6.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series.}}{15}{table.8}\protected@file@percent }
-\newlabel{tab:extension_global}{{8}{15}{Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series}{table.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Normalización de la variable objetivo por serie}{15}{subsection.6.7}\protected@file@percent }
-\citation{romano2019}
+\citation{lundberg2017}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020). Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: el cuello de botella no es \emph  {cuáles} variables se usan, sino el volumen de datos.}}{15}{table.7}\protected@file@percent }
+\newlabel{tab:extension_shap}{{7}{15}{Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020). Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: el cuello de botella no es \emph {cuáles} variables se usan, sino el volumen de datos}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Modelo global multi-especie y multi-unidad económica}{15}{subsection.6.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series.}}{16}{table.8}\protected@file@percent }
+\newlabel{tab:extension_global}{{8}{16}{Modelo global vs. modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series}{table.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Normalización de la variable objetivo por serie}{16}{subsection.6.7}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log  (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila.}}{16}{table.9}\protected@file@percent }
 \newlabel{tab:extension_ynorm}{{9}{16}{Pooling con la variable objetivo normalizada por serie vs. modelos específicos (RMSE diario, kg, tras invertir la transformación). El pooling sobre $\log (1+y)$ gana o empata en 4 de 5 series; la estandarización por serie ($z$-score, no mostrada) resulta inferior (1 de 5). En negrita, la mejor de cada fila}{table.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Pronóstico probabilístico con regresión cuantílica conformalizada}{16}{subsection.6.8}\protected@file@percent }
+\citation{romano2019}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Pronóstico probabilístico con regresión cuantílica conformalizada}{17}{subsection.6.8}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Cobertura empírica de la CQR (modelo global $\log  (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas.}}{17}{table.10}\protected@file@percent }
 \newlabel{tab:extension_cqr}{{10}{17}{Cobertura empírica de la CQR (modelo global $\log (1+y)$, por serie, calibrada en temporada; corte 01-julio-2020). Cercana al nivel nominal y estable durante olas de calor marinas}{table.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}La hipótesis de datos, puesta a prueba: más unidades y más temporadas}{17}{subsection.6.9}\protected@file@percent }
-\newlabel{sec:extension_moredata}{{6.9}{17}{}{subsection.6.9}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Efecto de mover el corte de prueba para incluir las temporadas 2022-2026 (union COBI+CONAPESCA) en el entrenamiento y la calibración. La langosta de San Quintín pasa de sub-cubrir gravemente a quedar bien calibrada; la cobertura durante olas de calor se mantiene cerca del nominal. El CRPS global aumenta porque el conjunto de prueba de 2024 concentra las temporadas de recuperación, intrínsecamente más difíciles.}}{18}{table.11}\protected@file@percent }
-\newlabel{tab:extension_moredata}{{11}{18}{Efecto de mover el corte de prueba para incluir las temporadas 2022-2026 (union COBI+CONAPESCA) en el entrenamiento y la calibración. La langosta de San Quintín pasa de sub-cubrir gravemente a quedar bien calibrada; la cobertura durante olas de calor se mantiene cerca del nominal. El CRPS global aumenta porque el conjunto de prueba de 2024 concentra las temporadas de recuperación, intrínsecamente más difíciles}{table.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.10}Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}{18}{subsection.6.10}\protected@file@percent }
-\newlabel{sec:extension_comparativa}{{6.10}{18}{}{subsection.6.10}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Modelos puntuales de langosta $\times $ San Quintín re-entrenados sobre el conjunto unido 2017-2026, en los dos cortes de prueba (MAE, RMSE y sMAPE diarios, kg). En negrita, el mejor modelo de cada corte. Pasar de 3 a 7 temporadas de entrenamiento reduce el error diario a aproximadamente la mitad en todos los modelos.}}{19}{table.12}\protected@file@percent }
-\newlabel{tab:extension_comparativa}{{12}{19}{Modelos puntuales de langosta $\times $ San Quintín re-entrenados sobre el conjunto unido 2017-2026, en los dos cortes de prueba (MAE, RMSE y sMAPE diarios, kg). En negrita, el mejor modelo de cada corte. Pasar de 3 a 7 temporadas de entrenamiento reduce el error diario a aproximadamente la mitad en todos los modelos}{table.12}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusión}{19}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}La hipótesis de datos, puesta a prueba: más unidades y más temporadas}{18}{subsection.6.9}\protected@file@percent }
+\newlabel{sec:extension_moredata}{{6.9}{18}{}{subsection.6.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Estabilidad de la calibración de la langosta de San Quintín según el corte de prueba y la composición del pool. Con el bache \emph  {fuera} del entrenamiento (corte 2020) la cobertura por serie oscila entre 40.6\% y 99.8\% según cuántas series haya en el pool ---no es fiable en ninguna dirección---; con el bache \emph  {dentro} (corte 2024) es estable en torno al 96\% independientemente del pool. El CRPS es mayor en el corte de 2024 porque su conjunto de prueba concentra las temporadas recientes de baja captura, intrínsecamente más difíciles.}}{18}{table.11}\protected@file@percent }
+\newlabel{tab:extension_moredata}{{11}{18}{Estabilidad de la calibración de la langosta de San Quintín según el corte de prueba y la composición del pool. Con el bache \emph {fuera} del entrenamiento (corte 2020) la cobertura por serie oscila entre 40.6\% y 99.8\% según cuántas series haya en el pool ---no es fiable en ninguna dirección---; con el bache \emph {dentro} (corte 2024) es estable en torno al 96\% independientemente del pool. El CRPS es mayor en el corte de 2024 porque su conjunto de prueba concentra las temporadas recientes de baja captura, intrínsecamente más difíciles}{table.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Intervalos de la CQR (bandas 80\% y 90\% + mediana) frente al observado (puntos) para las diez series de langosta, en el corte 01-junio-2024. Con el bache post-ola-de-calor dentro del entrenamiento y la calibración, el observado cae dentro de las bandas de forma consistente (cobertura empírica anotada por panel, 93--100\%), incluida la langosta de San Quintín (96.2\%). El eje $y$ de cada panel se recorta a 3$\times $ su máximo observado, pues la cota superior del 90\% se dispara en los días pico al invertir la transformación logarítmica.}}{19}{figure.6}\protected@file@percent }
+\newlabel{fig:extension_cqr_grid}{{6}{19}{Intervalos de la CQR (bandas 80\% y 90\% + mediana) frente al observado (puntos) para las diez series de langosta, en el corte 01-junio-2024. Con el bache post-ola-de-calor dentro del entrenamiento y la calibración, el observado cae dentro de las bandas de forma consistente (cobertura empírica anotada por panel, 93--100\%), incluida la langosta de San Quintín (96.2\%). El eje $y$ de cada panel se recorta a 3$\times $ su máximo observado, pues la cota superior del 90\% se dispara en los días pico al invertir la transformación logarítmica}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.10}Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}{20}{subsection.6.10}\protected@file@percent }
+\newlabel{sec:extension_comparativa}{{6.10}{20}{}{subsection.6.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Modelos puntuales de langosta $\times $ San Quintín re-entrenados sobre el conjunto unido 2017-2026, en los dos cortes de prueba (MAE, RMSE y sMAPE diarios, kg). En negrita, el mejor modelo de cada corte. Pasar de 3 a 7 temporadas de entrenamiento reduce el error diario a aproximadamente la mitad en todos los modelos.}}{20}{table.12}\protected@file@percent }
+\newlabel{tab:extension_comparativa}{{12}{20}{Modelos puntuales de langosta $\times $ San Quintín re-entrenados sobre el conjunto unido 2017-2026, en los dos cortes de prueba (MAE, RMSE y sMAPE diarios, kg). En negrita, el mejor modelo de cada corte. Pasar de 3 a 7 temporadas de entrenamiento reduce el error diario a aproximadamente la mitad en todos los modelos}{table.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Langosta $\times $ San Quintín, observado (negro) vs. pronosticado por el XGBoost completo (35 vars, rojo) y el podado por SHAP ($\sim $16 vars, verde), en los dos cortes. Con el entrenamiento corto (arriba, hasta jun-2020) el modelo extrapola el régimen pre-bache y sobre-predice todas las temporadas post-2021; con el entrenamiento largo (abajo, hasta may-2024, con el bache incluido) sigue las temporadas recientes de captura reducida. Eje $y$ recortado a 3$\times $ el máximo observado.}}{21}{figure.7}\protected@file@percent }
+\newlabel{fig:extension_comparativa}{{7}{21}{Langosta $\times $ San Quintín, observado (negro) vs. pronosticado por el XGBoost completo (35 vars, rojo) y el podado por SHAP ($\sim $16 vars, verde), en los dos cortes. Con el entrenamiento corto (arriba, hasta jun-2020) el modelo extrapola el régimen pre-bache y sobre-predice todas las temporadas post-2021; con el entrenamiento largo (abajo, hasta may-2024, con el bache incluido) sigue las temporadas recientes de captura reducida. Eje $y$ recortado a 3$\times $ el máximo observado}{figure.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusión}{21}{section.7}\protected@file@percent }
 \citation{villasenor2024}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{22}{figure.5}\protected@file@percent }
-\newlabel{fig:enter-label}{{5}{22}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{22}{figure.6}\protected@file@percent }
-\newlabel{fig:enter-label}{{6}{22}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{23}{figure.7}\protected@file@percent }
-\newlabel{fig:enter-label}{{7}{23}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{23}{figure.8}\protected@file@percent }
-\newlabel{fig:enter-label}{{8}{23}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{24}{figure.9}\protected@file@percent }
-\newlabel{fig:enter-label}{{9}{24}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{24}{figure.10}\protected@file@percent }
-\newlabel{fig:enter-label}{{10}{24}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.10}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{25}{figure.11}\protected@file@percent }
-\newlabel{fig:enter-label}{{11}{25}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {.1}Descripción de los datos}{26}{subsection.Alph0.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Muestra de conjunto de datos}}{26}{table.13}\protected@file@percent }
-\newlabel{tab:datos}{{13}{26}{Muestra de conjunto de datos}{table.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{24}{figure.8}\protected@file@percent }
+\newlabel{fig:enter-label}{{8}{24}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{24}{figure.9}\protected@file@percent }
+\newlabel{fig:enter-label}{{9}{24}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{25}{figure.10}\protected@file@percent }
+\newlabel{fig:enter-label}{{10}{25}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{25}{figure.11}\protected@file@percent }
+\newlabel{fig:enter-label}{{11}{25}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{26}{figure.12}\protected@file@percent }
+\newlabel{fig:enter-label}{{12}{26}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{26}{figure.13}\protected@file@percent }
+\newlabel{fig:enter-label}{{13}{26}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{27}{figure.14}\protected@file@percent }
+\newlabel{fig:enter-label}{{14}{27}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {.1}Descripción de los datos}{27}{subsection.Alph0.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Muestra de conjunto de datos}}{27}{table.13}\protected@file@percent }
+\newlabel{tab:datos}{{13}{27}{Muestra de conjunto de datos}{table.13}{}}
 \citation{globcolour2020}
 \bibcite{adibi2020}{{1}{}{{}}{{}}}
 \bibcite{chen2016}{{2}{}{{}}{{}}}
@@ -110,4 +116,4 @@
 \bibcite{yoon2020}{{19}{}{{}}{{}}}
 \bibcite{zhao2021}{{20}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{29}
+\gdef \@abspage@last{31}

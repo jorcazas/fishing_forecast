@@ -1283,9 +1283,70 @@ Javier eligió refrescar los baselines single-series y presentarlo como **secci�
   ayuda en ambos cortes y marcadamente en 2024 (145→104, −29%): el sobreajuste original era volumen de
   datos, no selección de variables.
 - **Tesis**: nueva subsección `final_work.tex` §6.10 (Tabla `extension_comparativa`, encabezados
-  agrupados por corte con `\cmidrule`). Compila a **29 págs**, refs resueltas. Las Tablas
-  `extension_floor`/`extension_shap` (snapshot pre-unión) se conservan intactas.
+  agrupados por corte con `\cmidrule`) + **Figura 5** (`fig:extension_comparativa`): panel doble
+  observado-vs-pronosticado (XGBoost 35 vars vs SHAP) en ambos cortes, generada por
+  `experiments/exp2_covariates/compare_cuts.py` (reutiliza funciones de Exp 2 + features podadas del
+  JSON de Exp 2.3), copiada a `final_work/images/exp2_comparativa_cuts.png`. Títulos por rango de
+  fechas de train (no conteo crudo de labels de temporada, que sobre-cuenta parciales/off-season).
+  Compila a **29 págs**, refs resueltas, 116/116 tests. Las Tablas `extension_floor`/`extension_shap`
+  (snapshot pre-unión) se conservan intactas.
+- **Grid CQR en la tesis**: añadida la **Figura 5** (`fig:extension_cqr_grid`) a la subsección
+  §hipótesis-de-datos — el grid de 7 paneles de langosta en el corte 2024-06-01
+  (`exp4_cqr_fan_grid_2024-06-01.png` → `final_work/images/exp4_cqr_fan_grid_2024.png`), con la
+  cobertura anotada por panel. La comparativa puntual pasó a ser la Figura 6. Tesis a **30 págs**.
+
+---
+
+## 2026-07-21 (noche, cont.) — Pasada de formato a la tesis
+
+Limpieza tipográfica de `final_work.tex` (sin tocar contenido):
+
+- **Todo centrado**: añadido `\centering` a la tabla de hiperparámetros (`tab:catch_comparison`,
+  la única sin él); las demás ya lo tenían.
+- **Menos espacio en blanco**: reemplazado `[H]` (float package, "exactamente aquí", dejaba huecos
+  al final de página) por `[htbp]` en las 23 figuras/tablas + relajados los parámetros de flotantes
+  en el preámbulo (`\topfraction` 0.9, `\textfraction` 0.1, `topnumber` 3, `totalnumber` 5). Esto
+  eliminó el gran hueco antes de la Tabla 12 (ahora pegada a su párrafo) y compactó el documento.
+- **Tablas dentro del margen**: eliminados todos los *overfull hbox* (el peor era 82pt) — `\small`
+  en las tablas de datos anchas, `\setlength{\tabcolsep}{5pt}`, encabezados largos acortados
+  (`extension_ynorm`, `extension_floor`, las 3 tablas de Datos unificadas a "Error temp. (\%)") y
+  columnas `p{}` que envuelven en la tabla de métodos (metodología) y la de hiperparámetros.
+- `\arraystretch` 1.1 para un poco de aire entre filas. Compila a **30 págs**, sin overfull >8pt,
+  refs resueltas (solo queda el warning natbib author-year, no fatal a `pdflatex`).
 
 **Nota**: al refrescar Exp 2/2.3 se regeneraron sus figuras/summary/JSON sobre la ventana completa
 (2020-2026), consistente con la dirección elegida. Defaults (figuras/summary sin corte en el nombre)
 = corte canónico (se corre 2024 primero, canónico al final).
+
+---
+
+## 2026-07-21 (noche, cont.) — Verificación de empalme, figura MHW y clúster costa-norte (3 tareas)
+
+Tres tareas seguidas (el usuario pidió las tres):
+
+1. **Empalme 2021 COBI↔CONAPESCA — LIMPIO** (script `scratchpad/seam_check.py`): sin fechas
+   duplicadas; COBI termina 2021-12-31 (truncaba la temporada 21-22 a ~31 t), la unión recupera
+   ene-feb 2022 (→ 39.5 t completa); transición continua (dic-2021 COBI 6.3 t ≈ ene-2022 CONAPESCA
+   6.5 t). Hallazgo: la captura **no se recuperó** (39.5→24.4→18.5→17.0 t en 2021-2025). Corregí en
+   la tesis §"El bache" las cifras (31→39.5 t, 82→77%) + añadí el detalle del empalme, y cambié
+   "recuperación"→"temporadas de captura reducida" en 4 lugares.
+2. **Figura MHW** (`experiments/mhw_timeline_figure.py` → `reports/figures/mhw_timeline.png`,
+   copiada a `final_work/images/`): SST del bbox de SQ vs climatología+umbral p90 (baseline
+   1982-2011), eventos sombreados. Muestra el Blob 2014-2016 y el régimen 2019-2021. Añadida como
+   **Figura 3** a §"Índice de MHW" (2099 días MHW en la serie completa).
+3. **Clúster costa-norte** (langosta 7→10 series): añadidas Punta Canoas, El Pabellón de SQ, Rocas
+   de San Martín a `economic_units.yaml` (las dos de SQ comparten `&sq_bbox`; Punta Canoas bbox
+   propio ~29.4°N). Todas historia completa 2017-2026 (COBI+CONAPESCA), 97% SST. Pipeline:
+   `transform union` (6033 filas) → `aggregate ocean/oceancolor` ×3 → `consolidate` (dataset_v1
+   81408 filas, 10 series langosta). Re-corrido Exp 4 en ambos cortes.
+
+**Hallazgo importante (reformulación de la tesis)**: al re-correr la CQR con 10 series, la cobertura
+de langosta@SQ en el **corte 2020 saltó 40.6%→99.8%** (sobre-cubre) — el pool más grande ensanchó el
+cuantil base (21→48 kg). O sea el **40.6% era frágil**: la cobertura OOD del corte 2020 oscila
+(53%/41%/99.8% con 5/7/10 series) sin cambiar la serie ni su calibración. El corte 2024 es **estable**
+(95.8%/96.2% con 7/10). Con permiso del usuario, **reformulé §6.9 en torno a la ESTABILIDAD**: la
+Tabla `extension_moredata` ahora muestra la oscilación 40.6↔99.8 (2020) vs estable ~96% (2024); el
+mensaje pasó de "40.6→95.8 lo arregló" a "llevar el régimen al train da calibración *reproducible*".
+Mejoras operativas reales del corte 2024 con 10 series: marginal 95→96.7%, CRPS 220→131, ancho
+langosta@SQ 471→341. Figura 6 (grid CQR) ahora 10 paneles. Tesis a **31 págs**, 116/116 tests, ruff
+limpio. Exp 3.2 (extension_ynorm) queda como snapshot de 5 series (etapa documentada).

@@ -32,9 +32,23 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    2024-06-01 con el salto de cobertura~~ **HECHO (2026-07-21)**: `final_work.tex` §Datos-y-ETL
    actualizado (union COBI+CONAPESCA, 2017-2026); nueva subsección §La-hipótesis-de-datos con
    Tabla `extension_moredata` (langosta@SQ 40.6%→95.8% al corte 2024, marginal 94→95%, CRPS
-   158→220); párrafo de cierre en Conclusión. Compila a 27 págs, refs resueltas; (b) confirmar
-   consistencia del empalme 2021 COBI↔CONAPESCA;
-   (c) clústers Ensenada (~31.8°N) y Vizcaíno (El Tomatal, Punta Canoas) — aún más UEs; (d) ~~parametrizar
+   158→220); párrafo de cierre en Conclusión. Compila a 27 págs, refs resueltas; (b) ~~confirmar
+   consistencia del empalme 2021 COBI↔CONAPESCA~~ **HECHO (2026-07-21) — LIMPIO**: sin fechas
+   duplicadas; COBI termina 2021-12-31 (truncaba la temporada 21-22 a ~31 t), la unión recupera
+   ene-feb 2022 (→ 39.5 t completa); transición continua (dic-2021 COBI 6.3 t ≈ ene-2022 CONAPESCA
+   6.5 t, escalas compatibles). Hallazgo extra: la captura NO se recuperó (24→18→17 t en 2022-2025).
+   Corregidas en la tesis las cifras (31→39.5 t, 82→77%) y "recuperación"→"captura reducida".
+   Caveat: no hay periodo de solape COBI/CONAPESCA para validar escala de forma exhaustiva; el
+   traspaso dic→ene es la evidencia disponible y es consistente;
+   (c) ~~clústers Ensenada/Vizcaíno — aún más UEs~~ **PARCIAL (2026-07-21)**: añadido el clúster
+   **costa-norte con historia completa 2017-2026** (Punta Canoas ~29.4°N + El Pabellón de SQ + Rocas
+   de San Martín ~30.4°N) → langosta **7→10 series**. Mejora el corte 2024 (marginal 95→96.7%, CRPS
+   220→131, ancho langosta@SQ 471→341). HALLAZGO: al re-correr, la cobertura langosta@SQ en el corte
+   2020 saltó 40.6%→99.8% (por composición del pool) → el 40.6% era frágil; el corte 2020 es
+   **inestable** (OOD), el 2024 estable (~96%). Tesis §6.9 reformulada en torno a la ESTABILIDAD.
+   **Pendiente**: Ensenada (~31.8°N) no tiene cooperativa de langosta en los datos; península de
+   Vizcaíno (Bahía Tortugas 767t, Isla Natividad, Bahía Asunción) queda pendiente (solo CONAPESCA
+   2022+, ~4 temporadas, borde sur de la SST); (d) ~~parametrizar
    el corte también en Exp 1-3~~ **HECHO (2026-07-21)**: Exp 1/2/2.3 aceptan `FF_CUT_DATE` (como Exp 4).
    Comparativa refrescada de modelos puntuales langosta@SQ sobre datos unidos (ambos cortes) en
    `final_work.tex` §6.10 (Tabla `extension_comparativa`): de ~3 a ~7 temporadas de train el MAE cae

@@ -7,7 +7,7 @@
 litoral_bc_sur:
   name: "LITORAL DE BAJA CALIFORNIA S DE PR DE RL"
   region: san_quintin
-  bbox:
+  bbox: &sq_bbox
     lon_min: -117.0
     lon_max: -115.0
     lat_min: 30.0
@@ -71,6 +71,34 @@ er_isla_san_geronimo:
   bbox: *el_rosario_bbox
   notes: "Langosta ~93 t. Captura: El Socorro, El Chute (Isla San Gerónimo ~29.78°N)."
 
-# Más UEs se agregan aquí conforme se confirmen ubicaciones (oficina de arribo da la zona):
-# ENSENADA  (~31.8°N): SANTO TOMAS, HERMANOS VIERA, AJUSCO, BAHIA DE TODOS SANTOS, ...
-# VIZCAINO/central (~28-29°N): PESQUERA EL TOMATAL, SPR PUNTA CANOAS, ...
+# --- Clúster costa-norte con historia completa 2017-2026 (COBI + CONAPESCA) ---
+# Cooperativas de langosta roja presentes en AMBAS fuentes → misma profundidad de temporadas
+# que San Quintín (~9), a diferencia de las de la península de Vizcaíno (solo CONAPESCA 2022+).
+# El Pabellón y Rocas de San Martín están en la zona de San Quintín (~30.4-30.5°N) y comparten
+# su bbox; Punta Canoas (~29.4°N) está ~1° al sur y tiene bbox propio. Todas dentro de la
+# descarga Copernicus (lat 27-32, lon -117..-112.5). Nombres = `unidad_economica` exacto del crudo.
+pabellon_sq:
+  name: "EL PABELLON DE SAN QUINTIN SPR DE RL"
+  region: san_quintin
+  bbox: *sq_bbox
+  notes: "Langosta roja, zona de San Quintín (~30.4°N). Comparte bbox con litoral_bc_sur."
+
+rocas_san_martin:
+  name: "ROCAS DE SAN MARTIN SPR DE RL"
+  region: san_quintin
+  bbox: *sq_bbox
+  notes: "Langosta roja, Isla San Martín / San Quintín (~30.5°N). Comparte bbox con litoral_bc_sur."
+
+punta_canoas:
+  name: "SPR PUNTA CANOAS S DE RL DE CV"
+  region: punta_canoas
+  bbox:
+    lon_min: -115.7
+    lon_max: -114.9
+    lat_min: 29.1
+    lat_max: 29.8
+  notes: "Langosta roja, Punta Canoas (~29.4°N), ~1° al sur de El Rosario. Historia 2017-2026."
+
+# Pendientes (península de Vizcaíno, solo CONAPESCA 2022+): SCPP BAHIA TORTUGAS, SCPP BUZOS Y
+# PESCADORES (Isla Natividad, con polígono TURF), SCPP LEYES DE REFORMA (Bahía Asunción).
+# ENSENADA (~31.8°N): sin cooperativa de langosta significativa en los datos.

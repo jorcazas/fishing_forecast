@@ -16,6 +16,19 @@
 % Las figuras viven en el subdirectorio images/
 \graphicspath{{images/}}
 
+% Empaquetado de flotantes: permitir más figuras/tablas por página y reducir espacios en blanco.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+
+% Tablas: menos relleno entre columnas y un poco más de aire entre filas.
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.1}
+
 % Definitions of handy macros can go here
 
 \newcommand{\dataset}{{\cal D}}
@@ -112,7 +125,7 @@ La metodología propuesta consiste de 5 etapas, cada una diseñada para evaluar 
 \begin{table}[htbp]
   \centering
   \caption{Selección de modelos y sus características}
-  \begin{tabular}{|l|p{8cm}|}
+  \begin{tabular}{|p{4cm}|p{7.5cm}|}
     \hline
     \textbf{Modelo} & \textbf{Descripción} \\
     \hline
@@ -154,7 +167,7 @@ La metodología propuesta consiste de 5 etapas, cada una diseñada para evaluar 
 
     \item Para dividir los conjuntos de entrenamiento y validación se usará una ventana temporal, es decir, se dividirán los datos de entrenamiento en n-divisiones o ‘splits’ diferentes, donde cada una tendrá datos para entrenar y datos para validar, separadas por un corte temporal también; los ‘splits’ están diseñados de tal manera que cada uno es un superconjunto del anterior, y la cantidad de datos a entrenar es creciente mientras que la cantidad de datos para validar es fija. En la Figura 1 se explica el procedimiento visualmente.
     
-    \begin{figure}[H]
+    \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.5\linewidth]{1_qvdnPF8ETV9mFdMT0Y_BBA.png}
     \caption{División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}
@@ -190,7 +203,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
         El proceso de ingesta utiliza el protocolo FTP al conectarse a los servidores remotos con una clave privada solicitada directamente a los administradores del proyecto por correo electrónico. El acceso es público, pero debe hacerse esa solicitud justificando su uso. 
         El proceso de transformación se encargó de convertir los archivos .nc (no legibles por humanos) en archivos .csv tabulares. Cada uno de los archivos .nc contenía información de una sola variable en una fecha en particular en varios puntos geográficos (con coordenadas). El proceso de transformación se encargó entonces de agrupar estos archivos por variable, por zona y por fecha, para que después se consolidaran en una tabla que puede exportarse como .csv. 
 
-        \begin{figure}[H]
+        \begin{figure}[htbp]
             \centering
             \includegraphics[width=1\linewidth]{Imagen1.png}
             \caption{ETL de datos de GlobColour y COBI}
@@ -199,7 +212,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
 
         \item Para homogeneizar el ajuste y entrenamiento de los modelos, se hizo un procesamiento adicional en donde se hace un desplazamiento de 3 meses de las variables X hacia adelante. Esto con el fin de utilizar las variables X de hoy para predecir 3 meses en el futuro. El desplazamiento se decidió debido a que es un periodo de tiempo acordado con COBI para que los pescadores consideren el modelo útil.
         
-        \begin{figure}[H]
+        \begin{figure}[htbp]
             \centering
             \includegraphics[width=0.9\linewidth]{4DkMD.png}
             \caption{Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}
@@ -212,7 +225,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
         
         Los datos finales se almacenan en una tabla donde cada observación corresponde al agregado por promedio de todas las variables explicativas para una fecha en particular en toda la zona de interés.
 
-        \begin{figure}[H]
+        \begin{figure}[htbp]
             \centering
             \includegraphics[width=0.8\linewidth]{mapa.png}
             \caption{Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}
@@ -239,8 +252,10 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
 \section{Resultados}
 
 Después de la optimización de hiperparámetros y parámetros de cada modelo, y de la toma de decisión de arquitectura en el caso de LSTM, se llegó a los siguientes modelos representativos:
-\begin{table}[H]
-\begin{tabular}{lcccccc}
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lp{9.5cm}}
 \toprule
 Modelo & Arquitectura / Parámetros\\
 \midrule
@@ -296,11 +311,12 @@ ARIMA & d: 0, p: 29, q: 24, trend: c \\
 
 Los resultados de las métricas a evaluar de cada modelo se muestran en las Tablas 3, 4 y 5.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lcccccc}
 \toprule
-Modelo & Real & Predicción & Error (\%) de Captura de Temporada & RMSE & MAE \\
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
 \midrule
 XGBoost + LSTM & 106333.0 & 115583.97 & 8.7\% & 623.7 & 407.87 \\
 XGBoost & 106333.0 & 95654.32 & 12\% & 354.42 & 304.34 \\
@@ -315,11 +331,12 @@ ARIMA & 106333.0 & 104482.56 & 338\% & 467.52 & 344.13 \\
 \end{table}
 
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lcccccc}
 \toprule
-Modelo & Real & Predicción & Error de Captura de Temporada & RMSE & MAE \\
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
 \midrule
 XGBoost + LSTM & 30912.0 & 59351.04 & 92\% & 345.66 & 313.40 \\
 XGBoost & 30852 & 50490.34 & 16.3\% & 386.42 & 284.26 \\
@@ -334,11 +351,12 @@ ARIMA & 106133.0 & 90003.27 & 142\% & 467.52 & 344.13 \\
 \end{table}
 
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lcccccc}
 \toprule
-Modelo & Real & Predicción & Error de Captura de Temporada & RMSE & MAE \\
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
 \midrule
 XGBoost + LSTM & 137245.0 & 154949.60 & 12.9\% & 527.31 & 368.97 \\
 XGBoost & 137245.0 & 117299.43 & 14.5\% & 450.67 & 312.6 \\
@@ -375,19 +393,29 @@ Se reescribió el proceso ETL de forma modular y reproducible. Los arribos pesqu
 \subsection{Índice de olas de calor marinas (MHW)}
 Se implementó el índice de MHW siguiendo la metodología de Hobday et al. \cite{hobday2016}: para cada día del año se calcula una climatología y su percentil 90 sobre el periodo base 1982-2011; un evento MHW es un tramo de al menos 5 días consecutivos con SST por encima de ese umbral (fusionando eventos separados por huecos de $\leq 2$ días), y se clasifica en categorías I-IV según cuántos múltiplos de la diferencia (umbral $-$ media) alcanza la anomalía. El dataset consolidado incorpora tres columnas nuevas: \texttt{sst\_anomaly} (siempre), \texttt{mhw\_category} (0-4) y \texttt{mhw\_intensity} (definida durante eventos).
 
-Como validación, el índice reproduce con nitidez los eventos conocidos del Pacífico nororiental: el llamado ``Blob'' de 2014-2016 (con 231, 293 y 102 días de MHW respectivamente en la zona de San Quintín) y el régimen cálido de 2020. Esta validación es relevante porque conecta directamente con el mecanismo documentado por \cite{villasenor2024}.
+Como validación, el índice reproduce con nitidez los eventos conocidos del Pacífico nororiental: el llamado ``Blob'' de 2014-2016 (con 231, 293 y 102 días de MHW respectivamente en la zona de San Quintín) y el régimen cálido de 2019-2021 (Figura \ref{fig:mhw_timeline}). Esta validación es relevante porque conecta directamente con el mecanismo documentado por \cite{villasenor2024}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{mhw_timeline.png}
+\caption{Serie diaria de SST en el bbox de San Quintín (negro) contra su climatología (azul continuo) y el umbral del percentil 90 (azul discontinuo), con baseline 1982-2011 (Hobday et al. 2016). Las áreas sombreadas marcan los eventos de ola de calor marina. Destacan el ``Blob'' de 2014-2016 y el régimen cálido de 2019-2021 que precede al colapso de la captura de langosta de la temporada 2021-2022.}
+\label{fig:mhw_timeline}
+\end{figure}
 
 \subsection{El bache de la temporada 2021-2022 se explica por olas de calor}
-Las sumas de captura de langosta en San Quintín, reconstruidas a partir de los arribos, muestran una caída pronunciada tras el régimen cálido 2019-2021: aproximadamente 173 t en 2019-2020, 106 t en 2020-2021 y apenas 31 t en 2021-2022 (una reducción cercana al 82\% respecto al máximo). Esta magnitud es consistente con el rango de 15-58\% de reducción de capturas atribuido a las MHW en Baja California \cite{villasenor2024}, y resuelve la pregunta abierta de la sección de Resultados: la caída no obedece principalmente a un efecto económico, sino a un forzamiento ambiental que los modelos originales no podían anticipar por carecer de una variable de anomalía térmica de largo plazo.
+Las sumas de captura de langosta en San Quintín, reconstruidas a partir de los arribos, muestran una caída pronunciada tras el régimen cálido 2019-2021: aproximadamente 173 t en 2019-2020, 106 t en 2020-2021 y 39.5 t en 2021-2022 (una reducción cercana al 77\% respecto al máximo). Es más, la unión con CONAPESCA revela que la captura \emph{no se recuperó} en las temporadas siguientes, sino que se estabilizó en niveles bajos: 24.4 t en 2022-2023, 18.5 t en 2023-2024 y 17.0 t en 2024-2025 (una décima parte del máximo). Esta magnitud iguala o supera el rango de 15-58\% de reducción de capturas atribuido a las MHW en Baja California \cite{villasenor2024}, coherente con que los impactos son mayores cerca de quiebres biogeográficos como San Quintín; y resuelve la pregunta abierta de la sección de Resultados: la caída no obedece principalmente a un efecto económico, sino a un forzamiento ambiental que los modelos originales no podían anticipar por carecer de una variable de anomalía térmica de largo plazo.
+
+Un detalle de la reconstrucción merece mención, porque valida la unión de fuentes: el registro de COBI termina el 31-diciembre-2021, a mitad de la temporada 2021-2022, de modo que por sí solo la truncaba (solo $\sim$31 t hasta diciembre). La unión con CONAPESCA recupera el tramo enero-febrero de 2022 y completa la temporada en 39.5 t. El empalme es limpio: no hay fechas duplicadas entre fuentes, y la transición es continua ---diciembre de 2021 (COBI, 6.3 t) y enero de 2022 (CONAPESCA, 6.5 t) reportan a escalas compatibles---, lo que da confianza en que comparar temporadas anteriores (COBI) con posteriores (CONAPESCA) no introduce un artefacto de fuente.
 
 \subsection{Re-entrenamiento del baseline y modelo con covariables}
 Sobre los datos reales reconstruidos (langosta $\times$ San Quintín, corte de prueba 01-julio-2020) se re-entrenaron los modelos baseline y un modelo con las nuevas covariables oceanográficas (SST y MHW desplazadas 90 días, respetando la convención del proyecto y evitando fuga de datos). La Tabla \ref{tab:extension_floor} resume el desempeño.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lccccc}
 \toprule
-Modelo & MAE & RMSE & sMAPE (\%) & Error temp. 2020-21 & Error temp. 2021-22 \\
+Modelo & MAE & RMSE & sMAPE (\%) & Err.\ 2020-21 & Err.\ 2021-22 \\
 \midrule
 ARIMA(3,0,3) & 345 & 463 & 138 & $-26\%$ & $+291\%$ \\
 Prophet & 372 & 576 & 129 & $+62\%$ & $+418\%$ \\
@@ -405,7 +433,7 @@ Para enriquecer el conjunto de regresoras se integraron seis variables ópticas 
 
 Para verificar si el problema era el exceso de variables, se aplicó una selección basada en valores SHAP \cite{lundberg2017} (\emph{TreeExplainer}): se ordenaron las variables por su importancia media absoluta $|$SHAP$|$ y se conservaron las que aportaban al menos el 1\% del total, reduciendo de 35 a 16. El ordenamiento es coherente y físicamente interpretable ---dominan el calendario (\texttt{doy\_sin}, \texttt{in\_season}), seguido de la retrodispersión de partículas rezagada (\texttt{bbp\_roll90\_lag90}), el rezago anual de $y$ y variables de SST/color del océano---, lo que indica que las variables tienen sentido. No obstante, podar \emph{no} corrige el sobreajuste (Tabla \ref{tab:extension_shap}): el modelo reducido es incluso ligeramente peor.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{lccccc}
 \toprule
@@ -424,7 +452,7 @@ La conclusión metodológica es importante: la selección de variables por sí s
 \subsection{Modelo global multi-especie y multi-unidad económica}
 Para atacar la escasez de datos por serie se entrenó un único modelo global sobre varias series (especie, unidad económica), con codificación one-hot de especie y de unidad económica y la oceanografía compartida, y se comparó contra modelos específicos entrenados por serie. Se incorporó una segunda unidad económica, Isla Cedros ($\sim$28$^\circ$N), además de San Quintín ($\sim$30.5$^\circ$N), lo que introduce variación a lo largo del gradiente biogeográfico. La Tabla \ref{tab:extension_global} muestra la comparación por serie.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{lccc}
 \toprule
@@ -446,11 +474,12 @@ De aquí surgen dos hallazgos. Primero, hay \emph{transferencia positiva dentro 
 \subsection{Normalización de la variable objetivo por serie}
 La hipótesis anterior se puso a prueba directamente. Antes de agrupar, se transformó la variable objetivo de cada serie con $\log(1+y)$ —una transformación global, invertible y sin parámetros estimados— de modo que las series de mayor volumen dejaran de dominar la función de pérdida; también se probó una estandarización ($z$-score) por serie con media y desviación calculadas únicamente sobre el conjunto de entrenamiento, para evitar fuga de información. La Tabla \ref{tab:extension_ynorm} compara, por serie, el modelo específico contra el pooling sobre la variable cruda y contra el pooling sobre $\log(1+y)$; todas las predicciones se invierten a kilogramos antes de medir el RMSE.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lccc}
 \toprule
-Serie (especie @ unidad económica) & RMSE específico & RMSE pooling crudo & RMSE pooling $\log(1{+}y)$ \\
+Serie (especie @ UE) & específico & pooling crudo & pooling $\log(1{+}y)$ \\
 \midrule
 abulón negro @ San Quintín & 52.0 & 35.4 & \textbf{7.0} \\
 abulón azul @ San Quintín & 6.7 & 32.7 & \textbf{4.6} \\
@@ -470,7 +499,7 @@ Con tres temporadas, cualquier pronóstico puntual es ruidoso; lo honesto ---y l
 
 La Tabla \ref{tab:extension_cqr} muestra la cobertura empírica y el ancho de los intervalos. La cobertura marginal queda cerca del nivel nominal (86\% para el intervalo nominal del 90\%, 81\% para el del 80\%), y la variante \emph{normalizada} (ensanchamiento proporcional a la dispersión local) es ligeramente mejor que la de corrección constante. Es notable que la cobertura se mantiene durante las olas de calor marinas (0.89 en días de MHW frente a 0.85 fuera): el intervalo sigue siendo honesto precisamente en el régimen anómalo que hacía fracasar al pronóstico puntual.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{lcc}
 \toprule
@@ -490,35 +519,44 @@ La cobertura marginal, sin embargo, promedia series heterogéneas: el abulón so
 \label{sec:extension_moredata}
 Todos los experimentos anteriores convergen en el mismo diagnóstico ---el factor limitante es el volumen de datos, no la sofisticación del modelo---, pero lo enuncian sin demostrarlo causalmente. La forma directa de ponerlo a prueba es \emph{sumar datos} y medir si la calibración mejora. Se hizo en dos frentes.
 
-Primero, se incorporó un clúster de cinco cooperativas de langosta de la región de El Rosario ($\sim$29.6--30.4$^\circ$N), llevando la langosta de 2 a 7 series (especie, unidad económica). El efecto sobre la serie insignia es inmediato: con el corte canónico de 01-julio-2020, el RMSE del \emph{pooling} de langosta en San Quintín cae de 659 a 313 kg, la cobertura marginal del intervalo del 90\% sube del 86\% al 93\%, y el ancho del percentil 90 de los días pico se estrecha de $\sim$9\,776 a $\sim$3\,812 kg. Es transferencia positiva dentro de la especie, ahora con siete zonas en lugar de dos.
+Primero, se amplió la cobertura espacial en dos tandas. Un clúster de cinco cooperativas de El Rosario ($\sim$29.6--30.4$^\circ$N) llevó la langosta de 2 a 7 series (especie, unidad económica): con el corte canónico de 01-julio-2020 el RMSE del \emph{pooling} de langosta en San Quintín cae de 659 a 313 kg y el ancho del percentil 90 de los días pico se estrecha de $\sim$9\,776 a $\sim$3\,812 kg ---transferencia positiva dentro de la especie. Una segunda tanda añadió tres cooperativas de la costa norte con historia completa 2017-2026 ---Punta Canoas ($\sim$29.4$^\circ$N), El Pabellón de San Quintín y Rocas de San Martín ($\sim$30.4--30.5$^\circ$N)---, llevando la langosta a 10 series y estrechando aún más el producto probabilístico: en el corte de 2024 el CRPS global baja de 220 a 131 y el ancho mediano de la langosta de San Quintín de 471 a 341 kg. Más zonas de la misma especie dan un intervalo mejor calibrado y más ajustado.
 
-Segundo, y de mayor impacto, se desbloquearon las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA (Sección~\ref{sec:extension2026}). Esto permite mover el corte de prueba a 01-junio-2024, dejando el bache post-MHW de 2021-2022 y su recuperación \emph{dentro} del conjunto de entrenamiento y calibración, en lugar de en la prueba. El resultado resuelve la sub-cobertura de la langosta de San Quintín que ningún ajuste de modelo había logrado tocar (Tabla \ref{tab:extension_moredata}): la cobertura del intervalo del 90\% para esa serie salta del 40.6\% al 95.8\%, y el intervalo, antes demasiado estrecho por haberse calibrado con una sola temporada previa al crash, ensancha su mediana de 21 a 471 kg ---el precio honesto de cubrir un régimen que antes quedaba fuera de la distribución aprendida.
+Segundo, y de mayor impacto, se desbloquearon las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA (Sección~\ref{sec:extension2026}), lo que permite mover el corte de prueba a 01-junio-2024 y dejar el bache post-MHW y las temporadas posteriores de captura reducida \emph{dentro} del entrenamiento y la calibración. Con ese corte la CQR queda bien calibrada y ---lo crucial--- de forma \emph{estable}: las diez series de langosta cubren entre 93\% y 100\% (cobertura marginal 96.7\% para el intervalo nominal del 90\%), la langosta de San Quintín 96.2\%, y el intervalo sigue honesto durante las olas de calor (94.7\% en días de MHW frente a 96.7\% fuera). La Figura \ref{fig:extension_cqr_grid} lo muestra serie por serie: el observado cae dentro de las bandas de forma consistente en las diez unidades económicas.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lcc}
 \toprule
-Métrica (intervalo nominal 90\%) & Corte 2020-07-01 & Corte 2024-06-01 \\
+Cobertura del intervalo 90\% & Corte 2020-07-01 & Corte 2024-06-01 \\
+ & (bache fuera del train) & (bache en el train) \\
 \midrule
-Cobertura langosta @ San Quintín & 40.6\% & \textbf{95.8\%} \\
-Cobertura marginal (todas las series) & 94.0\% & 95.0\% \\
-Cobertura en días de MHW & 94.1\% & 90.2\% \\
-Ancho mediano langosta @ San Quintín (kg) & 21.0 & 471.2 \\
-CRPS global & 158.1 & 220.6 \\
+Langosta @ San Quintín, con 7 series & 40.6\% & 95.8\% \\
+Langosta @ San Quintín, con 10 series & 99.8\% & \textbf{96.2\%} \\
+Cobertura marginal (10 series) & 97.9\% & 96.7\% \\
+CRPS global (10 series) & 114.8 & 130.8 \\
 \bottomrule
 \end{tabular}
-\caption{Efecto de mover el corte de prueba para incluir las temporadas 2022-2026 (union COBI+CONAPESCA) en el entrenamiento y la calibración. La langosta de San Quintín pasa de sub-cubrir gravemente a quedar bien calibrada; la cobertura durante olas de calor se mantiene cerca del nominal. El CRPS global aumenta porque el conjunto de prueba de 2024 concentra las temporadas de recuperación, intrínsecamente más difíciles.}
+\caption{Estabilidad de la calibración de la langosta de San Quintín según el corte de prueba y la composición del pool. Con el bache \emph{fuera} del entrenamiento (corte 2020) la cobertura por serie oscila entre 40.6\% y 99.8\% según cuántas series haya en el pool ---no es fiable en ninguna dirección---; con el bache \emph{dentro} (corte 2024) es estable en torno al 96\% independientemente del pool. El CRPS es mayor en el corte de 2024 porque su conjunto de prueba concentra las temporadas recientes de baja captura, intrínsecamente más difíciles.}
 \label{tab:extension_moredata}
 \end{table}
 
-La conclusión es la que se venía anticipando, ahora con evidencia experimental directa: la palanca decisiva fue añadir temporadas, no endurecer los estimadores. La poda por SHAP y la optimización bayesiana de los cuantílicos no habían movido la sub-cobertura de la langosta de San Quintín; una sola temporada adicional de calibración ---la que arrastró el cambio de régimen a la distribución de entrenamiento--- la corrigió por completo.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{exp4_cqr_fan_grid_2024.png}
+\caption{Intervalos de la CQR (bandas 80\% y 90\% + mediana) frente al observado (puntos) para las diez series de langosta, en el corte 01-junio-2024. Con el bache post-ola-de-calor dentro del entrenamiento y la calibración, el observado cae dentro de las bandas de forma consistente (cobertura empírica anotada por panel, 93--100\%), incluida la langosta de San Quintín (96.2\%). El eje $y$ de cada panel se recorta a 3$\times$ su máximo observado, pues la cota superior del 90\% se dispara en los días pico al invertir la transformación logarítmica.}
+\label{fig:extension_cqr_grid}
+\end{figure}
+
+El contraste con el corte de 2020 es revelador, pero no como un simple ``antes mal, después bien''. Cuando el bache queda \emph{fuera} del entrenamiento, la cobertura por serie de la langosta de San Quintín es sencillamente \emph{poco fiable}: a lo largo de la expansión ha tomado valores de 53\%, 41\% y 99.8\% con 5, 7 y 10 series en el pool ---de la sub-cobertura severa a la sobre-cobertura severa--- sin que la serie ni su conjunto de calibración cambien, solo la composición del pool que fija el ancho del cuantil base. Es la firma de un régimen fuera de distribución: el intervalo se apoya sobre el filo de la navaja respecto a las capturas del crash. Con el bache \emph{dentro} del entrenamiento (corte 2024) la cobertura es estable (95.8\% con 7 series, 96.2\% con 10). Lo que compran las temporadas adicionales, entonces, no es solo un buen número de cobertura sino una calibración \emph{reproducible}, y ese es el argumento de fondo: ni la poda por SHAP ni la optimización bayesiana de los cuantílicos dieron una calibración fiable de la serie insignia; llevar el régimen anómalo al entrenamiento sí.
 
 \subsection{Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}
 \label{sec:extension_comparativa}
-Las tablas anteriores del piso (Tablas \ref{tab:extension_floor} y \ref{tab:extension_shap}) son una fotografía \emph{previa} a la unión con CONAPESCA: se calcularon con tres temporadas de entrenamiento y solo dos de prueba (2020-2022), que era todo lo que había. Con el conjunto unido 2017-2026 podemos re-entrenar los modelos puntuales de una sola serie (langosta $\times$ San Quintín) y, sobre todo, comparar de frente los dos cortes: el canónico 01-julio-2020 ($\sim$3 temporadas de entrenamiento, prueba 2020-2026 abarcando el bache y la recuperación) contra 01-junio-2024 ($\sim$7 temporadas, con el bache \emph{dentro} del entrenamiento, prueba = recuperación reciente). La diferencia entre columnas aísla el efecto de \emph{cuántas temporadas} ve el modelo. La Tabla \ref{tab:extension_comparativa} lo resume.
+Las tablas anteriores del piso (Tablas \ref{tab:extension_floor} y \ref{tab:extension_shap}) son una fotografía \emph{previa} a la unión con CONAPESCA: se calcularon con tres temporadas de entrenamiento y solo dos de prueba (2020-2022), que era todo lo que había. Con el conjunto unido 2017-2026 podemos re-entrenar los modelos puntuales de una sola serie (langosta $\times$ San Quintín) y, sobre todo, comparar de frente los dos cortes: el canónico 01-julio-2020 ($\sim$3 temporadas de entrenamiento, prueba 2020-2026 abarcando el bache y las temporadas posteriores de baja captura) contra 01-junio-2024 ($\sim$7 temporadas, con el bache \emph{dentro} del entrenamiento, prueba = temporadas recientes de baja captura). La diferencia entre columnas aísla el efecto de \emph{cuántas temporadas} ve el modelo. La Tabla \ref{tab:extension_comparativa} lo resume.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
+\small
 \begin{tabular}{lccccccc}
 \toprule
  & \multicolumn{3}{c}{Corte 2020-07-01 ($\sim$3 temp.)} & & \multicolumn{3}{c}{Corte 2024-06-01 ($\sim$7 temp.)} \\
@@ -535,7 +573,14 @@ XGBoost (SHAP, $\sim$16 vars) & \textbf{387.5} & \textbf{673.0} & \textbf{132.1}
 \label{tab:extension_comparativa}
 \end{table}
 
-Tres lecturas se desprenden de la comparación. Primero, mover el corte de 2020 a 2024 ---es decir, meter el bache post-ola-de-calor al entrenamiento--- reduce el MAE diario a la mitad en todos los modelos (ARIMA 331 $\to$ 178, Prophet 455 $\to$ 190, XGBoost 459 $\to$ 145): al dejar de extrapolar un régimen pre-bache sobre las temporadas posteriores, los pronósticos dejan de dispararse. Es el análogo puntual del salto de cobertura de la CQR.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{exp2_comparativa_cuts.png}
+\caption{Langosta $\times$ San Quintín, observado (negro) vs. pronosticado por el XGBoost completo (35 vars, rojo) y el podado por SHAP ($\sim$16 vars, verde), en los dos cortes. Con el entrenamiento corto (arriba, hasta jun-2020) el modelo extrapola el régimen pre-bache y sobre-predice todas las temporadas post-2021; con el entrenamiento largo (abajo, hasta may-2024, con el bache incluido) sigue las temporadas recientes de captura reducida. Eje $y$ recortado a 3$\times$ el máximo observado.}
+\label{fig:extension_comparativa}
+\end{figure}
+
+Tres lecturas se desprenden de la comparación (visibles en la Figura \ref{fig:extension_comparativa}). Primero, mover el corte de 2020 a 2024 ---es decir, meter el bache post-ola-de-calor al entrenamiento--- reduce el MAE diario a la mitad en todos los modelos (ARIMA 331 $\to$ 178, Prophet 455 $\to$ 190, XGBoost 459 $\to$ 145): al dejar de extrapolar un régimen pre-bache sobre las temporadas posteriores, los pronósticos dejan de dispararse. Es el análogo puntual del salto de cobertura de la CQR.
 
 Segundo, el orden de los modelos se invierte. Con tres temporadas, el XGBoost con covariables (459) es \emph{peor} que ARIMA (331): 35 variables sobreajustan tan poco dato. Con siete temporadas, el mismo XGBoost (145) \emph{supera} a ambos baselines autorregresivos: las covariables de SST/MHW por fin rinden cuando hay suficientes temporadas para aprender la relación ola-de-calor $\to$ captura.
 
@@ -560,7 +605,7 @@ En segundo lugar, los experimentos con modelos multivariados y con un modelo glo
 
 En tercer lugar, y como respuesta directa a esa escasez de datos, el pronóstico se reformuló en términos probabilísticos: una regresión cuantílica conformalizada sobre el modelo global entrega intervalos con cobertura cercana a la nominal y estable incluso durante las olas de calor marinas. Para una cooperativa pesquera, un rango calibrado de captura esperada es más accionable ---y más honesto--- que un único número puntual, y representa el producto operativo concreto de esta extensión.
 
-Finalmente, la hipótesis que recorre todo el trabajo ---que el cuello de botella es el volumen de datos y no la sofisticación del modelo--- dejó de ser una conjetura y se puso a prueba. Al sumar cinco cooperativas de langosta de El Rosario (de 2 a 7 series) y desbloquear las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA, la sub-cobertura crónica de la langosta de San Quintín ---que ni la selección de variables por SHAP ni la optimización bayesiana de los cuantílicos habían logrado corregir--- se resolvió: con el bache post-ola-de-calor de 2021-2022 dentro del entrenamiento, la cobertura del intervalo del 90\% pasó del 40.6\% al 95.8\%. Es la demostración más concreta de la tesis de fondo: la ruta hacia un modelo operativo y transferible pasa por acumular temporadas y unidades económicas ---junto con el índice de MHW como covariable estándar y el objetivo en escala logarítmica--- y no por más maquinaria estadística.
+Finalmente, la hipótesis que recorre todo el trabajo ---que el cuello de botella es el volumen de datos y no la sofisticación del modelo--- dejó de ser una conjetura y se puso a prueba. Al sumar ocho cooperativas de langosta (El Rosario y la costa norte, de 2 a 10 series) y desbloquear las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA, la langosta de San Quintín ---cuya calibración ni la selección de variables por SHAP ni la optimización bayesiana de los cuantílicos habían hecho fiable--- pasó a estar bien calibrada de forma \emph{estable} (cobertura $\sim$96\%) al llevar el bache post-ola-de-calor de 2021-2022 dentro del entrenamiento; con el bache fuera del entrenamiento su cobertura era irreproducible, oscilando entre 41\% y 99.8\% según la composición del pool. Es la demostración más concreta de la tesis de fondo: la ruta hacia un modelo operativo y transferible pasa por acumular temporadas y unidades económicas ---junto con el índice de MHW como covariable estándar y el objetivo en escala logarítmica--- y no por más maquinaria estadística.
 % % Acknowledgements should go at the end, before appendices and references
 
 % \acks{We would like to acknowledge support for this project
@@ -576,48 +621,48 @@ Finalmente, la hipótesis que recorre todo el trabajo ---que el cuello de botell
 \appendix
 \section*{Apéndice A.}
 A continuación se muestran las gráficas de valores predichos contra los valores reales en cada uno de los modelos.
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{arima_forecast.png}
     \caption{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
     \label{fig:enter-label}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{prophet.png}
     \caption{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
     \label{fig:enter-label}
 \end{figure}
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{xgboost_final.png}
     \caption{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
     \label{fig:enter-label}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{lgbm_final.png}
     \caption{LGBM:  Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
     \label{fig:enter-label}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{final_first_season.png}
     \caption{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}
     \label{fig:enter-label}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{image.png}
     \caption{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}
     \label{fig:enter-label}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{final_two_seasons.png}
     \caption{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}
@@ -631,7 +676,7 @@ A continuación se muestran las gráficas de valores predichos contra los valore
 \section*{Apéndice B.}
 \subsection{Descripción de los datos}
 El conjunto de datos utilizado está compuesto de fecha 'ds', variable objetivo 'y' y 16 variables regresoras 'xi', como se muestra en la tabla 4.
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
 \caption{Muestra de conjunto de datos}
 \label{tab:datos}
