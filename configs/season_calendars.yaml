@@ -9,6 +9,11 @@
 #       end:   "MM-DD"
 #       notes: ...
 
+# La langosta roja (Panulirus interruptus) comparte el MISMO reglamento en toda la costa del
+# Pacífico de Baja California (temporada 15-sep–15-feb), así que todas las UEs de langosta usan
+# el mismo calendario. Se declara explícitamente por UE (el ETL no soporta comodín) vía un ancla
+# YAML. Antes solo se declaraba litoral_bc_sur → el resto quedaba in_season=True todo el año
+# (deuda corregida 2026-07-23).
 lobster_red:
   litoral_bc_sur:
     start: "09-15"
@@ -16,6 +21,34 @@ lobster_red:
     notes: |
       Temporada estándar de langosta roja en Baja California, según el reglamento
       pesquero histórico. Misma convención usada en el paper 2024.
+  # Mismo reglamento (15-sep–15-feb) para todas las demás UEs de langosta roja:
+  isla_cedros: &lobster_cal
+    start: "09-15"
+    end: "02-15"
+  # Clúster El Rosario
+  er_scpp_ensenada: *lobster_cal
+  er_mortera_leyva: *lobster_cal
+  er_el_chute: *lobster_cal
+  er_regasa: *lobster_cal
+  er_isla_san_geronimo: *lobster_cal
+  # Clúster costa-norte / San Quintín
+  pabellon_sq: *lobster_cal
+  rocas_san_martin: *lobster_cal
+  punta_canoas: *lobster_cal
+  # Clúster Vizcaíno (Tier A)
+  vizcaino_tortugas: *lobster_cal
+  vizcaino_emancipacion: *lobster_cal
+  vizcaino_natividad: *lobster_cal
+  vizcaino_asuncion: *lobster_cal
+  # Clúster Pacífico BCS (Tier B)
+  abreojos_san_ignacio: *lobster_cal
+  abreojos_progreso: *lobster_cal
+  abreojos_punta: *lobster_cal
+  la_purisima: *lobster_cal
+  # Clúster Bahía Magdalena (Tier C)
+  magdalena_san_carlos: *lobster_cal
+  magdalena_bahia: *lobster_cal
+  magdalena_chale: *lobster_cal
 
 # Pendiente de declarar (esperando confirmación con reglamento INAPESCA):
 # abalone_blue:

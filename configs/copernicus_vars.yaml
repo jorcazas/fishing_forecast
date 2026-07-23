@@ -4,12 +4,14 @@
 
 # Región de descarga compartida = superconjunto de los bbox de todas las UEs.
 # Ampliada (2026-07-23) al sur y al este para el clúster Tier B del Pacífico BCS
-# (Punta Abreojos/La Bocana/San Hipólito ~26.7-27.0°N; La Purísima/Punta Pequeña ~26.2°N,
-# ~-112.4°W, que quedaba al este del borde anterior -112.5). Antes: lat_min 27.0, lon_max -112.5.
+# (Punta Abreojos/La Bocana/San Hipólito ~26.7-27.0°N; La Purísima/Punta Pequeña ~26.2°N).
+# Re-ampliada (2026-07-23, Tier C) al sur (lat_min 24.0) y al este (lon_max -111.5) para el
+# clúster Bahía Magdalena (costa externa de Isla Magdalena/Santa Margarita ~24.1-25.0°N,
+# -112.4..-111.6°W). Historial de bordes: lat_min 27.0→25.8→24.0; lon_max -112.5→-112.0→-111.5.
 _region: &region
   lon_min: -117.0
-  lon_max: -112.0
-  lat_min: 25.8
+  lon_max: -111.5
+  lat_min: 24.0
   lat_max: 32.0
 
 products:

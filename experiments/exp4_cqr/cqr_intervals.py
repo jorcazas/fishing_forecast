@@ -68,11 +68,22 @@ QUANTILE_XGB = dict(
 )
 
 
+#: Ablación de composición del pool (reproducibilidad de la progresión 7→10→14→18→21 series):
+#: `FF_EXCLUDE_LOBSTER_UES=ue1,ue2,...` excluye esas UEs de langosta del pool (las demás
+#: especies/UEs quedan intactas). Vacío → pool completo.
+EXCLUDE_LOBSTER_UES = tuple(
+    u.strip() for u in os.environ.get("FF_EXCLUDE_LOBSTER_UES", "").split(",") if u.strip()
+)
+
+
 def load_series() -> pd.DataFrame:
     """Series diarias `(especie, UE)` con captura suficiente; NaN in-season→0, recorte a último catch."""
     settings = get_settings()
     df = pd.read_parquet(settings.processed_dir / "dataset_v1.parquet")
     df = df[df["species"].isin(SPECIES)].copy()
+    if EXCLUDE_LOBSTER_UES:
+        drop = (df["species"] == "lobster_red") & (df["economic_unit"].isin(EXCLUDE_LOBSTER_UES))
+        df = df[~drop].copy()
     df["ds"] = pd.to_datetime(df["ds"])
     frames = []
     for _key, s in df.groupby(GROUP, observed=True):

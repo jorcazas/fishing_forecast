@@ -176,6 +176,39 @@ la_purisima:
     lat_max: 26.5
   notes: "Langosta roja ~741 t (mayor productora del Tier B). Punta Pequeña / San Juanico (~26.24°N, -112.48°W)."
 
-# Pendientes: Tier C (Bahía Magdalena ~24-25°N): SCPP PUERTO SAN CARLOS/CHALE, bajo volumen
-# (~28-41 t) y borde térmico cálido → baja prioridad. ENSENADA (~31.8°N): sin cooperativa de
-# langosta significativa en los datos.
+# --- Clúster BAHÍA MAGDALENA / Tier C (~24-25°N), solo CONAPESCA 2022+ ---
+# Extremo sur del rango de la langosta roja (Panulirus interruptus), en el borde térmico cálido
+# ~2° al sur del Tier B. Requirió ampliar la descarga Copernicus al sur (lat_min 24.0) y al este
+# (lon_max -111.5) — ver copernicus_vars.yaml. La langosta roja se captura en la costa PACÍFICA
+# externa de las islas barrera (Isla Magdalena, Isla Santa Margarita), no dentro de la bahía.
+# Puerto San Carlos y Bahía Magdalena comparten el bbox de la costa externa de Isla Magdalena
+# (~24.7°N); Puerto Chalé tiene bbox propio ~0.3° al sur (Isla Santa Margarita, ~24.4°N). Solo
+# historia CONAPESCA (2022-2026). Nombres = `UNIDAD ECONOMICA` exacto del crudo CONAPESCA.
+# Predomina la langosta AZUL (aguas cálidas); aquí solo se ingiere la ROJA (LANGOSTA ROJA ENT. FCA.).
+magdalena_san_carlos:
+  name: "SCPP PUERTO SAN CARLOS SCL"
+  region: bahia_magdalena
+  bbox: &magdalena_bbox
+    lon_min: -112.4
+    lon_max: -111.8
+    lat_min: 24.4
+    lat_max: 25.0
+  notes: "Langosta roja ~37 t. Puerto San Carlos (~24.79°N, -112.11°W); captura en costa externa de Isla Magdalena."
+
+magdalena_bahia:
+  name: "SCPP BAHIA MAGDALENA SCL"
+  region: bahia_magdalena
+  bbox: *magdalena_bbox
+  notes: "Langosta roja ~52 t. Puerto Magdalena / Isla Magdalena (~24.63°N, -112.14°W)."
+
+magdalena_chale:
+  name: "SCPP PUERTO CHALE SCL"
+  region: bahia_magdalena
+  bbox:
+    lon_min: -112.2
+    lon_max: -111.6
+    lat_min: 24.1
+    lat_max: 24.6
+  notes: "Langosta roja ~118 t (mayor del Tier C). Puerto Chalé (~24.42°N, -111.55°W); captura en costa externa de Isla Santa Margarita."
+
+# Pendientes: ENSENADA (~31.8°N): sin cooperativa de langosta significativa en los datos.
