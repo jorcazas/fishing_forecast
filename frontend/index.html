@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pronóstico pesquero por zona</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --ink: #1a2230; --muted: #667085;
+    --line: #e4e7ec; --accent: #0b7285; --accent-soft: #7ac4d0;
+    --band90: rgba(11,114,133,0.12); --band80: rgba(11,114,133,0.26);
+    --median: #0b7285; --obs: #d9480f; --good:#137a52; --warn:#b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#12161c; --card:#1a2029; --ink:#e6e9ee; --muted:#9aa4b2;
+      --line:#2a323d; --accent:#39b3c6; --accent-soft:#2a6b77;
+      --band90: rgba(57,179,198,0.14); --band80: rgba(57,179,198,0.30);
+      --median:#39b3c6; --obs:#ff8a5c; --good:#3ac48a; --warn:#e0a044;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--ink); line-height:1.45; }
+  header { padding: 20px 24px 12px; border-bottom:1px solid var(--line); }
+  h1 { margin:0; font-size:1.25rem; font-weight:650; }
+  .sub { color: var(--muted); font-size:.85rem; margin-top:2px; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 24px 48px; }
+  .controls { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; margin-bottom:18px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  select { padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card);
+    color:var(--ink); font-size:.9rem; min-width:220px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:18px; }
+  .zone-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .zone-title { font-size:1.05rem; font-weight:620; }
+  .zone-meta { color:var(--muted); font-size:.82rem; margin-top:2px; }
+  .badge { font-size:.75rem; padding:4px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
+  .badge.good { background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); }
+  .badge.warn { background:color-mix(in srgb, var(--warn) 18%, transparent); color:var(--warn); }
+  .seasons { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:16px; }
+  .season { border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .season .lbl { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  .season .val { font-size:1.15rem; font-weight:640; margin:2px 0; }
+  .season .rng { font-size:.74rem; color:var(--muted); }
+  .season .err { font-size:.74rem; margin-top:3px; }
+  .chart-wrap { overflow-x:auto; }
+  svg { display:block; width:100%; height:auto; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:10px; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .sw { width:14px; height:10px; border-radius:2px; display:inline-block; }
+  .empty, .loading { color:var(--muted); padding:32px 0; text-align:center; }
+  .note { font-size:.78rem; color:var(--muted); margin-top:8px; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--line);
+    border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; vertical-align:-3px; margin-right:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pronóstico pesquero por zona</h1>
+  <div class="sub" id="subtitle">Intervalos calibrados de captura (regresión cuantílica conformalizada) por especie y unidad económica.</div>
+</header>
+<main>
+  <div class="controls">
+    <div class="field">
+      <label for="species">Especie</label>
+      <select id="species"><option>Cargando…</option></select>
+    </div>
+    <div class="field">
+      <label for="zone">Zona / unidad económica</label>
+      <select id="zone"><option>—</option></select>
+    </div>
+  </div>
+  <div id="content"><div class="loading"><span class="spinner"></span>Entrenando el modelo (una sola vez, ~30–60 s)…</div></div>
+</main>
+
+<script>
+const API = "";
+let catalog = [];
+
+async function waitReady() {
+  for (let i = 0; i < 120; i++) {
+    try {
+      const h = await (await fetch(API + "/api/health")).json();
+      if (h.ready) return true;
+    } catch (e) { /* server still booting */ }
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  return false;
+}
+
+async function init() {
+  const ok = await waitReady();
+  if (!ok) { document.getElementById("content").innerHTML =
+    '<div class="empty">El modelo tardó demasiado en cargar. Recarga la página.</div>'; return; }
+  const data = await (await fetch(API + "/api/series")).json();
+  catalog = data.series;
+  document.getElementById("subtitle").textContent =
+    `Intervalos calibrados (CQR) por especie y unidad económica · corte de prueba ${data.cut_date} · ${catalog.length} series.`;
+  const spSel = document.getElementById("species");
+  const species = [...new Map(catalog.map(s => [s.species, s.species_label])).entries()];
+  spSel.innerHTML = species.map(([c, l]) => `<option value="${c}">${l}</option>`).join("");
+  spSel.onchange = fillZones;
+  document.getElementById("zone").onchange = loadForecast;
+  fillZones();
+}
+
+function fillZones() {
+  const sp = document.getElementById("species").value;
+  const zones = catalog.filter(s => s.species === sp)
+    .sort((a, b) => (b.n_test - a.n_test));
+  const z = document.getElementById("zone");
+  z.innerHTML = zones.map(s => {
+    const lat = s.lat != null ? ` · ${s.lat}°N` : "";
+    return `<option value="${s.series}">${s.unit_name}${lat}</option>`;
+  }).join("");
+  loadForecast();
+}
+
+async function loadForecast() {
+  const series = document.getElementById("zone").value;
+  if (!series) return;
+  const el = document.getElementById("content");
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>Calculando…</div>';
+  const rec = await (await fetch(API + "/api/forecast?series=" + encodeURIComponent(series))).json();
+  el.innerHTML = renderForecast(rec);
+  drawChart(rec);
+}
+
+function fmt(n) {
+  if (n == null) return "—";
+  if (n >= 1000) return (n / 1000).toFixed(1) + " t";
+  return Math.round(n) + " kg";
+}
+
+function renderForecast(rec) {
+  const cov = Math.round(rec.coverage90 * 100);
+  const covClass = cov >= 85 && cov <= 100 ? "good" : "warn";
+  const seasons = rec.seasons.map(s => {
+    const head = s.obs_total_kg != null
+      ? `<div class="val">${fmt(s.obs_total_kg)}</div><div class="rng">captura observada (${s.n_days} días)</div>`
+      : `<div class="val" style="color:var(--muted)">en curso</div><div class="rng">temporada sin observado aún</div>`;
+    let cov = "";
+    if (s.coverage90 != null && s.obs_total_kg != null) {
+      const c = Math.round(s.coverage90 * 100);
+      const cls = c >= 80 ? "good" : "warn";
+      cov = `<div class="err" style="color:var(--${cls})">intervalo 90% contuvo ${c}% de los días</div>`;
+    }
+    return `<div class="season">
+      <div class="lbl">Temporada ${s.label}</div>
+      ${head}
+      ${cov}
+      <div class="err" style="color:var(--muted)">estim. central (ref.): ${fmt(s.central_est_kg)}</div>
+    </div>`;
+  }).join("");
+  return `<div class="card">
+    <div class="zone-head">
+      <div>
+        <div class="zone-title">${rec.species_label} · ${rec.unit_name}</div>
+        <div class="zone-meta">Región: ${rec.region || "—"}${rec.lat != null ? " · " + rec.lat + "°N" : ""} · ${rec.n_test} días de prueba</div>
+      </div>
+      <div class="badge ${covClass}" title="Fracción de días en temporada cuyo observado cayó dentro del intervalo del 90%.">cobertura 90% en temporada: ${cov}%</div>
+    </div>
+    <div class="seasons">${seasons || '<div class="empty">Sin temporadas en el periodo.</div>'}</div>
+    <div class="note">Cada temporada muestra la <strong>captura observada</strong> y qué porcentaje de los días quedó dentro del intervalo del 90% ---la métrica honesta de confianza del modelo---. El producto es el <em>intervalo diario calibrado</em> (gráfico abajo), no un total puntual: con capturas concentradas en pocos días, la estimación central (mediana) es poco fiable como total y se muestra solo como referencia.</div>
+  </div>
+  <div class="card">
+    <div class="zone-title" style="font-size:.95rem;margin-bottom:6px;">Pronóstico diario calibrado</div>
+    <div class="chart-wrap"><svg id="chart" viewBox="0 0 900 340" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--band90)"></span>banda 90%</span>
+      <span><span class="sw" style="background:var(--band80)"></span>banda 80%</span>
+      <span><span class="sw" style="background:var(--median);height:3px"></span>mediana (pronóstico)</span>
+      <span><span class="sw" style="background:var(--obs);border-radius:50%;width:10px;height:10px"></span>observado</span>
+    </div>
+    <div class="note">Eje Y recortado a 3× el máximo observado en temporada (la cota superior del 90% se dispara en días pico al invertir la escala log).</div>
+  </div>`;
+}
+
+function drawChart(rec) {
+  const svg = document.getElementById("chart");
+  const W = 900, H = 340, m = { l: 52, r: 12, t: 12, b: 28 };
+  const n = rec.dates.length;
+  if (!n) { svg.innerHTML = ""; return; }
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+
+  // Eje Y: recorte a 3× el máx observado en temporada (fallback: 3× máx mediana).
+  const inS = rec.in_season;
+  const obsIn = rec.y_obs.filter((v, i) => inS[i]);
+  const medIn = rec.median.filter((v, i) => inS[i]);
+  const maxObs = Math.max(0, ...obsIn);
+  const base = maxObs > 0 ? maxObs : Math.max(1, ...medIn, 1);
+  const yMax = Math.max(base * 3, 1);
+  const x = i => m.l + (n === 1 ? iw / 2 : (i / (n - 1)) * iw);
+  const y = v => m.t + ih - Math.min(v, yMax) / yMax * ih;
+
+  const areaPath = (lo, hi) => {
+    let up = "", dn = "";
+    for (let i = 0; i < n; i++) { up += `${i ? "L" : "M"}${x(i).toFixed(1)},${y(hi[i]).toFixed(1)}`; }
+    for (let i = n - 1; i >= 0; i--) { dn += `L${x(i).toFixed(1)},${y(lo[i]).toFixed(1)}`; }
+    return up + dn + "Z";
+  };
+  const line = arr => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+
+  // Ticks Y
+  let yticks = "";
+  for (let k = 0; k <= 4; k++) {
+    const val = (yMax * k / 4), yy = y(val);
+    yticks += `<line x1="${m.l}" y1="${yy.toFixed(1)}" x2="${W - m.r}" y2="${yy.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+    yticks += `<text x="${m.l - 6}" y="${(yy + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)">${val >= 1000 ? (val / 1000).toFixed(1) + "t" : Math.round(val)}</text>`;
+  }
+  // Ticks X (5 fechas)
+  let xticks = "";
+  const nt = Math.min(5, n);
+  for (let k = 0; k < nt; k++) {
+    const i = Math.round(k / (nt - 1 || 1) * (n - 1));
+    xticks += `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${rec.dates[i].slice(0, 7)}</text>`;
+  }
+  // Observado (solo puntos > 0, recortados)
+  let dots = "";
+  for (let i = 0; i < n; i++) {
+    if (rec.y_obs[i] > 0) dots += `<circle cx="${x(i).toFixed(1)}" cy="${y(rec.y_obs[i]).toFixed(1)}" r="2.2" fill="var(--obs)" opacity="0.85"/>`;
+  }
+
+  svg.innerHTML = `
+    ${yticks}${xticks}
+    <path d="${areaPath(rec.lo90, rec.hi90)}" fill="var(--band90)"/>
+    <path d="${areaPath(rec.lo80, rec.hi80)}" fill="var(--band80)"/>
+    <path d="${line(rec.median)}" fill="none" stroke="var(--median)" stroke-width="1.6"/>
+    ${dots}`;
+}
+
+init();
+</script>
+</body>
+</html>
