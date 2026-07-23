@@ -80,6 +80,16 @@ dl = [
     "pytorch-forecasting>=1.0",
 ]
 
+# API de inferencia + front mínimo (Fase de despliegue). Autosuficiente: incluye solo el
+# modelo que la CQR necesita (XGBoost cuantílico), sin arrastrar prophet/lightgbm/optuna del
+# extra `models` — así la imagen Docker es ligera y sin compiladores.
+serve = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "xgboost>=2.0",
+    "scikit-learn>=1.4",
+]
+
 # Tracking de experimentos.
 tracking = [
     "mlflow>=2.11",

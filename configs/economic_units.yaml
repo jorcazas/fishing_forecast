@@ -99,6 +99,83 @@ punta_canoas:
     lat_max: 29.8
   notes: "Langosta roja, Punta Canoas (~29.4°N), ~1° al sur de El Rosario. Historia 2017-2026."
 
-# Pendientes (península de Vizcaíno, solo CONAPESCA 2022+): SCPP BAHIA TORTUGAS, SCPP BUZOS Y
-# PESCADORES (Isla Natividad, con polígono TURF), SCPP LEYES DE REFORMA (Bahía Asunción).
-# ENSENADA (~31.8°N): sin cooperativa de langosta significativa en los datos.
+# --- Clúster PENÍNSULA DE VIZCAÍNO (Punta Eugenia, ~27.1-27.9°N), solo CONAPESCA 2022+ ---
+# Grandes productoras FEDECOOP de langosta roja (Panulirus interruptus), ~2° al sur de El Rosario
+# y en el borde biogeográfico del Vizcaíno. Solo tienen historia CONAPESCA (2022-2026, ~4
+# temporadas) → aportan AMPLITUD ESPACIAL al pool (más zonas de la misma especie), no profundidad
+# temporal para San Quintín. Todas caen DENTRO de la descarga Copernicus actual (lat 27.02-31.98,
+# lon -116.97..-112.53) → cero descargas nuevas. Nombres = `UNIDAD ECONOMICA` exacto del crudo
+# CONAPESCA (verificado en cosecha_2022_2026). Tortugas/Emancipación/Natividad comparten bbox de
+# Punta Eugenia (~27.7°N); Asunción tiene bbox propio ~0.7° al SE (~27.1°N, aguas más cálidas).
+vizcaino_tortugas:
+  name: "SCPP BAHIA TORTUGAS SC DE RL"
+  region: vizcaino
+  bbox: &vizcaino_pe_bbox
+    lon_min: -115.3
+    lon_max: -114.6
+    lat_min: 27.5
+    lat_max: 28.0
+  notes: "Langosta roja ~767 t (mayor productora del pool). Bahía Tortugas (~27.68°N, -114.87°W)."
+
+vizcaino_emancipacion:
+  name: "SCPP EMANCIPACION SC DE RL"
+  region: vizcaino
+  bbox: *vizcaino_pe_bbox
+  notes: "Langosta roja ~637 t. Punta Eugenia / Puerto Nuevo (~27.84°N, -115.08°W)."
+
+vizcaino_natividad:
+  name: "SCPP BUZOS Y PESCADORES DE LA BAJA CALIFORNIA SCL"
+  region: vizcaino
+  bbox: *vizcaino_pe_bbox
+  notes: "Langosta roja ~362 t. Isla Natividad (~27.87°N, -115.17°W)."
+
+vizcaino_asuncion:
+  name: "SCPP LEYES DE REFORMA SC DE RL"
+  region: vizcaino
+  bbox:
+    lon_min: -114.6
+    lon_max: -113.9
+    lat_min: 27.05
+    lat_max: 27.45
+  notes: "Langosta roja ~494 t. Bahía Asunción (~27.13°N, -114.29°W), ~0.7° al SE de Punta Eugenia."
+
+# --- Clúster PACÍFICO BCS / Tier B (Punta Abreojos–La Purísima, ~26.2-27.0°N), solo CONAPESCA 2022+ ---
+# Extiende el pool ~1° más al sur del clúster de Vizcaíno. Requirió ampliar la descarga Copernicus
+# al sur (lat_min 25.8) y al este (lon_max -112.0) — ver copernicus_vars.yaml. Abreojos, La Bocana
+# y San Hipólito comparten un bbox (~26.8°N); La Purísima/Punta Pequeña tiene bbox propio ~0.6° al
+# SE (~26.2°N). Solo historia CONAPESCA (2022-2026). Nombres = `UNIDAD ECONOMICA` exacto del crudo.
+abreojos_san_ignacio:
+  name: "SCPP CALIFORNIA DE SAN IGNACIO SCL"
+  region: pacifico_bcs
+  bbox: &abreojos_bbox
+    lon_min: -114.1
+    lon_max: -113.4
+    lat_min: 26.5
+    lat_max: 27.1
+  notes: "Langosta roja ~310 t. Punta San Hipólito / Laguna San Ignacio (~26.96°N, -113.96°W)."
+
+abreojos_progreso:
+  name: "SC PROGRESO DE PRODUCCION PESQUERA SC DE RL"
+  region: pacifico_bcs
+  bbox: *abreojos_bbox
+  notes: "Langosta roja ~366 t. La Bocana (~26.79°N, -113.68°W)."
+
+abreojos_punta:
+  name: "SCPP PUNTA ABREOJOS SC DE RL"
+  region: pacifico_bcs
+  bbox: *abreojos_bbox
+  notes: "Langosta roja ~408 t. Punta Abreojos (~26.71°N, -113.57°W)."
+
+la_purisima:
+  name: "SCPP LA PURISIMA SC DE RL"
+  region: pacifico_bcs
+  bbox:
+    lon_min: -112.8
+    lon_max: -112.1
+    lat_min: 26.0
+    lat_max: 26.5
+  notes: "Langosta roja ~741 t (mayor productora del Tier B). Punta Pequeña / San Juanico (~26.24°N, -112.48°W)."
+
+# Pendientes: Tier C (Bahía Magdalena ~24-25°N): SCPP PUERTO SAN CARLOS/CHALE, bajo volumen
+# (~28-41 t) y borde térmico cálido → baja prioridad. ENSENADA (~31.8°N): sin cooperativa de
+# langosta significativa en los datos.

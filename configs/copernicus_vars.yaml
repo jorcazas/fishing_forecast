@@ -3,12 +3,13 @@
 # `aggregate/ocean_by_ue`. dataset_id verificados contra el catálogo (2026-07-05).
 
 # Región de descarga compartida = superconjunto de los bbox de todas las UEs.
-# lat_min = 27 para cubrir Isla Cedros (~27.7-28.4°N). Ampliar al sur si se agregan UEs
-# de Vizcaíno/Punta Abreojos (~26.7°N).
+# Ampliada (2026-07-23) al sur y al este para el clúster Tier B del Pacífico BCS
+# (Punta Abreojos/La Bocana/San Hipólito ~26.7-27.0°N; La Purísima/Punta Pequeña ~26.2°N,
+# ~-112.4°W, que quedaba al este del borde anterior -112.5). Antes: lat_min 27.0, lon_max -112.5.
 _region: &region
   lon_min: -117.0
-  lon_max: -112.5
-  lat_min: 27.0
+  lon_max: -112.0
+  lat_min: 25.8
   lat_max: 32.0
 
 products:
