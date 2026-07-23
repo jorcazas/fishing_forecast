@@ -1,0 +1,19 @@
+# Front de inferencia por zona. Levanta con: docker compose up --build
+# Luego abre http://localhost:8000  (el primer arranque entrena la CQR ~30-60 s; /api/health
+# reporta ready=true cuando termina).
+services:
+  forecast:
+    build: .
+    image: fishing-forecast-serve:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Corte de prueba que define el horizonte servido (2024-06-01 = temporadas recientes).
+      FF_SERVE_CUT: "2024-06-01"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys,json; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')).get('ready') else 1)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 90s
+      retries: 20

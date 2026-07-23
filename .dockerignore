@@ -1,0 +1,29 @@
+# Solo horneamos código + configs + front + dataset_v1.parquet. Todo lo pesado se excluye.
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Datos pesados y crudos (solo se incluye data/processed/dataset_v1.parquet vía COPY explícito).
+data/raw
+data/interim
+data/processed/*
+!data/processed/dataset_v1.parquet
+
+# Artefactos de modelado / experimentos no necesarios para servir.
+models
+lightning_logs
+reports
+experiments
+notebooks
+final_work
+docs
+tests
+scratchpad
+
+# Secretos y entorno local
+.env
+keys.json
