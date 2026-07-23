@@ -1580,3 +1580,47 @@ paquete → añadido `COPY README.md`). Doc: `docs/serving.md`.
 
 Tests: `tests/serving/test_forecast.py` (helpers puros de temporada, 12 verdes). Smoke-test del
 servidor local OK. Imagen Docker construida.
+
+---
+
+## 2026-07-23 (cont.) — Higiene, figura MHW, calendario de temporada + Tier C (langosta 18→21)
+
+Sesión de cierre: tres pulidos + una expansión con re-derivación de Exp 4.
+
+### 1. Higiene heredada del borrador
+- `git mv etl legacy/etl` y `git mv forecasting_models legacy/forecasting_models` (23+13 archivos):
+  se archivan las credenciales Postgres hardcodeadas, rutas Windows/Colab y `code_wandb.py` (CIFAR
+  ajeno). Nada del código nuevo (`src/`) los referenciaba. `ruff extend-exclude` simplificado a
+  `["legacy","notebooks"]`. CLI + 130 tests verdes.
+
+### 2. Higiene LaTeX + figura MHW
+- **Labels duplicados** del borrador (`fig:enter-label` ×11, `tab:catch_comparison` ×4, ninguno
+  `\ref`-eado) → renombrados por unicidad (`fig:splits`, `fig:etl_globcolour`, `fig:pred_*`,
+  `tab:metricas_*`, etc.). La tesis recompila a 33 págs con **0 warnings de "multiply defined"**.
+- **Figura MHW**: ya estaba generada (2026-07-21) e incluida (`\ref{fig:mhw_timeline}`); se verificó
+  (SST + clim + umbral p90 + eventos, Blob 2014-16 visible). El pendiente era stale.
+
+### 3. Calendario de temporada (deuda RESUELTA) + Tier C (Bahía Magdalena)
+- **Calendario**: `season_calendars.yaml` ahora declara 15-sep–15-feb para las 21 UEs de langosta
+  (antes solo `litoral_bc_sur`). `in_season` del dataset pasó de 1.0 (17 UEs) a 0.422 (todas).
+- **Tier C**: descarga Copernicus re-extendida al sur (`copernicus_vars.yaml`: lat_min 24.0, lon_max
+  -111.5, ~2.4 GB `--force`) + 3 cooperativas de Bahía Magdalena (`magdalena_chale/bahia/san_carlos`,
+  costa externa Isla Magdalena/Santa Margarita ~24.1-25.0°N, SST media ~21.5°C vs ~17°C en SQ) →
+  langosta **18→21 series**. Aggregate ocean+oceancolor de las 3 UEs; `transform arribos --source
+  union` → `consolidate` → `qc` (1 warning no bloqueante: 117 filas fuera de temporada con y≠0,
+  artefacto de fechas CONAPESCA vs ventana reglamentaria).
+- **Re-derivación de Exp 4**: nuevo filtro `FF_EXCLUDE_LOBSTER_UES` (reproducibilidad de tramos) →
+  se re-corrió Exp 4 en los 5 tramos (7/10/14/18/21) × 2 cortes con calibración consistente (~30s
+  c/u). **Hallazgos con la calibración corregida**:
+  - langosta@SQ **estable a 96.2% (corte 2024) de 7 a 21 series** → invariancia SOSTENIDA.
+  - corte 2020 **inestable** (se mantuvo ~41% hasta 18 series, saltó a 99.9% con 21) → confirma OOD.
+  - **la afirmación previa de "más zonas → más nitidez" NO se sostiene**: el CRPS insignia rebota
+    (124→95→131→90→123) y Bahía Magdalena (borde térmico cálido) EMPEORA la nitidez de SQ (90→123).
+    Nuevo matiz honesto: la transferencia dentro de la especie opera entre regímenes parecidos, no
+    desde el extremo cálido del rango.
+- **Tesis §6.9 reescrita** a la progresión 7→21 (tabla con 5 filas + 5 párrafos por tanda + figura
+  21 paneles `exp4_cqr_fan_grid_2024.png` + conclusión), atenuando la afirmación de nitidez. 33 págs,
+  compila limpio. Serving: docstring de `_in_lobster_season` y `docs/serving.md` actualizados (deuda
+  resuelta); smoke-test del store OK (28 series, Magdalena servida). 130 tests verdes.
+
+Nota deploy: `docker compose up --build` re-hornea `dataset_v1.parquet` → sirve las 21 series.

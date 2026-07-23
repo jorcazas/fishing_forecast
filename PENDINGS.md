@@ -2,7 +2,7 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-07-21**.
+actualización: **2026-07-23**.
 
 ## Qué falta ahora (snapshot 2026-07-21, ordenado por prioridad)
 
@@ -11,12 +11,13 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
 0. **Despliegue — front de inferencia (HECHO 2026-07-23)**: mini-app FastAPI + front vanilla/SVG
    (`src/fishing_forecast/serving/`, `frontend/`) que sirve el pronóstico calibrado CQR por especie ×
    UE, dockerizada (`Dockerfile`, `docker-compose.yml`, `docs/serving.md`). `docker compose up --build`
-   → http://localhost:8000. **Deuda técnica encontrada**: `configs/season_calendars.yaml` solo declara
-   `lobster_red@litoral_bc_sur` → el resto de langosta queda `in_season=True` todo el año; la app
-   aplica la ventana canónica en la capa de servicio, pero declarar el calendario para todas las UEs de
-   langosta (mismo reglamento 15-sep–15-feb) corregiría el dataset a costa de re-derivar Exp 4
-   (decisión aparte). El total por temporada NO es fiable como punto (captura concentrada en pocos
-   días); el producto es el intervalo diario + cobertura en temporada.
+   → http://localhost:8000 (ahora sirve 21 series de langosta + abulón/erizo = 28). El total por
+   temporada NO es fiable como punto (captura concentrada en pocos días); el producto es el intervalo
+   diario + cobertura en temporada. **Deuda del calendario de temporada: RESUELTA (2026-07-23)** —
+   `season_calendars.yaml` ahora declara la ventana 15-sep–15-feb para **todas** las UEs de langosta
+   (antes solo `litoral_bc_sur`); `in_season` del dataset ya es fiable. Esto re-derivó Exp 4 (ver #4
+   y tesis §6.9); el workaround `_in_lobster_season` se conserva como ventana autocontenida pero
+   coincide con el flag del dataset.
 
 1. **Más temporadas de calibración (Fase 4 — el techo real)**: intenté endurecer los cuantílicos
    base con Optuna sobre pinball (Exp 4b, 2026-07-21) para estrechar el ancho de días pico →
@@ -76,20 +77,38 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    abreojos_punta 260t, abreojos_san_ignacio 152t) → langosta **14→18 series**. Resultado: langosta@SQ
    INVARIANTE otra vez (99.8%/96.2%) Y su **nitidez mejora** (CRPS 2024 87→76, 2020 505→144 —
    transferencia positiva dentro de especie explícita); marginal cerca del nominal; CRPS marginal sube
-   por escala. Series Tier B mejor calibradas (87-94%) que las de Vizcaíno. Tesis actualizada a la
-   progresión 7→10→14→18 (tabla + párrafo + figura 18 paneles + conclusión). **Pendiente**: solo
-   **Tier C** (Bahía Magdalena ~24-25°N: Puerto San Carlos/Chalé, ~28-41t, borde térmico cálido) —
-   baja prioridad; Ensenada (~31.8°N) sin langosta en los datos; (d) ~~parametrizar
+   por escala. Series Tier B mejor calibradas (87-94%) que las de Vizcaíno.
+   **Vizcaíno Tier C HECHO (2026-07-23)**: descarga Copernicus re-extendida al sur (lat_min 24.0,
+   lon_max -111.5, ~2.4 GB) + 3 cooperativas de Bahía Magdalena (magdalena_chale 34t, magdalena_bahia
+   25t, magdalena_san_carlos 19t; costa externa de Isla Magdalena/Santa Margarita ~24.1-25.0°N) →
+   langosta **18→21 series**. **En la misma tanda se corrigió el calendario de temporada** (todas las
+   UEs de langosta, antes solo la insignia) → se re-corrió Exp 4 en LOS 5 TRAMOS (7/10/14/18/21) ×
+   2 cortes con calibración consistente (nuevo filtro `FF_EXCLUDE_LOBSTER_UES` en Exp 4). **Hallazgos
+   con calibración corregida**: (a) langosta@SQ **estable a 96.2% (corte 2024) en 7→21 series** — la
+   invariancia se sostiene; (b) el corte 2020 es **inestable** (se mantuvo en ~41% hasta 18 series y
+   saltó a 99.9% con 21 — confirma OOD, corte poco fiable); (c) **la afirmación previa de "nitidez que
+   mejora al sumar zonas" NO se sostiene**: el CRPS insignia rebota (124→95→131→90→123) y Bahía
+   Magdalena (borde cálido) EMPEORA la nitidez de SQ (90→123). La transferencia positiva dentro de la
+   especie opera entre regímenes parecidos, no desde el extremo cálido del rango. Tesis §6.9 reescrita
+   a la progresión **7→21** (tabla + 5 párrafos + figura 21 paneles + conclusión), atenuando la
+   afirmación de nitidez. Ensenada (~31.8°N) sin langosta en los datos; (d) ~~parametrizar
    el corte también en Exp 1-3~~ **HECHO (2026-07-21)**: Exp 1/2/2.3 aceptan `FF_CUT_DATE` (como Exp 4).
    Comparativa refrescada de modelos puntuales langosta@SQ sobre datos unidos (ambos cortes) en
    `final_work.tex` §6.10 (Tabla `extension_comparativa`): de ~3 a ~7 temporadas de train el MAE cae
    a la mitad (ARIMA 331→178, XGBoost 459→145); el orden se invierte (XGBoost supera a ARIMA con 7
    temporadas); la poda SHAP cambia de signo (empeoraba pre-unión 424→445, ahora ayuda 145→104).
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
-6. **Figura MHW** `reports/figures/mhw_timeline.png` (ver §4) — producible, falta correr.
-7. **Higiene heredada** del borrador (§6) y fix natbib/latexmk (error author-year no fatal a
-   `pdflatex`); labels placeholder duplicados del borrador original (`fig:enter-label`,
-   `tab:catch_comparison`) — renombrar por unicidad.
+6. ~~**Figura MHW** `reports/figures/mhw_timeline.png`~~ **HECHO (2026-07-21)**: generada
+   (SST + climatología + umbral p90 + eventos MHW sombreados; el "Blob" 2014-2016 y el régimen
+   cálido 2019-2021 se ven con nitidez) e incluida en la tesis (`final_work.tex` §Datos,
+   `\ref{fig:mhw_timeline}`).
+7. **Higiene heredada** del borrador (§6): credenciales Postgres hardcodeadas, rutas Windows/Colab,
+   `code_wandb.py` ajeno — mover a `legacy/` (pendiente). ~~Labels placeholder duplicados
+   (`fig:enter-label` ×11, `tab:catch_comparison` ×4)~~ **HECHO (2026-07-23)**: renombrados por
+   unicidad (`fig:splits`, `fig:etl_globcolour`, `fig:zona_pesca`, `fig:pred_*`, `tab:metricas_*`,
+   etc.); ninguno estaba `\ref`-eado. La tesis recompila a 33 págs con **0 warnings de
+   "multiply defined"**. El mensaje natbib author-year sigue siendo no fatal (solo detiene con
+   `-halt-on-error`; el build en `nonstopmode` produce el PDF).
 
 **Hecho (2026-07-21)** — documentación de tesis: **Exp 2.3 (SHAP)** y **Exp 4 (CQR)** integrados a
 `final_work.tex` (nuevas subsecciones + Tablas `extension_shap`/`extension_cqr` + conclusión).
@@ -250,10 +269,10 @@ lograba ~8.7%). Es el "piso" contra el cual comparar.
   (el `.h5` ya está en `models/legacy/`; el borrador usaba tf 2.7) y el XGB joblib (zips B5).
 - [ ] **LGBM/LSTM** y tuning (Optuna) sobre el mismo setup — opcional; el cuello de botella
   es la cantidad de temporadas, no el modelo.
-- [ ] **Figura MHW** `reports/figures/mhw_timeline.png`: ahora **producible** (ya hay SST
-  real 1982-2025). Falta correr `add_mhw(..., return_diagnostics=True)` sobre la serie de SQ
-  y pasarla a `viz/mhw_plot.plot_mhw_timeline` (el `aggregate ocean` actual no guarda
-  `clim`/`thresh`/`in_mhw`; añadir un flag o un pequeño script).
+- [x] **Figura MHW** `reports/figures/mhw_timeline.png` **HECHA (2026-07-21)**: `add_mhw(...,
+  return_diagnostics=True)` sobre la SST de SQ (1982-2025) → `viz/mhw_plot.plot_mhw_timeline`.
+  Muestra el "Blob" 2014-2016 y el régimen cálido 2019-2021. Incluida en `final_work.tex`
+  (§Datos, `\ref{fig:mhw_timeline}`).
 
 ---
 

@@ -57,10 +57,11 @@ uv run --no-sync uvicorn fishing_forecast.serving.api:app --host 0.0.0.0 --port 
   covariables. Es una herramienta de pronóstico calibrado sobre el periodo con datos, no un
   oráculo de temporadas futuras arbitrarias.
 
-## Deuda técnica conocida
+## Notas de mantenimiento
 
-- `configs/season_calendars.yaml` solo declara el calendario de `lobster_red@litoral_bc_sur`; el
-  resto de las series de langosta quedan con `in_season=True` todo el año. La app aplica la ventana
-  reglamentaria canónica (15-sep–15-feb) en la capa de servicio para los resúmenes y la cobertura,
-  sin tocar el dataset. Declarar el calendario para todas las UEs de langosta (mismo reglamento)
-  corregiría el `in_season` del dataset, pero re-derivaría las métricas de Exp 4 → decisión aparte.
+- **Calendario de temporada (resuelto 2026-07-23)**: `configs/season_calendars.yaml` ahora declara
+  la ventana reglamentaria (15-sep–15-feb) para **todas** las UEs de langosta (antes solo
+  `litoral_bc_sur`), así que `in_season` del dataset ya es fiable. La app conserva
+  `_in_lobster_season` como ventana reglamentaria autocontenida para el etiquetado por temporada,
+  pero coincide con el flag del dataset. Corregir esto re-derivó las métricas de Exp 4 (ver tesis
+  §6.9, progresión 7→21 series).
