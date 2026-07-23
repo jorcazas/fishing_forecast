@@ -521,34 +521,40 @@ Todos los experimentos anteriores convergen en el mismo diagnóstico ---el facto
 
 Primero, se amplió la cobertura espacial en dos tandas. Un clúster de cinco cooperativas de El Rosario ($\sim$29.6--30.4$^\circ$N) llevó la langosta de 2 a 7 series (especie, unidad económica): con el corte canónico de 01-julio-2020 el RMSE del \emph{pooling} de langosta en San Quintín cae de 659 a 313 kg y el ancho del percentil 90 de los días pico se estrecha de $\sim$9\,776 a $\sim$3\,812 kg ---transferencia positiva dentro de la especie. Una segunda tanda añadió tres cooperativas de la costa norte con historia completa 2017-2026 ---Punta Canoas ($\sim$29.4$^\circ$N), El Pabellón de San Quintín y Rocas de San Martín ($\sim$30.4--30.5$^\circ$N)---, llevando la langosta a 10 series y estrechando aún más el producto probabilístico: en el corte de 2024 el CRPS global baja de 220 a 131 y el ancho mediano de la langosta de San Quintín de 471 a 341 kg. Más zonas de la misma especie dan un intervalo mejor calibrado y más ajustado.
 
-Segundo, y de mayor impacto, se desbloquearon las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA (Sección~\ref{sec:extension2026}), lo que permite mover el corte de prueba a 01-junio-2024 y dejar el bache post-MHW y las temporadas posteriores de captura reducida \emph{dentro} del entrenamiento y la calibración. Con ese corte la CQR queda bien calibrada y ---lo crucial--- de forma \emph{estable}: las diez series de langosta cubren entre 93\% y 100\% (cobertura marginal 96.7\% para el intervalo nominal del 90\%), la langosta de San Quintín 96.2\%, y el intervalo sigue honesto durante las olas de calor (94.7\% en días de MHW frente a 96.7\% fuera). La Figura \ref{fig:extension_cqr_grid} lo muestra serie por serie: el observado cae dentro de las bandas de forma consistente en las diez unidades económicas.
+Segundo, y de mayor impacto, se desbloquearon las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA (Sección~\ref{sec:extension2026}), lo que permite mover el corte de prueba a 01-junio-2024 y dejar el bache post-MHW y las temporadas posteriores de captura reducida \emph{dentro} del entrenamiento y la calibración. Con ese corte la CQR queda bien calibrada y ---lo crucial--- de forma \emph{estable}: las diez series de langosta cubren entre 93\% y 100\% (cobertura marginal 96.7\% para el intervalo nominal del 90\%), la langosta de San Quintín 96.2\%, y el intervalo sigue honesto durante las olas de calor (94.7\% en días de MHW frente a 96.7\% fuera).
 
 \begin{table}[htbp]
 \centering
 \small
-\begin{tabular}{lcc}
+\begin{tabular}{p{4.6cm}cccc}
 \toprule
-Cobertura del intervalo 90\% & Corte 2020-07-01 & Corte 2024-06-01 \\
- & (bache fuera del train) & (bache en el train) \\
+ & \multicolumn{2}{c}{Langosta @ SQ, cob.\ 90\%} & Marginal & CRPS \\
+\cmidrule(lr){2-3}
+Pool de langosta & Corte 2020 & Corte 2024 & 2024 & marg.\ 2024 \\
+ & (bache fuera) & (bache dentro) & cob.\ 90\% & \\
 \midrule
-Langosta @ San Quintín, con 7 series & 40.6\% & 95.8\% \\
-Langosta @ San Quintín, con 10 series & 99.8\% & \textbf{96.2\%} \\
-Cobertura marginal (10 series) & 97.9\% & 96.7\% \\
-CRPS global (10 series) & 114.8 & 130.8 \\
+7 series (El Rosario) & 40.6\% & 95.8\% & --- & --- \\
+10 series (+costa norte) & 99.8\% & 96.2\% & 96.7\% & 130.8 \\
+14 series (+Vizcaíno) & 99.8\% & 96.2\% & 94.0\% & 245.8 \\
+18 series (+Abreojos--Purísima) & \textbf{99.8\%} & \textbf{96.2\%} & 94.1\% & 280.9 \\
 \bottomrule
 \end{tabular}
-\caption{Estabilidad de la calibración de la langosta de San Quintín según el corte de prueba y la composición del pool. Con el bache \emph{fuera} del entrenamiento (corte 2020) la cobertura por serie oscila entre 40.6\% y 99.8\% según cuántas series haya en el pool ---no es fiable en ninguna dirección---; con el bache \emph{dentro} (corte 2024) es estable en torno al 96\% independientemente del pool. El CRPS es mayor en el corte de 2024 porque su conjunto de prueba concentra las temporadas recientes de baja captura, intrínsecamente más difíciles.}
+\caption{Estabilidad de la calibración de la langosta de San Quintín frente al corte de prueba y a la composición del pool, al expandir de 7 a 18 series. El buque insignia es \emph{invariante} a añadir zonas: su cobertura se mantiene en 96.2\% (corte 2024) y 99.8\% (corte 2020) a lo largo de toda la expansión. Con el bache \emph{fuera} del entrenamiento (corte 2020) fue en cambio frágil en la primera tanda (40.6\% con 7 series). La cobertura marginal se mantiene cerca del nominal; el CRPS marginal sube al añadir series por un efecto de \emph{escala} ---las cooperativas nuevas de Vizcaíno y del Pacífico BCS son las de mayor tonelaje y el CRPS está en kg---, no por pérdida de calidad: la cobertura por serie de las nuevas se mantiene entre 82\% y 97\%, y la \emph{nitidez} de la langosta de San Quintín incluso mejora (su CRPS baja de 85 a 76 en el corte de 2024 al sumar zonas de la misma especie).}
 \label{tab:extension_moredata}
 \end{table}
+
+Una tercera tanda puso a prueba la \emph{robustez} del producto ante la composición del pool. Se añadieron cuatro grandes cooperativas FEDECOOP de la península de Vizcaíno (Bahía Tortugas, Punta Eugenia, Isla Natividad y Bahía Asunción, $\sim$27.1--27.9$^\circ$N, unos 2$^\circ$ al sur de San Quintín), llevando la langosta a 14 series. Como estas solo tienen historia de CONAPESCA (2022--2026, apenas dos temporadas de entrenamiento antes del corte de 2024), lo que se mide no es nitidez sino estabilidad: la calibración de la langosta de San Quintín quedó \emph{intacta} (99.8\% y 96.2\% en ambos cortes, idéntica a la del pool de 10 series), a diferencia de lo ocurrido con la tanda anterior, donde el buque insignia era todavía frágil a la composición del pool en el corte de 2020. La cobertura marginal se mantuvo cerca del nominal (94.0\% en 2024). Las nuevas series, de historia corta, se calibran algo peor (81--86\% en el corte de 2024) y elevan el CRPS \emph{marginal} por su gran escala en kilogramos ---son las de mayor tonelaje del pool---, no por peor calidad probabilística: su cobertura por serie sigue siendo razonable. Es, una vez más, la firma de que la palanca es acumular temporadas, no añadir zonas de historia corta.
+
+Una cuarta tanda extendió el pool $\sim$1$^\circ$ más al sur, al clúster de Punta Abreojos--La Purísima ($\sim$26.2--27.0$^\circ$N, cuatro cooperativas), lo que obligó a ampliar la descarga oceanográfica de Copernicus hacia el sur y el este. Con ello la langosta llegó a 18 series, y el patrón se repitió con nitidez: la calibración de la langosta de San Quintín siguió \emph{intacta} (99.8\%/96.2\%), la cobertura marginal cerca del nominal (94.1\% en 2024), y las nuevas cooperativas ---mejor muestreadas que las de Vizcaíno--- se calibraron entre 87\% y 94\%. La señal más alentadora es que la \emph{nitidez} de la serie insignia mejoró al sumar zonas de la misma especie: su CRPS bajó de 85 a 76 en el corte de 2024 (y de 268 a 144 en el de 2020). Es transferencia positiva dentro de la especie hecha explícita: más zonas de langosta no solo dejan estable la calibración de San Quintín, sino que afinan su pronóstico. La Figura \ref{fig:extension_cqr_grid} lo muestra serie por serie para las dieciocho unidades.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{exp4_cqr_fan_grid_2024.png}
-\caption{Intervalos de la CQR (bandas 80\% y 90\% + mediana) frente al observado (puntos) para las diez series de langosta, en el corte 01-junio-2024. Con el bache post-ola-de-calor dentro del entrenamiento y la calibración, el observado cae dentro de las bandas de forma consistente (cobertura empírica anotada por panel, 93--100\%), incluida la langosta de San Quintín (96.2\%). El eje $y$ de cada panel se recorta a 3$\times$ su máximo observado, pues la cota superior del 90\% se dispara en los días pico al invertir la transformación logarítmica.}
+\caption{Intervalos de la CQR (bandas 80\% y 90\% + mediana) frente al observado (puntos) para las dieciocho series de langosta, en el corte 01-junio-2024. Con el bache post-ola-de-calor dentro del entrenamiento y la calibración, el observado cae dentro de las bandas de forma consistente (cobertura empírica anotada por panel, 82--100\%; las cooperativas nuevas de Vizcaíno y del Pacífico BCS, de solo dos temporadas de entrenamiento, en el extremo inferior), incluida la langosta de San Quintín (96.2\%). El eje $y$ de cada panel se recorta a 3$\times$ su máximo observado, pues la cota superior del 90\% se dispara en los días pico al invertir la transformación logarítmica.}
 \label{fig:extension_cqr_grid}
 \end{figure}
 
-El contraste con el corte de 2020 es revelador, pero no como un simple ``antes mal, después bien''. Cuando el bache queda \emph{fuera} del entrenamiento, la cobertura por serie de la langosta de San Quintín es sencillamente \emph{poco fiable}: a lo largo de la expansión ha tomado valores de 53\%, 41\% y 99.8\% con 5, 7 y 10 series en el pool ---de la sub-cobertura severa a la sobre-cobertura severa--- sin que la serie ni su conjunto de calibración cambien, solo la composición del pool que fija el ancho del cuantil base. Es la firma de un régimen fuera de distribución: el intervalo se apoya sobre el filo de la navaja respecto a las capturas del crash. Con el bache \emph{dentro} del entrenamiento (corte 2024) la cobertura es estable (95.8\% con 7 series, 96.2\% con 10). Lo que compran las temporadas adicionales, entonces, no es solo un buen número de cobertura sino una calibración \emph{reproducible}, y ese es el argumento de fondo: ni la poda por SHAP ni la optimización bayesiana de los cuantílicos dieron una calibración fiable de la serie insignia; llevar el régimen anómalo al entrenamiento sí.
+El contraste con el corte de 2020 es revelador, pero no como un simple ``antes mal, después bien''. Cuando el bache queda \emph{fuera} del entrenamiento, la cobertura por serie de la langosta de San Quintín es sencillamente \emph{poco fiable}: a lo largo de la expansión ha tomado valores de 53\%, 41\% y 99.8\% con 5, 7 y 10 series en el pool ---de la sub-cobertura severa a la sobre-cobertura severa--- sin que la serie ni su conjunto de calibración cambien, solo la composición del pool que fija el ancho del cuantil base. Es la firma de un régimen fuera de distribución: el intervalo se apoya sobre el filo de la navaja respecto a las capturas del crash. Con el bache \emph{dentro} del entrenamiento (corte 2024) la cobertura es estable (95.8\% con 7 series y 96.2\% con 10, 14 y 18). Lo que compran las temporadas adicionales, entonces, no es solo un buen número de cobertura sino una calibración \emph{reproducible} ---invariante a cuántas zonas haya en el pool---, y ese es el argumento de fondo: ni la poda por SHAP ni la optimización bayesiana de los cuantílicos dieron una calibración fiable de la serie insignia; llevar el régimen anómalo al entrenamiento sí.
 
 \subsection{Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}
 \label{sec:extension_comparativa}
@@ -586,6 +592,33 @@ Segundo, el orden de los modelos se invierte. Con tres temporadas, el XGBoost co
 
 Tercero, y de forma reveladora, la poda por SHAP cambia de signo. En la fotografía previa a la unión (Tabla \ref{tab:extension_shap}) podar de 35 a 16 variables \emph{empeoraba} el modelo (MAE 424 $\to$ 445); sobre los datos unidos \emph{ayuda} en ambos cortes, y de forma marcada en el de 2024 (145 $\to$ 104, un 29\% menos de MAE). La misma regularización que era contraproducente con tres temporadas generaliza bien con siete: evidencia directa de que el sobreajuste original era un problema de \emph{volumen de datos}, no de selección de variables. El mejor modelo puntual refrescado ---XGBoost con variables seleccionadas por SHAP en el corte de 2024, MAE 103.5 y sMAPE 64.1\%--- es un salto cualitativo frente a los baselines ciegos al bache del trabajo original, y complementa a los intervalos calibrados de la CQR como entregable.
 
+\subsection{Prueba de techo: un Transformer de fusión temporal (TFT)}
+\label{sec:extension_tft}
+Toda la extensión sostiene que el cuello de botella es el volumen de datos y no la sofisticación del modelo. La prueba más exigente de esa tesis es enfrentar al producto ---XGBoost con envoltura conformal--- contra una arquitectura de vanguardia y comprobar si la complejidad adicional \emph{compra} algo. Se eligió el Temporal Fusion Transformer (TFT, \citealp{lim2021}), un modelo de atención multi-horizonte con \emph{gating} de variables diseñado precisamente para series con covariables estáticas, conocidas y observadas. Se entrenó un TFT global cuantílico (\texttt{pytorch-forecasting}) sobre las 22 series especie$\times$unidad económica, con las mismas covariables de color del océano y de olas de calor marinas y la misma rejilla de 11 cuantiles de la CQR. Para una comparación de cobertura \emph{manzana con manzana} sus cuantiles se envolvieron en la \emph{misma} corrección conformal de la Sección anterior (Mondrian por serie, calibrada en temporada, en escala logarítmica), previo reordenamiento monótono por fila para eliminar el cruce de cuantiles \citep{chernozhukov2010}. Así lo que se mide es ``TFT + conformal'' frente a ``XGBoost + conformal'', en los dos cortes de prueba.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{Corte 2020-07-01 (bache fuera)} & \multicolumn{3}{c}{Corte 2024-06-01 (bache dentro)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Método & Cob.\ 90\% & Ancho (kg) & CRPS & Cob.\ 90\% & Ancho (kg) & CRPS \\
+\midrule
+TFT + conformal & 82.5\% & 2.1 & \textbf{90.6} & \textbf{91.2\%} & 1.5 & \textbf{117.8} \\
+XGBoost + CQR & 97.9\% & 149.3 & 114.8 & 96.7\% & 137.8 & 130.8 \\
+\bottomrule
+\end{tabular}
+\caption{Prueba de techo: TFT y XGBoost, ambos con la misma envoltura conformal, en los dos cortes (intervalo nominal del 90\%; cobertura empírica, ancho mediano y CRPS global). Marginalmente el TFT empata o mejora ligeramente el CRPS y, en distribución (corte 2024), queda mejor calibrado (91.2\% frente a la sobre-cobertura del 96.7\% del XGBoost); fuera de distribución (corte 2020) sub-cubre. El ancho mediano del TFT es minúsculo porque casi todos los días son fuera de temporada con captura nula.}
+\label{tab:extension_tft}
+\end{table}
+
+El resultado es matizado y honesto (Tabla \ref{tab:extension_tft}). \emph{Marginalmente}, el TFT+conformal es competitivo: su CRPS global empata o supera ligeramente al del XGBoost en ambos cortes (90.6 vs.\ 114.8 en 2020; 117.8 vs.\ 130.8 en 2024), y tras el reordenamiento de cuantiles queda bien calibrado en distribución (91.2\% para el intervalo nominal del 90\% en el corte de 2024, frente a la sobre-cobertura conservadora del 96.7\% del XGBoost). El reordenamiento importó: sin él los cuantiles del TFT se cruzaban y la cobertura resultaba no-monótona. Es decir, la \emph{nitidez} probabilística cruda del Transformer no es peor que la del gradient boosting.
+
+Lo que descalifica al TFT como producto no es su nitidez marginal sino su \emph{inestabilidad por serie}. La langosta de San Quintín ---la serie insignia--- oscila entre 40.6\% (corte 2020) y 62.0\% (corte 2024) de cobertura, con un CRPS que se dispara de 114 a 213, mientras que el XGBoost se mantiene estable (99.8\% y 96.2\%). Peor aún, en el corte de 2020 la serie de erizo de El Regasa reventó a un ancho mediano del orden de $10^{8}$ kg por desborde numérico al invertir la transformación logarítmica sobre un cuantil base mal condicionado ---un fallo que la envoltura conformal no cura porque hereda el cuantil del modelo base---. Cada corrida entrena un TFT nuevo y el ruido corrida a corrida en las series pequeñas es alto; entrenar más (8 vs.\ 30 épocas) no cambia el veredicto, la firma inconfundible de un problema limitado por \emph{datos}, no por capacidad del modelo.
+
+El veredicto de la prueba de techo confirma la tesis de fondo. Con entre $\sim$200 y $\sim$1\,100 días de captura por serie ---uno a dos órdenes de magnitud por debajo del umbral (del orden de $10^{4}$ observaciones por grupo) donde los Transformers suelen empezar a pagar--- el TFT \emph{no supera} al XGBoost+CQR: marginalmente están en paridad, pero para una cooperativa lo que importa es una calibración \emph{estable y segura} por unidad económica, y ahí el XGBoost+CQR gana claramente por reproducibilidad y sobre-cobertura controlada. La capa conformal ---no la arquitectura--- es la que entrega la calibración. La palanca sigue siendo acumular temporadas y series, no añadir maquinaria. La justificación de diseño y esta hipótesis, enunciada \emph{antes} de correr el experimento, quedan registradas en \texttt{docs/decisions/ADR-0002-tft.md}.
+
 \section{Conclusión}
 La evaluación de diversos modelos para predecir el volumen de capturas pesqueras en la temporada arrojó los siguientes resultados:
 
@@ -605,7 +638,9 @@ En segundo lugar, los experimentos con modelos multivariados y con un modelo glo
 
 En tercer lugar, y como respuesta directa a esa escasez de datos, el pronóstico se reformuló en términos probabilísticos: una regresión cuantílica conformalizada sobre el modelo global entrega intervalos con cobertura cercana a la nominal y estable incluso durante las olas de calor marinas. Para una cooperativa pesquera, un rango calibrado de captura esperada es más accionable ---y más honesto--- que un único número puntual, y representa el producto operativo concreto de esta extensión.
 
-Finalmente, la hipótesis que recorre todo el trabajo ---que el cuello de botella es el volumen de datos y no la sofisticación del modelo--- dejó de ser una conjetura y se puso a prueba. Al sumar ocho cooperativas de langosta (El Rosario y la costa norte, de 2 a 10 series) y desbloquear las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA, la langosta de San Quintín ---cuya calibración ni la selección de variables por SHAP ni la optimización bayesiana de los cuantílicos habían hecho fiable--- pasó a estar bien calibrada de forma \emph{estable} (cobertura $\sim$96\%) al llevar el bache post-ola-de-calor de 2021-2022 dentro del entrenamiento; con el bache fuera del entrenamiento su cobertura era irreproducible, oscilando entre 41\% y 99.8\% según la composición del pool. Es la demostración más concreta de la tesis de fondo: la ruta hacia un modelo operativo y transferible pasa por acumular temporadas y unidades económicas ---junto con el índice de MHW como covariable estándar y el objetivo en escala logarítmica--- y no por más maquinaria estadística.
+Finalmente, la hipótesis que recorre todo el trabajo ---que el cuello de botella es el volumen de datos y no la sofisticación del modelo--- dejó de ser una conjetura y se puso a prueba. Al sumar dieciséis cooperativas de langosta (El Rosario, la costa norte, la península de Vizcaíno y el Pacífico de BCS, de 2 a 18 series) y desbloquear las temporadas 2022-2026 mediante la unión con los avisos de cosecha de CONAPESCA, la langosta de San Quintín ---cuya calibración ni la selección de variables por SHAP ni la optimización bayesiana de los cuantílicos habían hecho fiable--- pasó a estar bien calibrada de forma \emph{estable} (cobertura $\sim$96\%) al llevar el bache post-ola-de-calor de 2021-2022 dentro del entrenamiento, e \emph{invariante} a añadir zonas al pool (su nitidez incluso mejoró al hacerlo); con el bache fuera del entrenamiento su cobertura era irreproducible, oscilando entre 41\% y 99.8\% según la composición del pool. Es la demostración más concreta de la tesis de fondo: la ruta hacia un modelo operativo y transferible pasa por acumular temporadas y unidades económicas ---junto con el índice de MHW como covariable estándar y el objetivo en escala logarítmica--- y no por más maquinaria estadística.
+
+Como prueba de techo de esa afirmación se enfrentó al producto contra un Transformer de fusión temporal (TFT) con idénticas covariables y envuelto en la misma corrección conformal. El TFT resultó marginalmente competitivo en nitidez (CRPS a la par o ligeramente a favor) pero \emph{inestable por serie} ---la langosta de San Quintín osciló entre 41\% y 62\% de cobertura, con desbordes numéricos ocasionales--- y sin ganancia al entrenar más épocas. Que la arquitectura de vanguardia no supere al gradient boosting con estos datos, mientras que sumar temporadas sí volvió fiable la calibración, es la confirmación más nítida de que la complejidad del modelo no es el factor limitante: lo es el volumen de datos.
 % % Acknowledgements should go at the end, before appendices and references
 
 % \acks{We would like to acknowledge support for this project
@@ -761,6 +796,9 @@ Adibi, P., et al. (2020). Predicting Fishing Effort and Catch Using Semantic Tra
 \bibitem{chen2016}
 Chen, T., Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. arXiv:1603.02754 [cs.LG]. \url{https://doi.org/10.48550/arXiv.1603.02754}
 
+\bibitem{chernozhukov2010}
+Chernozhukov, V., Fernández-Val, I., Galichon, A. (2010). Quantile and Probability Curves Without Crossing. Econometrica, 78(3), 1093-1125. \url{https://doi.org/10.3982/ECTA7880}
+
 \bibitem{globcolour2020}
 GlobColour. (2020). \emph{Product User Guide} (Ref: GC-UM-ACR-PUG-01, Version 4.2.1). Retrieved from \url{https://www.globcolour.info/CDR_Docs/GlobCOLOUR_PUG.pdf}
 
@@ -778,6 +816,9 @@ Hyndman, R.J., Athanasopoulos, G. (2021) Forecasting: principles and practice, 3
 
 \bibitem{ke2017}
 Ke, G., et al. (2017). LightGBM: A Highly Efficient Gradient Boosting Decision Tree. In Advances in Neural Information Processing Systems 30 (NIPS 2017). \url{https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree}
+
+\bibitem{lim2021}
+Lim, B., Arık, S.Ö., Loeff, N., Pfister, T. (2021). Temporal Fusion Transformers for interpretable multi-horizon time series forecasting. International Journal of Forecasting, 37(4), 1748-1764. \url{https://doi.org/10.1016/j.ijforecast.2021.03.012}
 
 \bibitem{lindemann2021}
 Lindemann, B., et al. (2021). A survey on long short-term memory networks for time series prediction. Institute of Industrial Automation and Software Engineering, University of Stuttgart. Available online 3 May 2021. \url{https://doi.org/10.1016/j.procir.2021.03.088}
