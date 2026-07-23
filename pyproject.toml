@@ -133,8 +133,6 @@ target-version = "py311"
 src = ["src"]
 extend-exclude = [
     "legacy",
-    "etl",
-    "forecasting_models",
     "notebooks",
 ]
 
