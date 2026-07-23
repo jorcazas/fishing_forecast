@@ -238,15 +238,15 @@ Implementar en `src/features/`:
 
 **Objetivo**: explorar si una arquitectura moderna de deep learning supera al ensamble. Solo hacer si hay tiempo.
 
-- [ ] Justificar en un ADR corto (`docs/decisions/ADR-tft.md`) por qué TFT y no otro Transformer. Puntos a cubrir: acepta covariables estáticas, conocidas futuras y observadas pasadas; produce cuantiles; tiene interpretabilidad vía variable selection networks.
-- [ ] Implementación con `pytorch-forecasting` (abstracción más simple) o `darts` (`TFTModel`).
-- [ ] Dataset debe estar en formato multi-series con group IDs (especie × UE).
-- [ ] Entrenamiento con early stopping sobre el set de validación temporal.
-- [ ] Reportar métricas y compararlas con XGBoost+LSTM ensamble + CQR.
-- [ ] Discusión honesta: si TFT no gana, eso es un hallazgo metodológico (con estos datos, la complejidad extra no paga).
+- [x] ADR corto (`docs/decisions/ADR-0002-tft.md`): por qué TFT (covariables estáticas/conocidas/observadas, cuantiles, interpretabilidad) + hipótesis honesta (con ~200-1 100 obs/serie, ≪10k, se espera que NO gane).
+- [x] Implementación con `pytorch-forecasting` (`experiments/exp5_tft/tft.py`): modelo global, `GroupNormalizer(log1p)`, `QuantileLoss` con la misma rejilla que la CQR, salidas espejo de Exp 4.
+- [x] Dataset multi-series con group IDs especie × UE (`build_tft_frame`, función pura testeada sin `torch`).
+- [x] Entrenamiento con early stopping sobre validación temporal (corte `FF_CUT_DATE`).
+- [x] **CORRIDO** en ambos cortes (2020-07-01 y 2024-06-01), 8 y 30 épocas. Comparación justa: cuantiles del TFT envueltos en la MISMA CQR de Exp 4 (`experiments/exp5_tft/tft_cqr.py`), con reordenamiento monótono de cuantiles (Chernozhukov 2010) para evitar cruces.
+- [x] Discusión honesta: TFT+conformal en **paridad marginal** (CRPS a la par/ligeramente mejor; bien calibrado en distribución, 91.2% @2024) pero **inestable por serie** (langosta@SQ 40.6%↔62.0%; desborde numérico en urchin@regasa) y sin ganancia con más épocas → NO supera al XGBoost+CQR. La capa conformal, no la arquitectura, da la calibración.
 
 **Criterio de éxito**:
-- [ ] Reporte claro de si TFT vale la pena con los datos actuales. Si no gana, documentar cuánta más data haría falta (regla de dedo: Transformers empiezan a pagar con >10k observaciones por grupo).
+- [x] Reporte claro: el TFT NO vale la pena con los datos actuales (~200-1 100 obs/serie, 1-2 órdenes bajo el umbral ~10k). Documentado en `reports/exp5_tft_cqr_summary.md`, §"Prueba de techo" de la tesis (`sec:extension_tft`), y ADR-0002. La palanca sigue siendo *más datos*.
 
 ---
 

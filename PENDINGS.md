@@ -8,6 +8,16 @@ actualización: **2026-07-21**.
 
 Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que queda:
 
+0. **Despliegue — front de inferencia (HECHO 2026-07-23)**: mini-app FastAPI + front vanilla/SVG
+   (`src/fishing_forecast/serving/`, `frontend/`) que sirve el pronóstico calibrado CQR por especie ×
+   UE, dockerizada (`Dockerfile`, `docker-compose.yml`, `docs/serving.md`). `docker compose up --build`
+   → http://localhost:8000. **Deuda técnica encontrada**: `configs/season_calendars.yaml` solo declara
+   `lobster_red@litoral_bc_sur` → el resto de langosta queda `in_season=True` todo el año; la app
+   aplica la ventana canónica en la capa de servicio, pero declarar el calendario para todas las UEs de
+   langosta (mismo reglamento 15-sep–15-feb) corregiría el dataset a costa de re-derivar Exp 4
+   (decisión aparte). El total por temporada NO es fiable como punto (captura concentrada en pocos
+   días); el producto es el intervalo diario + cobertura en temporada.
+
 1. **Más temporadas de calibración (Fase 4 — el techo real)**: intenté endurecer los cuantílicos
    base con Optuna sobre pinball (Exp 4b, 2026-07-21) para estrechar el ancho de días pico →
    **NO funciona** (empeora langosta: p90 36k→402k kg, sobreajusta validación; ver bitácora).
@@ -17,7 +27,14 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    temporadas de calibración.** No hay palanca de código/tuning; la mejora real es **más datos**
    (ver #4). Opcional de bajo retorno: conformal adaptativo por régimen (MHW), pero con 1 temporada
    de calibración por serie es poco robusto.
-2. **Fase 5 (opcional) — TFT**: prueba de techo; ADR de justificación + `pytorch-forecasting`/`darts`.
+2. **Fase 5 (opcional) — TFT**: **CERRADA (2026-07-23)**. Corrido en ambos cortes con comparación
+   justa (`experiments/exp5_tft/tft_cqr.py`: cuantiles del TFT en la misma CQR de Exp 4, con
+   reordenamiento monótono de cuantiles). Veredicto: TFT+conformal en **paridad marginal** (CRPS a
+   la par/ligeramente mejor; calibrado 91.2% @2024) pero **inestable por serie** y sin ganancia con
+   más épocas → NO supera al XGBoost+CQR, como anticipaba el ADR. Escrita la §"Prueba de techo" en
+   la tesis (`sec:extension_tft`) y reescrito `reports/exp5_tft_cqr_summary.md` con números
+   corregidos. Reproducir: `uv sync --extra dl --extra models`, luego
+   `FF_CUT_DATE=<corte> uv run python -m experiments.exp5_tft.tft_cqr`.
 3. **Endurecer `pooled_log`** (Fase 3 residual): Optuna sobre el pool log; investigar por qué
    langosta@Cedros (mayor escala) empeora con log; probar pesos por serie u objetivo por-grupo.
 4. **Más datos** (mayor palanca real) — **GRAN AVANCE (2026-07-21)**:
@@ -46,9 +63,23 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    220→131, ancho langosta@SQ 471→341). HALLAZGO: al re-correr, la cobertura langosta@SQ en el corte
    2020 saltó 40.6%→99.8% (por composición del pool) → el 40.6% era frágil; el corte 2020 es
    **inestable** (OOD), el 2024 estable (~96%). Tesis §6.9 reformulada en torno a la ESTABILIDAD.
-   **Pendiente**: Ensenada (~31.8°N) no tiene cooperativa de langosta en los datos; península de
-   Vizcaíno (Bahía Tortugas 767t, Isla Natividad, Bahía Asunción) queda pendiente (solo CONAPESCA
-   2022+, ~4 temporadas, borde sur de la SST); (d) ~~parametrizar
+   **Vizcaíno Tier A HECHO (2026-07-23)**: 4 cooperativas FEDECOOP de Punta Eugenia (~27.1-27.9°N,
+   dentro del bbox SST actual → cero descargas) añadidas → langosta **10→14 series**:
+   vizcaino_tortugas (767t), vizcaino_emancipacion (616t), vizcaino_asuncion (494t), vizcaino_natividad
+   (362t). Resultado (Exp 4 CQR): **langosta@SQ ESTABLE** (99.8%/96.2% sin cambio en ambos cortes —
+   ya no es frágil como con la adición costa-norte); marginal→nominal (2024 96.7→94.0%). CRPS marginal
+   sube (131→246 @2024) por composición de ESCALA (series de gran tonelaje), NO regresión de calidad;
+   nuevas series cubren 91-93% (2020) / 81-86% (2024, solo ~2 temporadas de train). Reflejado en tesis
+   (§6.9 tabla + párrafo robustez + figura 14 paneles).
+   **Vizcaíno Tier B HECHO (2026-07-23)**: descarga Copernicus extendida (lat_min 25.8, lon_max -112.0,
+   ~2 GB re-descargados) + 4 cooperativas del Pacífico BCS (la_purisima 533t, abreojos_progreso 366t,
+   abreojos_punta 260t, abreojos_san_ignacio 152t) → langosta **14→18 series**. Resultado: langosta@SQ
+   INVARIANTE otra vez (99.8%/96.2%) Y su **nitidez mejora** (CRPS 2024 87→76, 2020 505→144 —
+   transferencia positiva dentro de especie explícita); marginal cerca del nominal; CRPS marginal sube
+   por escala. Series Tier B mejor calibradas (87-94%) que las de Vizcaíno. Tesis actualizada a la
+   progresión 7→10→14→18 (tabla + párrafo + figura 18 paneles + conclusión). **Pendiente**: solo
+   **Tier C** (Bahía Magdalena ~24-25°N: Puerto San Carlos/Chalé, ~28-41t, borde térmico cálido) —
+   baja prioridad; Ensenada (~31.8°N) sin langosta en los datos; (d) ~~parametrizar
    el corte también en Exp 1-3~~ **HECHO (2026-07-21)**: Exp 1/2/2.3 aceptan `FF_CUT_DATE` (como Exp 4).
    Comparativa refrescada de modelos puntuales langosta@SQ sobre datos unidos (ambos cortes) en
    `final_work.tex` §6.10 (Tabla `extension_comparativa`): de ~3 a ~7 temporadas de train el MAE cae
@@ -263,7 +294,9 @@ Resumen de lo que queda; detalle completo en `PLAN.md`.
   0.854 fuera (honesto). **Residual (ver arriba, #1)**: el ancho en días pico lo fija el cuantil
   base, no el conformal. Nota: CQR propia (no `mapie`) porque `mapie` 1.3 con cuantiles prefit +
   `expm1` daba intervalos no anidados.
-- [ ] **Fase 5 (opcional) — TFT**: ADR de justificación + `pytorch-forecasting`/`darts`.
+- [x] **Fase 5 (opcional) — TFT**: **CERRADA (2026-07-23)** — corrida en dos cortes, comparación
+  justa (TFT+conformal), veredicto de paridad marginal / no supera al XGBoost+CQR, y sección
+  escrita en la tesis (ver §2 arriba). ADR `docs/decisions/ADR-0002-tft.md`.
 
 ---
 
