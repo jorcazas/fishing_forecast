@@ -145,9 +145,10 @@ def _season_year(ds: pd.Timestamp) -> int:
 def _in_lobster_season(ds: pd.Timestamp) -> bool:
     """Ventana canónica de langosta roja en Baja California: 15-sep a 15-feb.
 
-    El dataset solo trae calendario para ``litoral_bc_sur``; el resto de las series de langosta
-    quedan con ``in_season=True`` todo el año (calendario no declarado). Para el resumen por
-    temporada aplicamos aquí la ventana reglamentaria, común a toda la especie.
+    Desde 2026-07-23 el dataset declara este calendario para **todas** las UEs de langosta
+    (antes solo ``litoral_bc_sur``), así que ``in_season`` del dataset ya es fiable y esta
+    función coincide con él; se conserva como ventana reglamentaria autocontenida (independiente
+    de que el ETL haya declarado el calendario) para el etiquetado por temporada.
     """
     md = (ds.month, ds.day)
     return md >= (9, 15) or md <= (2, 15)
