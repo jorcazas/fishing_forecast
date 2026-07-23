@@ -171,7 +171,7 @@ La metodología propuesta consiste de 5 etapas, cada una diseñada para evaluar 
     \centering
     \includegraphics[width=0.5\linewidth]{1_qvdnPF8ETV9mFdMT0Y_BBA.png}
     \caption{División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}
-    \label{fig:enter-label}
+    \label{fig:splits}
 \end{figure}
 
 \end{itemize}
@@ -207,7 +207,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
             \centering
             \includegraphics[width=1\linewidth]{Imagen1.png}
             \caption{ETL de datos de GlobColour y COBI}
-            \label{fig:enter-label}
+            \label{fig:etl_globcolour}
         \end{figure}
 
         \item Para homogeneizar el ajuste y entrenamiento de los modelos, se hizo un procesamiento adicional en donde se hace un desplazamiento de 3 meses de las variables X hacia adelante. Esto con el fin de utilizar las variables X de hoy para predecir 3 meses en el futuro. El desplazamiento se decidió debido a que es un periodo de tiempo acordado con COBI para que los pescadores consideren el modelo útil.
@@ -216,7 +216,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
             \centering
             \includegraphics[width=0.9\linewidth]{4DkMD.png}
             \caption{Ejemplo ilustrativo del desplazamiento para una variable, en este caso el desplazamiento es hacia atrás. En azul los datos originales y en amarillo los datos desplazados}
-            \label{fig:enter-label}
+            \label{fig:desplazamiento}
         \end{figure}
         
         \item Para obtener los datos de los sensores de COBI, quienes los recopilan cada 6 meses, se utiliza una conexión directa a OneDrive para recuperar sus datos en formato .csv. 
@@ -229,7 +229,7 @@ La descripción completa de cada una de las variables se encuentra en el Anexo B
             \centering
             \includegraphics[width=0.8\linewidth]{mapa.png}
             \caption{Zona de pesca designada a la unidad económica LITORAL DE BAJA CALIFORNIA S DE PR DE RL}
-            \label{fig:enter-label}
+            \label{fig:zona_pesca}
         \end{figure}
 
         Para reducir el ruido inducido por los meses de veda, donde a pesar de que las condiciones del mar pueden ser normales pero no hay pesca, decidimos reducir el conjunto de entrenamiento y prueba a sólo los días de temporada de pesca de Langosta: del 15 de septiembre de cada año al 15 de febrero del año siguiente.
@@ -267,7 +267,7 @@ ARIMA & d: 0, p: 29, q: 24, trend: c \\
 \bottomrule
 \end{tabular}
 \caption{Modelos seleccionados y su composición}
-\label{tab:catch_comparison}
+\label{tab:modelos_seleccionados}
 \end{table}
 
 
@@ -327,7 +327,7 @@ ARIMA & 106333.0 & 104482.56 & 338\% & 467.52 & 344.13 \\
 \bottomrule
 \end{tabular}
 \caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2020-2021}
-\label{tab:catch_comparison}
+\label{tab:metricas_2020_21}
 \end{table}
 
 
@@ -347,7 +347,7 @@ ARIMA & 106133.0 & 90003.27 & 142\% & 467.52 & 344.13 \\
 \bottomrule
 \end{tabular}
 \caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2021-2022}
-\label{tab:catch_comparison}
+\label{tab:metricas_2021_22}
 \end{table}
 
 
@@ -368,7 +368,7 @@ ARIMA & 137245.0 & 150 & 142\% & 467.52 & 344.13 \\
 \bottomrule
 \end{tabular}
 \caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para las dos temporadas 2020-2021 y 2021-2022}
-\label{tab:catch_comparison}
+\label{tab:metricas_ambas}
 \end{table}
 
 
@@ -660,48 +660,48 @@ A continuación se muestran las gráficas de valores predichos contra los valore
     \centering
     \includegraphics[width=0.9\linewidth]{arima_forecast.png}
     \caption{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
-    \label{fig:enter-label}
+    \label{fig:pred_arima}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{prophet.png}
     \caption{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
-    \label{fig:enter-label}
+    \label{fig:pred_prophet}
 \end{figure}
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{xgboost_final.png}
     \caption{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
-    \label{fig:enter-label}
+    \label{fig:pred_xgboost}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{lgbm_final.png}
     \caption{LGBM:  Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
-    \label{fig:enter-label}
+    \label{fig:pred_lgbm}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{final_first_season.png}
     \caption{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}
-    \label{fig:enter-label}
+    \label{fig:pred_ensemble_2020}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{image.png}
     \caption{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}
-    \label{fig:enter-label}
+    \label{fig:pred_ensemble_2021}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{final_two_seasons.png}
     \caption{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}
-    \label{fig:enter-label}
+    \label{fig:pred_ensemble_ambas}
 \end{figure}
 
 
