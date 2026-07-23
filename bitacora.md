@@ -1350,3 +1350,233 @@ mensaje pasó de "40.6→95.8 lo arregló" a "llevar el régimen al train da cal
 Mejoras operativas reales del corte 2024 con 10 series: marginal 95→96.7%, CRPS 220→131, ancho
 langosta@SQ 471→341. Figura 6 (grid CQR) ahora 10 paneles. Tesis a **31 págs**, 116/116 tests, ruff
 limpio. Exp 3.2 (extension_ynorm) queda como snapshot de 5 series (etapa documentada).
+
+---
+
+## 2026-07-22 — Fase 5: Temporal Fusion Transformer (código entregado, sin correr)
+
+Fase 5 (opcional, prueba de techo) — **entrega de código, no de entrenamiento** (regla del
+proyecto: no correr DL largo sin confirmar).
+
+- **ADR** `docs/decisions/ADR-0002-tft.md`: por qué TFT (covariables estáticas/conocidas/observadas,
+  cuantiles nativos, interpretabilidad) y la **hipótesis honesta**: con ~200-1 100 obs/serie (≪10k,
+  el umbral donde los Transformers empiezan a pagar) se espera que NO supere al pool XGBoost+CQR;
+  el experimento está diseñado para falsar eso.
+- **Experimento** `experiments/exp5_tft/tft.py` (`pytorch-forecasting`): modelo global sobre las
+  mismas series `(especie,UE)` que Exp 4; `GroupNormalizer(transformation="log1p")` por serie;
+  covariables conocidas (calendario) vs observadas (SST/MHW/color del océano, solo en el codificador
+  → sin fuga); `QuantileLoss` con la MISMA rejilla de cuantiles que la CQR → métricas idénticas
+  (MAE/RMSE/sMAPE, cobertura 80/90, CRPS, condicional MHW, por serie), reutilizando
+  `evaluation.metrics`. Salidas espejo de Exp 4 (JSON + summary + fan chart) para comparar lado a
+  lado. Corte por `FF_CUT_DATE` (2020/2024), épocas por `FF_TFT_EPOCHS`. `torch`/`pytorch_forecasting`
+  se importan dentro de `main()` (aviso claro si falta el extra `dl`).
+- **Prep pura testeada**: `build_tft_frame` (recorte a último catch, filtro MIN_CATCH_DAYS, relleno
+  de covariables, `time_idx`/calendario) + `tests/experiments/test_tft_frame.py` (2 tests, sin
+  `torch`). **118/118 tests, ruff limpio.**
+- `pyproject.toml` ya tenía el extra `dl` (torch, pytorch-lightning, pytorch-forecasting); no se
+  instaló. PLAN/PENDINGS actualizados (Fase 5: código ✓, correr ✗).
+
+**Pendiente / decisión del usuario**: instalar `uv sync --extra dl --extra models` y correr el
+entrenamiento (largo). Nota de compatibilidad: la API `predict(mode="quantiles", return_index=True)`
+de pytorch-forecasting ha variado entre versiones 1.x; `_align_quantile_preds` puede requerir un
+ajuste menor contra la versión instalada.
+
+---
+
+## 2026-07-22 (cont.) — Fase 5 CORRIDA: TFT entrenado (corte 2024), veredicto
+
+Instalado el extra `dl` (torch 2.11, pytorch-forecasting 1.7, lightning 2.6; mps disponible)
+y corrido el TFT. El entrenamiento es lento (~1.75-3.5 min/época); se corrió el **corte
+2024-06-01** (test corto) con 8 épocas, batch 256, en segundo plano. La API
+`predict(mode="quantiles", return_index=True)` de pf 1.7 funcionó; `_align_quantile_preds` no
+necesitó ajuste.
+
+**Resultado (TFT vs CQR, mismo corte/test, n=8717):**
+- CRPS global **128.9 (TFT) vs 130.8 (CQR)** — prácticamente empatado; en langosta@SQ el TFT
+  es mejor en CRPS (50.1 vs 85.0).
+- Cobertura 90% **5.7% (TFT) vs 96.7% (CQR)** — pero NO es comparable manzana-con-manzana: los
+  cuantiles del TFT colapsan (ancho mediano 1.2 kg) y no están conformalizados ni calibrados
+  solo-en-temporada; los días fuera de temporada (y=0) caen bajo una cota inferior levemente
+  positiva → cobertura marginal se desploma. En temporada las bandas de langosta@SQ son
+  sensatas (ver fan chart).
+- Puntual: MAE 148.7 (~ XGBoost-SHAP 103.5) pero RMSE 601 / sMAPE 200% (≫ XGBoost 156/64%):
+  falla en días pico.
+
+**Veredicto (criterio Fase 5)**: con ~200-1 100 obs/serie (≪10k) y 8 épocas, el TFT **no
+supera** al pool XGBoost+CQR — nitidez (CRPS) a lo sumo equivalente, puntual peor en picos, y
+como producto calibrado queda muy detrás por carecer de la capa conformal. Hallazgo
+metodológico esperado: la palanca es más datos, no más modelo. Artefactos:
+`reports/metrics/exp5_tft_2024-06-01.json`, `reports/exp5_tft_summary.md`,
+`reports/figures/exp5_tft_fan_chart_2024-06-01.png`. Env restaurado
+(`uv sync --extra dl --extra models --extra prob --extra dev`), 118/118 tests, ruff limpio.
+
+**Pendiente/opcional**: (a) comparación justa de cobertura = envolver los cuantiles del TFT en
+la misma CQR; (b) más épocas; (c) corte 2020 (más lento); (d) redactar sección Fase 5 en la
+tesis con este veredicto.
+
+---
+
+## 2026-07-22 (cont.) — Fase 5b: TFT + CQR (comparación justa) — VEREDICTO CORREGIDO
+
+A raíz de que Exp 5 medía cobertura sin conformalizar (injusto), se envolvieron los cuantiles
+del TFT en la MISMA CQR de Exp 4 (`experiments/exp5_tft/tft_cqr.py`, reusa `mondrian_cqr`).
+Reentrenado con cutoff en `conf_start`≈2022 (calibración held-out, validez conformal), corte
+2024-06-01, 8 épocas, fondo. API pf 1.7 OK.
+
+**Resultado (TFT+conformal vs XGBoost+conformal, mismo corte/test/partición):**
+- cobertura 90%: **87.5% (TFT) vs 96.7% (XGB)** — la conformal ARREGLA la calibración del TFT
+  (era 5.7% cruda). El TFT queda MÁS cerca del nominal (XGB sobre-cubre); a 80%: 76.7 vs 93.3.
+- CRPS marginal: **115.5 (TFT) < 130.8 (XGB)** — TFT mejor.
+- ancho mediano 90%: 1.3 (TFT) vs 137.8 (XGB) — pero lo dominan los días fuera de temporada;
+  en **días pico** (p90) EMPATE: 2239 vs 2132 kg.
+- langosta@SQ: TFT cov 95.8% / ancho 290 / CRPS 56.7 vs XGB 96.2% / 341 / 85.0 — TFT más nítido
+  y mejor CRPS a cobertura equivalente.
+
+**Veredicto corregido**: con la misma envoltura conformal, el TFT **es competitivo, no inferior**;
+incluso sub-entrenado (8 ep) empata o supera en nitidez/CRPS. La calibración la da la **capa
+conformal**, no la arquitectura base. Como el TFT cuesta mucho más cómputo para lograr **paridad**
+(no ventaja clara) y sub-cubre algo en el margen, **XGBoost+CQR sigue siendo la elección
+operativa pragmática**, pero la conclusión honesta es PARIDAD, no derrota del TFT. Esto refina
+(no contradice) la hipótesis del ADR: la complejidad extra no compra una ventaja clara con estos
+datos. Artefactos: `reports/metrics/exp5_tft_cqr_2024-06-01.json`, `reports/exp5_tft_cqr_summary.md`.
+
+**Pendiente/opcional**: más épocas (TFT sub-entrenado, podría mejorar); corte 2020; sección Fase 5
+en la tesis con AMBOS resultados (crudo injusto → conformal justo → paridad) como ejercicio de rigor.
+
+---
+
+## 2026-07-22 (cont.) — Fase 5b firmada: 30 épocas + arranca corte 2020
+
+**Corte 2024, 30 épocas (vs 8)**: entrenar más NO mejora el TFT (CRPS 115.5→117.5, cobertura
+87.5→85.0%, anchos algo mayores) → plateau/sobreajuste leve, lo esperado en régimen limitado por
+datos. **Firma el veredicto**: TFT+conformal es competitivo/paridad (mejor CRPS marginal 115-118
+vs 130.8; langosta@SQ CRPS 57-68 vs 85 a cobertura ~95%), estable en ambos presupuestos; sub-cubre
+algo en el margen (85-88% vs 90 nominal) mientras XGB sobre-cubre (96.7%). Empate en días pico
+(ancho p90 ~2.2-3.3 t). Resumen actualizado con la tabla 8-vs-30 épocas.
+
+Lanzado el **corte 2020** (fair comparison, 8 épocas, fondo) para el chequeo de robustez a dos
+cortes — caveat: predict window 2019-2026 (lento) y baseline CQR inestable en 2020 (hallazgo
+Exp 4), así que es una comparación más ruidosa.
+
+---
+
+## 2026-07-23 — Fase 5 cerrada: fix de cruce de cuantiles, dos cortes, y sección en la tesis
+
+**Bug encontrado y corregido**: el corte 2020 daba cobertura NO-monótona (80% > 90%) →
+cruce de cuantiles del TFT. Fix: reordenamiento monótono por fila (`np.sort(qmat, axis=1)`,
+Chernozhukov 2010) en `_align_quantile_preds` de `experiments/exp5_tft/tft.py`, igualando la
+lógica de Exp 4. Se re-corrieron AMBOS cortes con el fix.
+
+**Resultado corregido (TFT+conformal vs XGBoost+CQR, intervalo 90%)**:
+- Corte 2020 (bache fuera del train): TFT cob 82.5% (sub-cubre), CRPS 90.6; XGB cob 97.9%
+  (sobre-cubre), CRPS 114.8.
+- Corte 2024 (bache dentro): TFT cob **91.2%** (≈nominal tras el reordenamiento), CRPS 117.8;
+  XGB cob 96.7%, CRPS 130.8.
+
+**Lectura firme**: marginalmente PARIDAD (TFT empata/mejora ligeramente el CRPS y queda mejor
+calibrado en distribución). PERO **inestable por serie**: langosta@SQ oscila 40.6%→62.0% de
+cobertura (CRPS 114→213) mientras el XGB se mantiene (99.8%→96.2%); `urchin@er_regasa` (2020)
+reventó a un ancho ~9×10⁸ kg por desborde al exponenciar. Más épocas (8 vs 30) no cambian nada.
+**Veredicto**: el TFT NO supera al XGBoost+CQR; la capa conformal (no la arquitectura) entrega la
+calibración; la palanca sigue siendo *más datos*. Confirma la hipótesis del ADR-0002.
+
+**Tesis**: escrita la §"Prueba de techo: un Transformer de fusión temporal (TFT)"
+(`sec:extension_tft`) con la tabla de dos cortes (`tab:extension_tft`) + párrafo de cierre en la
+conclusión. Añadidos bibitems `lim2021` y `chernozhukov2010`. Compila limpio (32 págs, sin refs
+indefinidas; 2 overfull <3pt pre-existentes). Resúmenes `reports/exp5_tft_cqr_summary.md`
+reescritos con los números corregidos. Fase 5 cerrada.
+
+---
+
+## 2026-07-23 (cont.) — Item 4 (más datos): clúster Vizcaíno Tier A, langosta 10→14 series
+
+**Hallazgo previo (scan CONAPESCA)**: hay ~8 cooperativas nuevas de langosta ROJA (Panulirus
+interruptus) del Pacífico Baja en la cosecha 2022-2026 (no solo las 3 anotadas). Se separan por el
+bbox SST actual (lat 27.02-31.98): Tier A (≥27.1°N, dentro → cero descargas) y Tier B (sur de 27°N →
+requiere extender Copernicus). Excluir langosta CARIBE (P. argus, Quintana Roo, océano equivocado).
+
+**Implementado Tier A** (elección del usuario): 4 UEs FEDECOOP de Punta Eugenia añadidas a
+`configs/economic_units.yaml` — vizcaino_tortugas (767 t), vizcaino_emancipacion (616 t),
+vizcaino_asuncion (494 t, Bahía Asunción), vizcaino_natividad (362 t, Isla Natividad). Bboxes
+`vizcaino_pe_bbox` (compartido, ~27.7°N) + Asunción propio (~27.1°N), ambos dentro del NetCDF.
+Pipeline re-corrido: `transform arribos --source union` → `aggregate ocean/oceancolor` ×4 (extracción
+local, sin descarga) → `consolidate` → `qc` (limpio). dataset_v1 ahora con **14 series de langosta**.
+
+**Impacto CQR (Exp 4, ambos cortes, 10→14 series)**:
+- **langosta@SQ ESTABLE**: cobertura 90% 99.8%→99.8% (2020) y 96.2%→96.2% (2024) SIN CAMBIO —
+  contraste con la adición costa-norte previa que volteó el 2020 40.6%→99.8%. El buque insignia ya
+  está robustamente embebido en un pool grande.
+- Cobertura marginal se acerca al nominal: 97.9%→96.1% (2020), 96.7%→94.0% (2024).
+- Series nuevas de Vizcaíno: 91-93% (2020, casi nominal), 81-86% (2024, sub-cubren algo — solo ~2
+  temporadas de train c/u).
+- **CRPS marginal SUBE** (131→246 @2024): NO es regresión de calidad, es efecto de composición de
+  ESCALA — las 4 nuevas son las de mayor tonelaje (CRPS en kg alto). La señal libre de escala es la
+  cobertura por serie. Backups 10-series en scratchpad para el antes/después.
+
+Veredicto: la transferencia se sostiene (insignia estable, marginal→nominal); las nuevas series de
+historia corta son intrínsecamente más difíciles → otra vez la tesis del volumen de datos. Tier B
+(sur de 27°N, requiere descarga Copernicus) queda pendiente. Falta decidir cómo reflejarlo en la tesis.
+
+---
+
+## 2026-07-23 (cont.) — Item 4 Tier B: clúster Pacífico BCS, langosta 14→18 series
+
+**Descarga Copernicus extendida**: región ampliada al sur y al este (lat_min 27.0→25.8, lon_max
+-112.5→-112.0) en `configs/copernicus_vars.yaml` para cubrir Punta Abreojos–La Purísima. Re-descarga
+`extract copernicus --force` (~2 GB, 4 productos) — extent nuevo lat [25.83,31.98] lon [-116.97,-112.03],
+SST ahora hasta 2026-03-31. Re-agregadas ocean/oceancolor de las 18 UEs (cobertura uniforme).
+
+**4 UEs Tier B añadidas** (`configs/economic_units.yaml`, solo CONAPESCA 2022+): la_purisima (533 t,
+78 catch-days — dispersa), abreojos_progreso (366 t), abreojos_punta (260 t), abreojos_san_ignacio
+(152 t). bbox compartido Abreojos (~26.8°N) + La Purísima propio (~26.2°N). dataset_v1 → **18 series
+de langosta**.
+
+**Impacto CQR (Exp 4, 14→18 series)**:
+- **langosta@SQ INVARIANTE otra vez**: 99.8% (2020) / 96.2% (2024), sin cambio a lo largo de 7→18.
+- **NITIDEZ del insignia MEJORA**: langosta@SQ CRPS 2020 504.8→143.8, 2024 87.2→76.2 — transferencia
+  positiva dentro de especie hecha explícita (más zonas de langosta afinan el pronóstico de SQ).
+- Marginal cerca del nominal (2020 95.9%, 2024 94.1%). CRPS marginal 2024 sube 245.8→280.9 (efecto de
+  escala, La Purísima 533 t etc.), NO regresión; 2020 baja 145.2→135.6.
+- Series Tier B mejor calibradas que las de Vizcaíno (87-94% @2024 vs 81-86%): mejor muestreadas.
+
+**Tesis**: Tabla `extension_moredata` rediseñada a la progresión completa 7→10→14→18 (insignia
+invariante 96.2%, CRPS marginal por escala); párrafo de robustez ampliado con la cuarta tanda + la
+mejora de nitidez; figura fan-grid regenerada a **18 paneles**; conclusión (de 2 a 18 series, nitidez
+mejora). Compila limpio (33 págs). Pendiente solo Tier C (Magdalena, baja prioridad). Backups 14-series
+en scratchpad.
+
+---
+
+## 2026-07-23 (cont.) — Front de inferencia por zona (FastAPI + Docker)
+
+Fase de despliegue: mini-app web para que las cooperativas consulten el pronóstico calibrado (CQR)
+por especie × unidad económica.
+
+**Backend** (`src/fishing_forecast/serving/`): `forecast.build_store()` reutiliza los bloques puros
+de Exp 4 (XGBoost cuantílico en log, `sorted_quantile_preds`, `mondrian_cqr` normalizada por serie)
+y cachea, por serie, el pronóstico diario (mediana + bandas 80/90%) + resumen por temporada.
+`api.py` = FastAPI con `lifespan` que entrena una vez al arrancar (~30-60 s) y sirve `/api/series`,
+`/api/forecast`, `/api/health`, `/` (front). Extra `serve` en pyproject (fastapi+uvicorn+xgboost+
+sklearn, autosuficiente, sin arrastrar prophet/lightgbm/torch).
+
+**Front** (`frontend/index.html`): vanilla JS + SVG (sin dependencias), selector especie→zona,
+gráfico de abanico diario y panel de *backtest* por temporada. Tema claro/oscuro.
+
+**Docker**: `Dockerfile` (imagen `astral-sh/uv:python3.13`, `--extra serve`, hornea
+`dataset_v1.parquet`), `docker-compose.yml`, `.dockerignore` (excluye data/raw, models, etc.).
+Fix: hatchling necesita `README.md` en la imagen (build fallaba en el `uv sync` que instala el
+paquete → añadido `COPY README.md`). Doc: `docs/serving.md`.
+
+**Decisiones de honestidad** (surgieron al construir):
+- El producto es el **intervalo diario calibrado**, no el total por temporada: la suma de medianas
+  diarias es pésimo estimador del total (langosta@SQ +101%, la_purisima −100%) porque la captura se
+  concentra en pocos días. El panel por temporada muestra observado + cobertura, no un punto.
+- La cobertura de confianza mostrada es **en temporada** (fuera de temporada el 0 se cubre trivial y
+  la infla): historia larga 92-99%, historia corta (Vizcaíno/Abreojos) 63-85%.
+- **Deuda técnica encontrada** (pre-existente): `season_calendars.yaml` solo declara
+  `lobster_red@litoral_bc_sur`; el resto de langosta queda `in_season=True` todo el año. La app aplica
+  la ventana canónica 15-sep–15-feb en la capa de servicio (sin tocar el dataset). Corregir el
+  calendario en el dataset re-derivaría Exp 4 → decisión aparte, NO hecho.
+
+Tests: `tests/serving/test_forecast.py` (helpers puros de temporada, 12 verdes). Smoke-test del
+servidor local OK. Imagen Docker construida.
