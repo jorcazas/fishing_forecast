@@ -1,0 +1,143 @@
+\chapter{Datos}
+\label{cap:datos}
+
+Este capítulo describe de dónde vienen los datos, cómo se consolidan y qué contiene el conjunto
+resultante. La descripción variable por variable está en el Apéndice~\ref{ap:variables}.
+
+\section{Fuentes}
+\label{sec:datos_fuentes}
+
+\paragraph{Arribos pesqueros.} La variable objetivo proviene de dos fuentes complementarias.
+La primera es el registro histórico de COBI (2016-2021), obtenido por convenio, con
+granularidad de aviso de arribo. La segunda son los \emph{avisos de cosecha} de CONAPESCA
+(``AVISOS MAYORES/MENORES DE COSECHA'', 2022-2026), de acceso público. La segunda fuente fue la
+que permitió duplicar el número de temporadas disponibles.
+
+\paragraph{Oceanografía.} La temperatura superficial del mar (SST) proviene del producto
+reprocesado L4 de Copernicus Marine Service (OSTIA,
+\texttt{METOFFICE-GLO-SST-L4-REP-OBS-SST}), con cobertura diaria global desde 1981. Las
+variables de color del océano ---clorofila (CHL), coeficiente de atenuación difusa (KD490),
+materia particulada en suspensión (SPM), profundidad de disco de Secchi (ZSD), retrodispersión
+de partículas (BBP) y materia orgánica coloreada disuelta (CDM)--- provienen del acervo
+GlobColour redistribuido por Copernicus, a 4~km de resolución.
+
+\paragraph{Nota sobre el acceso a GlobColour.} La primera iteración de este trabajo descargaba
+GlobColour por FTP. Esa vía entrega archivos \emph{globales sin recorte} (18~MB por variable y
+por día a 4~km, del orden de cientos de gigabytes para el periodo y las variables de interés),
+lo que la hace inviable. Se optó por la misma información redistribuida por Copernicus, que
+permite recortar del lado del servidor. Las variables atmosféricas del acervo original (POC,
+PIC, PAR, aerosoles, nubosidad) no están disponibles por esa vía y se omiten.
+
+\section{Consolidación}
+\label{sec:datos_etl}
+
+\input{sections/_datos_etl_2026}
+
+\paragraph{Consistencia del empalme.} Como las dos fuentes de arribos se unen en la frontera de
+2021, se verificó que la costura no introdujera un salto de escala. No hay fechas duplicadas;
+COBI termina el 31-diciembre-2021 ---truncando la temporada 2021-2022 a unas 31~t--- y la unión
+recupera enero y febrero de 2022, completando esa temporada a 39.5~t. La transición es continua:
+diciembre de 2021 según COBI (6.3~t) es comparable con enero de 2022 según CONAPESCA (6.5~t).
+La limitación honesta es que \emph{no existe un periodo de solape} entre ambas fuentes que
+permita validar la escala de forma exhaustiva; el traspaso diciembre$\to$enero es la evidencia
+disponible y es consistente.
+
+\paragraph{Esquema.} El conjunto consolidado tiene una fila por
+$(\text{fecha}, \text{especie}, \text{\ue{}})$ sobre el rango de fechas completo ---no solo los
+días con registro---, con la variable objetivo, las covariables oceanográficas, el indicador de
+temporada, la temporada a la que pertenece el día, banderas de imputación y metadatos de
+trazabilidad del proceso. Se almacena en formato Parquet particionado por especie y año.
+
+\section{Tratamiento de la variable objetivo faltante}
+\label{sec:datos_faltantes}
+
+Como el conjunto cubre todos los días y no solo los días con aviso, hay que decidir qué valor
+toma la captura en los huecos. La semántica importa: un $0$ afirma ``no se pescó'' y un valor
+faltante afirma ``no sabemos''. La decisión adoptada distingue tres casos:
+
+\begin{enumerate}
+  \item \textbf{Fuera de temporada} sin registro $\Rightarrow y = 0$. No es una imputación sino
+  la consecuencia lógica de la veda.
+  \item \textbf{Dentro de temporada} sin registro $\Rightarrow y$ faltante. Puede ser un día sin
+  pesca (clima, festivo) o un hueco de captura de datos, y no hay forma de distinguirlos, así
+  que no se inventa un valor.
+  \item Cualquier imputación explícita queda marcada con una bandera, de modo que sea
+  rastreable. No se hace por omisión.
+\end{enumerate}
+
+Cada modelo decide cómo tratar el faltante en su propia capa de preparación ---en los
+experimentos de este trabajo se rellena con cero dentro de temporada, bajo el supuesto de que un
+día en temporada sin registro es un día sin captura--- pero el conjunto de datos preserva la
+distinción. La decisión está documentada como ADR en el repositorio.
+
+\section{Zona de cada \ue{}}
+\label{sec:datos_zona}
+
+La oceanografía se agrega espacialmente sobre la zona costera de cada \ue{}. Lo correcto sería
+recortar con el polígono TURF exacto de cada cooperativa, pero esos polígonos no son de acceso
+público y no fue posible obtenerlos. Se usa en su lugar un rectángulo costero (\emph{bounding
+box}) por clúster de cooperativas. A la resolución de los productos satelitales empleados
+---0.25\textdegree{} para la SST y 4~km para el color del océano--- el rectángulo es una
+aproximación razonable, y es además lo que hacía la primera iteración del trabajo; el polígono
+exacto queda como mejora deseable y no bloqueante. La Figura~\ref{fig:mapa_ues} muestra las
+zonas sobre el campo medio de SST, y la Figura~\ref{fig:zona_pesca} el detalle de la zona de
+San Quintín.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\linewidth]{mapa_ues.png}
+\caption{Zonas costeras asignadas a los clústeres de \UEs{} del conjunto consolidado, sobre la
+SST media de 2025. La península de Baja California aparece en blanco (sin dato de SST sobre
+tierra) y el agua cálida al oriente es el Golfo de California. El gradiente térmico a lo largo
+del rango es explícito: de $\sim$17\textdegree{}C en San Quintín ($\sim$30.4\textdegree{}N) a
+$\sim$22\textdegree{}C en Bahía Magdalena ($\sim$24.5\textdegree{}N).}
+\label{fig:mapa_ues}
+\end{figure}
+
+\section{Índice de olas de calor marinas}
+\label{sec:datos_mhw}
+
+\input{sections/_datos_mhw_2026}
+
+\section{Construcción de variables}
+\label{sec:datos_features}
+
+A partir del conjunto consolidado se construye la matriz de variables explicativas de la
+ecuación~\eqref{eq:problema}, con tres bloques:
+
+\begin{itemize}
+  \item \textbf{Calendario} (determinista en $t$): día del año codificado como $(\sin, \cos)$ e
+  indicador de temporada.
+  \item \textbf{Rezagos de la propia serie}: la captura de la misma fecha de uno y dos años
+  atrás, que captura el ciclo anual.
+  \item \textbf{Oceanografía desplazada}: cada covariable oceanográfica en $t-\horizonte$, más
+  medias móviles de 90 y 365 días que terminan en $t-\horizonte$ ---es decir, el estado del mar
+  previo a la temporada y el calor acumulado del año anterior. El desplazamiento es el mecanismo
+  ecológico que se quiere modelar y, a la vez, lo que garantiza que no haya fuga de información
+  (Figura~\ref{fig:desplazamiento}).
+\end{itemize}
+
+Con las seis variables de color del océano el conjunto crece a unas 35 variables, un número
+grande frente a las pocas temporadas disponibles; el Capítulo~\ref{cap:resultados} muestra que
+ese desbalance importa y cómo se corrige con selección de variables.
+
+\section{El conjunto consolidado}
+\label{sec:datos_resumen}
+
+El resultado cubre \textbf{2017-2026} y contiene \textbf{44 series} (especie $\times$ \ue{}) con
+al menos un día de captura registrado, que suman \textbf{10{,}465 toneladas} desembarcadas: 21
+series de langosta roja (7{,}569~t), 14 de abulón azul, 6 de erizo rojo y 3 de otras especies de
+abulón. La mediana de días con captura por serie es de \textbf{70}, lo que ilustra el problema
+de fondo: aun con casi una década de cobertura, cada serie individual aporta pocas
+observaciones. La Tabla~\ref{tab:series_resumen} desglosa cada serie.
+
+\input{tables/series_summary}
+
+\section{Origen de la información de las figuras heredadas}
+
+La primera iteración de este trabajo construyó su proceso de datos sobre GlobColour por FTP y
+sobre un intercambio directo de archivos con COBI. Ese proceso se muestra en la
+Figura~\ref{fig:etl_globcolour} y se conserva porque documenta el punto de partida; el proceso
+vigente es el descrito en la Sección~\ref{sec:datos_etl}.
+
+\input{sections/_datos_2023_figs}
