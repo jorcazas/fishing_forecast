@@ -20,7 +20,7 @@ ARIMA & d: 0, p: 29, q: 24, trend: c \\
 
 (*) La arquitectura y los hiperparámetros del modelo LSTM elegido son:
 
-\subsection{Arquitectura}
+\subsubsection*{Arquitectura de la LSTM}
 
 - Capa de entrada con dimensiones de entrada (batch size, time steps, features) igual a (None, 10, 17).
 
@@ -34,7 +34,7 @@ ARIMA & d: 0, p: 29, q: 24, trend: c \\
 
 - Capa densa con 1 unidad y activación 'relu'.
 
-\subsection{Hiperparámetros:}
+\subsubsection*{Hiperparámetros de la LSTM}
 
 - Unidades en la primera capa LSTM: 2700.
 
@@ -125,6 +125,6 @@ Además, los RMSE y MAE son elevados, lo cual implica que las predicciones diari
 
 En general, todos los modelos sobreestimaron la pesca de la segunda temporada debido a que podría tratarse de un caso atípico. Si comparamos esta temporada con el resto, el total de pesca es menos de la mitad. Por esta razón se decidió optar por predecir la temporada 2020-2021 también, pues es similar a las demás.
 
-No obstante, debemos poner atención a la causa de la reducción de la pesca en la temporada 2021-2022. Inicialmente se planteó la hipótesis de un efecto económico externo (el último año de la pandemia de Covid-19); sin embargo, la extensión de este trabajo (Sección \ref{sec:extension2026}) atribuye la caída a un mecanismo ambiental: las olas de calor marinas que afectaron a Baja California entre 2019 y 2021 \cite{villasenor2024}. Esto explica por qué los modelos que solo usan el historial de capturas —o las variables oceanográficas sin un índice de anomalía térmica de largo plazo— sobreestiman sistemáticamente esa temporada.
+No obstante, debemos poner atención a la causa de la reducción de la pesca en la temporada 2021-2022. Inicialmente se planteó la hipótesis de un efecto económico externo (el último año de la pandemia de Covid-19); sin embargo, el índice de olas de calor marinas de la Sección~\ref{sec:datos_mhw} atribuye la caída a un mecanismo ambiental: las olas de calor marinas que afectaron a Baja California entre 2019 y 2021 \cite{villasenor2024}. Esto explica por qué los modelos que solo usan el historial de capturas —o las variables oceanográficas sin un índice de anomalía térmica de largo plazo— sobreestiman sistemáticamente esa temporada.
 
 Los próximos pasos de este esfuerzo son conseguir datos de otras regiones y de otras especies para replicar este procedimiento y verificar si los modelos elegidos tienen resultados similares.

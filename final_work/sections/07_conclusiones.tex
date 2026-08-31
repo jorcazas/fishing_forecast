@@ -1,0 +1,77 @@
+\chapter{Conclusiones}
+\label{cap:conclusiones}
+
+\section{Respuesta a las preguntas de investigación}
+
+\input{sections/_conclusion_2023}
+
+\section{Limitaciones}
+\label{sec:limitaciones}
+
+Las limitaciones se enuncian en orden de gravedad para el uso del pronóstico.
+
+\paragraph{La captura no es abundancia.} La variable objetivo es el volumen desembarcado, que
+es el producto de la abundancia del recurso \emph{y} del esfuerzo pesquero: número de
+embarcaciones, días efectivos de salida, precio de venta, decisiones de la cooperativa. No se
+dispone de datos de esfuerzo, de modo que no es posible normalizar a captura por unidad de
+esfuerzo (CPUE), que es la medida estándar en evaluación pesquera. Una parte de lo que el
+modelo aprende es, por tanto, comportamiento humano y no dinámica poblacional, y una caída
+puede reflejar menos salidas y no menos langosta. Esta es la limitación más importante para
+interpretar los resultados en clave biológica.
+
+\paragraph{Pocas temporadas de calibración.} Es la limitación que el propio trabajo documenta
+como el cuello de botella. Con una a dos temporadas de calibración por serie, un cambio de
+régimen queda fuera de la distribución aprendida: con el corte de 2020 la cobertura de la serie
+insignia resulta irreproducible, oscilando según la composición del pool. El corte de 2024 es
+el fiable, y lo es porque el bache está dentro del entrenamiento.
+
+\paragraph{Zonas aproximadas por rectángulos.} La oceanografía se agrega sobre un rectángulo
+costero y no sobre el polígono TURF real de cada cooperativa, que no es de acceso público. A la
+resolución de los productos satelitales la aproximación es razonable, pero las cooperativas que
+comparten rectángulo comparten también, por construcción, sus covariables oceanográficas.
+
+\paragraph{Empalme de fuentes sin periodo de solape.} La unión COBI--CONAPESCA se apoya en la
+continuidad del traspaso de diciembre de 2021 a enero de 2022. No existe un periodo en el que
+ambas fuentes reporten simultáneamente, así que no fue posible validar exhaustivamente que las
+escalas coincidan.
+
+\paragraph{No se pronostica la oceanografía.} El horizonte útil llega hasta la última fecha con
+covariables disponibles. El sistema es una herramienta de pronóstico calibrado sobre el periodo
+con datos, no un oráculo de temporadas futuras arbitrarias; extenderlo exigiría alimentar
+pronósticos oceanográficos, con su propia incertidumbre.
+
+\paragraph{Dependencia de terceros.} Salvo los datos de COBI, obtenidos por convenio, las
+fuentes son públicas pero externas: el trabajo depende de que Copernicus y CONAPESCA sostengan
+sus procesos de publicación. Durante este trabajo, de hecho, el cliente \texttt{motuclient} de
+Copernicus fue descontinuado y hubo que reescribir la ingesta.
+
+\paragraph{Una sola especie con evidencia sólida.} Las conclusiones sobre transferencia entre
+zonas están respaldadas para la langosta roja, con 21 series. Las de abulón y erizo tienen menos
+series y menos temporadas, y sus resultados deben leerse como indicativos.
+
+\section{Trabajo futuro}
+\label{sec:trabajo_futuro}
+
+\begin{enumerate}
+  \item \textbf{Incorporar esfuerzo pesquero.} Es la mejora de mayor impacto científico:
+  permitiría modelar CPUE y separar la señal ambiental del comportamiento de la flota. Requiere
+  datos de salidas por embarcación, que las cooperativas sí registran.
+
+  \item \textbf{Acumular temporadas.} Es la conclusión que atraviesa todo el trabajo. Cada
+  temporada adicional vale más que cualquier refinamiento de modelo, y el sistema ya está
+  construido para incorporarlas con un solo comando.
+
+  \item \textbf{Conformal adaptativo por régimen.} Calibrar por separado los días con y sin ola
+  de calor daría intervalos que se ensanchan automáticamente en régimen anómalo. Con una sola
+  temporada de calibración por serie hoy no es robusto, pero lo será al acumular temporadas.
+
+  \item \textbf{Polígonos TURF reales} y, con ellos, covariables oceanográficas distintas por
+  cooperativa dentro de un mismo clúster.
+
+  \item \textbf{Extender el catálogo de especies} a las que hoy tienen series cortas,
+  aprovechando que el modelo global ya está diseñado para agruparlas.
+
+  \item \textbf{Validar el producto con las cooperativas.} La utilidad real del intervalo
+  calibrado solo puede evaluarse con quienes toman la decisión de compra de insumos; el
+  siguiente paso natural es una temporada de uso acompañado.
+\end{enumerate}

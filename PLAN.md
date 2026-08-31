@@ -1,6 +1,9 @@
 
 # PLAN.md
 
+> **Nota (2026-08-31)**: el documento de tesis vive ahora en `final_work/final_work.tex`
+> (clase `report`) + `final_work/front/` + `final_work/sections/`. Ver `PENDINGS.md` §4c.
+
 Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por prioridad según la reunión de planeación. Cada fase tiene criterios de éxito explícitos y un entregable verificable.
 
 **Uso**: marcar cada tarea con `[x]` al completarla. Claude Code debe ejecutar **fase por fase** en orden. No saltar fases. Si una fase revela problemas que bloquean la siguiente, documentarlos y consultar antes de continuar.

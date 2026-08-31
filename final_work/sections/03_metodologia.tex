@@ -68,6 +68,15 @@ con un modelo ajustado sobre todo lo anterior, de manera que cada partición de 
 un superconjunto de la anterior y el bloque de validación siempre está en el futuro respecto al
 de ajuste (Figura~\ref{fig:splits}).
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.62\linewidth]{1_qvdnPF8ETV9mFdMT0Y_BBA.png}
+\caption{Esquema de validación con ventana expansiva. Cada partición de entrenamiento (azul)
+es un superconjunto de la anterior y el bloque de validación (naranja) siempre está en el
+futuro respecto a los datos con los que se ajusta el modelo.}
+\label{fig:splits}
+\end{figure}
+
 \paragraph{Ausencia de fuga de información.} Se aplican tres reglas, verificadas con pruebas
 automatizadas:
 \begin{enumerate}

@@ -2,7 +2,7 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-08-31**.
+actualización: **2026-08-31** (b).
 
 ## Qué falta ahora (snapshot 2026-07-21, ordenado por prioridad)
 
@@ -119,6 +119,39 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    Nota técnica: en macOS hay que dejar torch en un solo hilo (`torch.set_num_threads(1)`, ya en
    el script) o el proceso se cuelga en la barrera de OpenMP por el `libomp` que ya cargaron
    xgboost/lightgbm.
+
+4c. **Documento de tesis reestructurado (HECHO 2026-08-31)**: el `.tex` pasó de artículo estilo
+   JMLR a **documento de tesis** (`report`, 12pt, capítulos), partido en `final_work/front/` y
+   `final_work/sections/`. Se cerraron cinco huecos de la revisión: (1) **formato** ---portada
+   ITAM, declaración de derechos (arts. 21 y 27 LFDA), agradecimientos, resumen + abstract,
+   índices general/figuras/tablas---; (2) **reencuadre** ---abstract, introducción y conclusión
+   ahora describen el alcance real (MHW, modelo global, CQR, TFT, producto), con pregunta de
+   investigación, objetivos, hipótesis falsable y aportaciones; la sección ``Extensión 2026''
+   desapareció como bolt-on y su contenido se repartió por capítulos---; (3) **capítulo de
+   Metodología formal** ---notación, horizonte, partición y ventana expansiva, reglas anti-fuga,
+   definición de TODAS las métricas (MAE/RMSE/sMAPE/error de temporada/pinball/CRPS/cobertura/
+   ancho + diagnóstico de forma), el algoritmo CQR paso a paso con ecuaciones, protocolo de
+   hiperparámetros y sección de reproducibilidad---; (4) **capítulo de Datos** ---fuentes, unión
+   COBI+CONAPESCA y consistencia del empalme, esquema, ADR-0001, bbox vs TURF, índice MHW,
+   construcción de variables, y **tabla generada de las 44 series** + **mapa nuevo de las UEs
+   sobre la SST media**---; (5) **capítulo del Producto operativo** ---arquitectura API/front/
+   Docker, qué ve una cooperativa (figura generada desde la API en marcha) y las tres
+   advertencias que el sistema declara.
+   Insumos reproducibles nuevos: `experiments/thesis_assets.py` (tabla `final_work/tables/
+   series_summary.tex` + `images/mapa_ues.png`) y `experiments/serving_figure.py`
+   (`images/producto_api.png`, requiere la API arriba: `FF_API=http://127.0.0.1:8000`).
+   La bibliografía pasó a etiquetas author-year (`\bibitem[Autor(Año)]{clave}`) para que
+   `\citet/\citep` funcionen, y se añadieron 6 referencias que el capítulo de metodología
+   exige (Gneiting-Raftery, Koenker-Bassett, Vovk, Angelopoulos-Bates, Akiba/Optuna,
+   Montero-Manso). Compila a **85 págs, 0 referencias sin resolver, 0 labels duplicados**.
+   **Pendiente del usuario (marcado como TODO en el `.tex`)**: (a) confirmar con el asesor y
+   Dirección Escolar el formato oficial vigente y si se requiere hoja de firmas; (b) nombre y
+   grado del asesor en la portada; (c) verificar el texto vigente de la declaración de derechos;
+   (d) escribir los agradecimientos; (e) decidir si el título registrado cambia al nuevo (más
+   fiel al alcance: 21 UEs, no solo San Quintín).
+   **Nota**: `babel-spanish` y `setspace` no están instalados en este TinyTeX (tlmgr falla al
+   verificar el paquete), así que el documento redefine los nombres en español a mano y usa
+   `\linespread`. Si se instalan, se puede simplificar el preámbulo (y ganar guionado español).
 
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
 6. ~~**Figura MHW** `reports/figures/mhw_timeline.png`~~ **HECHO (2026-07-21)**: generada

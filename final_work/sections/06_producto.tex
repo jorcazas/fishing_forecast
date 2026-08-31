@@ -1,0 +1,84 @@
+\chapter{El producto operativo}
+\label{cap:producto}
+
+Un modelo que vive en un cuaderno de trabajo no le sirve a una cooperativa pesquera. Este
+capítulo describe cómo se entrega el resultado del Capítulo~\ref{cap:resultados}: una
+aplicación de inferencia que sirve, por especie y \ue{}, el intervalo calibrado de captura
+diaria.
+
+\section{Qué entrega y por qué así}
+
+El producto \textbf{no es un total puntual por temporada}, y la decisión es deliberada. Como la
+captura se concentra en pocos días alrededor de la apertura, la suma de las medianas diarias es
+un mal estimador del total: subestima las series con picos grandes y sobreestima las de nivel
+bajo. Lo que sí está calibrado ---y es lo que el sistema entrega--- es el \textbf{intervalo
+diario} con su cobertura empírica verificada, más un resumen por temporada que muestra la
+captura observada y la cobertura alcanzada, con la estimación central únicamente como
+referencia. Es una diferencia de honestidad, no de presentación: se entrega la cantidad cuya
+garantía se puede sostener.
+
+\section{Arquitectura}
+
+El sistema tiene tres piezas:
+
+\begin{itemize}
+  \item Una \textbf{API} (FastAPI) que, al arrancar, entrena una sola vez el modelo de
+  producción ---el mismo de la Sección~\ref{sec:res_cqr}: \emph{gradient boosting} cuantílico
+  en escala logarítmica con conformalización Mondrian por serie--- y deja en memoria, por serie,
+  el pronóstico diario calibrado (mediana y bandas de 80 y 90\%). Los endpoints solo leen esa
+  memoria, de modo que la consulta es inmediata. El entrenamiento inicial tarda entre 30 y 60
+  segundos y el estado se expone en un endpoint de salud.
+  \item Un \textbf{front} estático mínimo: selector de especie y de zona, gráfico de abanico
+  diario (observado contra las bandas calibradas) y un panel de \emph{backtest} por temporada
+  con la captura observada y la cobertura empírica del intervalo del 90\% en temporada.
+  \item Un \textbf{empaquetado} en Docker, de modo que el despliegue completo es un solo
+  comando y no depende del entorno de desarrollo de quien lo corre.
+\end{itemize}
+
+El corte de prueba que define el horizonte servido es un parámetro de despliegue; por omisión se
+usa 01-junio-2024, que es el corte con la calibración estable
+(Sección~\ref{sec:res_moredata}). En su configuración actual sirve \textbf{28 series}: las 21 de
+langosta roja más las de abulón y erizo.
+
+\section{Lo que ve una cooperativa}
+
+La Figura~\ref{fig:producto_api} muestra la salida de la API para tres series de langosta
+elegidas por contraste, en la temporada 2024-2025.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{producto_api.png}
+\caption{Intervalos calibrados servidos por la API para tres series de langosta roja en la
+temporada 2024-2025: la serie insignia de San Quintín, una zona de historia larga (El Rosario) y
+una de historia corta, incorporada solo con los avisos de CONAPESCA (Bahía Tortugas, Vizcaíno).
+Los puntos son la captura observada; las bandas, los intervalos del 80 y 90\%; la línea, la
+mediana. La cobertura empírica en temporada se anota en cada panel. El ancho de la banda
+superior en los días de apertura es la limitación conocida del método: el cuantil alto en escala
+logarítmica se amplifica al invertir la transformación.}
+\label{fig:producto_api}
+\end{figure}
+
+Los tres paneles ilustran el rango de comportamiento del sistema. San Quintín, con el bache
+dentro del entrenamiento, queda bien calibrada (92.5\%). El Rosario, con historia completa
+2017-2026, alcanza 95.1\% y sus bandas siguen la estructura de picos de la temporada. Bahía
+Tortugas, incorporada solo con avisos de CONAPESCA y con apenas dos temporadas de
+entrenamiento, alcanza 93.2\% pero con bandas notoriamente más anchas: el sistema \emph{sabe}
+que sabe menos de esa zona, y lo comunica ensanchando el intervalo en lugar de dar un número
+falsamente preciso. Esa es exactamente la propiedad que se buscaba al reformular el pronóstico
+en términos probabilísticos.
+
+\section{Advertencias que el sistema declara}
+
+Tres advertencias están documentadas y se muestran junto al resultado, porque un producto de
+pronóstico que no declara sus límites induce confianza injustificada:
+
+\begin{enumerate}
+  \item La cobertura que reporta la interfaz es \textbf{en temporada}. Fuera de temporada la
+  captura es cero y cualquier intervalo la cubre trivialmente, lo que inflaría el número.
+  \item Las zonas de \textbf{historia corta} (Vizcaíno, Abreojos--La Purísima, incorporadas solo
+  con datos de 2022 en adelante) están peor calibradas que las de historia larga. Su calibración
+  depende de acumular temporadas, que es la conclusión de fondo de este trabajo.
+  \item El sistema \textbf{no pronostica la oceanografía futura}. El horizonte llega hasta la
+  última fecha con covariables disponibles: es una herramienta de pronóstico calibrado sobre el
+  periodo con datos, no un oráculo de temporadas futuras arbitrarias.
+\end{enumerate}

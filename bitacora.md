@@ -1683,3 +1683,60 @@ Los huecos que quedan para presentar la tesis son documentales, no científicos:
 (portada, firmas, índices), reencuadre del abstract/introducción (siguen describiendo solo el
 alcance 2023), un capítulo de metodología formal (métricas y CQR se usan pero no se definen),
 la sección del producto desplegado (hoy invisible en el documento) y la bibliografía.
+
+---
+
+## 2026-08-31 (b) — La tesis, reestructurada como tesis
+
+Los cinco huecos que la revisión marcó como bloqueantes para presentar (formato, reencuadre,
+metodología formal, capítulo de datos y capítulo del producto) se cerraron en una sola pasada.
+
+### De artículo a tesis
+El `.tex` era un artículo estilo JMLR de 35 páginas. Ahora es un documento `report` de 12 pt
+partido en piezas: `final_work/front/` (portada ITAM, declaración de derechos con los artículos
+21 y 27 de la LFDA, agradecimientos, resumen y abstract) y `final_work/sections/` (siete
+capítulos + dos apéndices + bibliografía). El contenido anterior **no se retecleó**: se extrajo
+por bloques y se recolocó, de modo que toda la prosa de resultados que ya estaba bien se
+conserva íntegra.
+
+### El reencuadre
+Era el problema de fondo: abstract, introducción y metodología describían solo el alcance de
+2023 (``¿cuál es el mejor modelo entre XGBoost, LGBM, LSTM…?'') mientras las aportaciones reales
+vivían dentro de una sección titulada ``Extensión 2026''. Esa sección ya no existe: su contenido
+se repartió entre Datos (ETL, índice MHW) y Resultados (todo lo demás), y la introducción ahora
+plantea la pregunta real ---cómo construir un pronóstico útil con el volumen de datos que
+hay--- con tres subpreguntas, hipótesis falsable, objetivos y aportaciones.
+
+### Metodología formal (capítulo nuevo)
+Lo que faltaba y un sinodal iba a pedir: notación ($y_s(t)$, $\mathbf{x}_s(t)$, horizonte
+$h=90$), la ecuación del problema, la definición de temporada, los dos cortes y por qué se
+reportan ambos, la ventana expansiva, las tres reglas anti-fuga, **todas** las métricas
+definidas (incluido el diagnóstico de forma que introdujo Exp 1b), el algoritmo CQR en seis
+pasos con ecuaciones, el protocolo de hiperparámetros y una sección de reproducibilidad.
+
+### Datos (capítulo nuevo) y Producto (capítulo nuevo)
+Dos insumos se generan ahora desde los datos reales, no a mano:
+- `experiments/thesis_assets.py` → tabla de las **44 series** (21 de langosta, 10,465 t, mediana
+  de 70 días con captura por serie) y un **mapa** de las UEs sobre la SST media, que hace
+  visible el gradiente térmico del rango (17 °C en SQ → 22 °C en Bahía Magdalena) sobre el que
+  descansa el argumento de §Resultados.
+- `experiments/serving_figure.py` → figura del producto **consultando la API en marcha**, con
+  tres series de contraste (insignia 92.5 %, historia larga 95.1 %, historia corta 93.2 % con
+  bandas visiblemente más anchas: el sistema comunica que sabe menos de esa zona).
+
+El capítulo de Producto documenta además las tres advertencias que la app declara (cobertura
+medida en temporada, zonas de historia corta peor calibradas, no se pronostica la oceanografía).
+
+### Detalles técnicos
+- La bibliografía manual pasó a `\bibitem[Autor(Año)]{clave}` para que natbib author-year
+  funcione; 6 referencias nuevas que el capítulo de metodología exige.
+- `babel-spanish` y `setspace` no están instalados en este TinyTeX (`tlmgr` falla al verificar
+  el archivo descargado), así que el preámbulo redefine los nombres en español a mano. Funciona;
+  lo único que se pierde es el guionado español.
+- **85 páginas, 0 referencias sin resolver, 0 labels duplicados. 140 tests verdes.**
+
+### Lo que queda para presentar
+Nada de código. Del documento: los TODO de la portada (asesor, formato oficial, agradecimientos,
+título registrado) y la bibliografía, que sigue corta en literatura pesquera (sin *Panulirus
+interruptus*, sin Carta Nacional Pesquera ni NOM-006-PESC, sin cita formal de la fuente de datos
+abiertos de CONAPESCA).
