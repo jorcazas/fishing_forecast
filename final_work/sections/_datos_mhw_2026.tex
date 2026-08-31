@@ -1,0 +1,10 @@
+Se implementó el índice de MHW siguiendo la metodología de Hobday et al. \cite{hobday2016}: para cada día del año se calcula una climatología y su percentil 90 sobre el periodo base 1982-2011; un evento MHW es un tramo de al menos 5 días consecutivos con SST por encima de ese umbral (fusionando eventos separados por huecos de $\leq 2$ días), y se clasifica en categorías I-IV según cuántos múltiplos de la diferencia (umbral $-$ media) alcanza la anomalía. El dataset consolidado incorpora tres columnas nuevas: \texttt{sst\_anomaly} (siempre), \texttt{mhw\_category} (0-4) y \texttt{mhw\_intensity} (definida durante eventos).
+
+Como validación, el índice reproduce con nitidez los eventos conocidos del Pacífico nororiental: el llamado ``Blob'' de 2014-2016 (con 231, 293 y 102 días de MHW respectivamente en la zona de San Quintín) y el régimen cálido de 2019-2021 (Figura \ref{fig:mhw_timeline}). Esta validación es relevante porque conecta directamente con el mecanismo documentado por \cite{villasenor2024}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{mhw_timeline.png}
+\caption{Serie diaria de SST en el bbox de San Quintín (negro) contra su climatología (azul continuo) y el umbral del percentil 90 (azul discontinuo), con baseline 1982-2011 (Hobday et al. 2016). Las áreas sombreadas marcan los eventos de ola de calor marina. Destacan el ``Blob'' de 2014-2016 y el régimen cálido de 2019-2021 que precede al colapso de la captura de langosta de la temporada 2021-2022.}
+\label{fig:mhw_timeline}
+\end{figure}

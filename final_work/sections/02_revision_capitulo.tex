@@ -1,0 +1,48 @@
+\chapter{Revisión bibliográfica}
+\label{cap:revision}
+
+\section{Pronóstico de capturas pesqueras}
+
+\input{sections/02_revision}
+
+\section{Modelos globales y agrupamiento parcial}
+\label{sec:revision_globales}
+
+Cuando cada serie individual es corta, la alternativa a entrenar un modelo por serie es
+entrenar \emph{uno solo} sobre todas ellas ---un \emph{modelo global}--- de modo que los
+parámetros se estimen con la unión de las observaciones y las series cortas se apoyen en las
+largas. \citet{montero2021} muestran que los modelos globales no son mejores por ser más
+complejos sino porque el conjunto agrupado permite ajustar modelos con más capacidad sin
+sobreajustar, y que su ventaja no requiere que las series sean ``parecidas''.
+\citet{petropoulos2022} documentan el mismo fenómeno en la práctica del pronóstico. Este es
+exactamente el régimen de este trabajo: decenas de series de unas pocas temporadas cada una.
+La contraparte es que las series de mayor escala dominan la función de pérdida, un problema
+que se aborda normalizando la variable objetivo (Sección~\ref{sec:met_global}).
+
+\section{Cuantificación de incertidumbre y predicción conformal}
+\label{sec:revision_conformal}
+
+La regresión cuantílica \citep{koenker1978} estima directamente los cuantiles condicionales de
+la respuesta en lugar de su media, lo que permite construir intervalos sin suponer una forma
+de la distribución del error. Sus intervalos, sin embargo, no tienen garantía de cobertura en
+muestra finita: el modelo puede estar mal calibrado.
+
+La \emph{predicción conformal} \citep{vovk2005,angelopoulos2023} corrige eso: a partir de un
+conjunto de calibración disjunto del de entrenamiento, ajusta los intervalos para garantizar
+cobertura marginal al nivel nominal bajo el único supuesto de intercambiabilidad.
+\citet{romano2019} combinan ambas ideas en la \emph{regresión cuantílica conformalizada} (CQR),
+que hereda la adaptabilidad de los cuantiles condicionales y añade la garantía de cobertura;
+es el método que se adopta en este trabajo. Cuando los cuantiles estimados se cruzan ---un
+artefacto frecuente al estimarlos por separado--- se aplica el reordenamiento monótono de
+\citet{chernozhukov2010}. Para evaluar pronósticos probabilísticos se usa el CRPS
+\citep{gneiting2007}, una regla de puntuación propia que premia simultáneamente calibración y
+nitidez.
+
+\section{Interpretabilidad}
+\label{sec:revision_shap}
+
+Con decenas de covariables derivadas y pocas temporadas, saber \emph{cuáles} variables usa el
+modelo es tan importante como su error. Los valores SHAP \citep{lundberg2017} atribuyen la
+predicción a cada variable con una formulación basada en la teoría de juegos cooperativos, y
+permiten podar el conjunto de variables con un criterio explícito en lugar de por prueba y
+error.

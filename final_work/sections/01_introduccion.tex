@@ -1,0 +1,119 @@
+\chapter{Introducción}
+\label{cap:introduccion}
+
+\section{Contexto}
+
+La pesca en Baja California tiene gran importancia económica y cultural. Con más de 1{,}500
+kilómetros de litorales y una biodiversidad marina privilegiada, el estado se ubica entre los
+principales productores pesqueros de México tanto en volumen como en valor, y sus flotas se
+componen principalmente de embarcaciones menores de pesca ribereña. En 2016, Baja California
+registró la producción de 45 especies entre pesca y acuacultura, donde sobresalen la sardina,
+el atún, el erizo, la langosta, el calamar y el camarón. Esta actividad económica genera
+numerosos empleos en las cadenas de captura, procesamiento y distribución. No obstante, el
+sector enfrenta problemas por la incertidumbre en el otorgamiento de permisos, la pesca ilegal
+y la insuficiente infraestructura.
+
+La organización no gubernamental COBI (Comunidad y Biodiversidad, A.C.) colabora con las
+cooperativas de la región y reconoce la importancia de los datos oceanográficos ---temperatura
+del mar, pH, salinidad, viento, marea--- para comprender la dinámica de las especies que se
+capturan. Anticipar el volumen de captura de la siguiente temporada le permite a una
+cooperativa dimensionar insumos, tripulación y compromisos de venta: es una decisión operativa
+concreta, con un horizonte natural de unos tres meses, que hoy se toma con la experiencia
+acumulada de los pescadores y sin ninguna herramienta cuantitativa.
+
+Este trabajo construye esa herramienta. Se concentra en la langosta roja
+(\emph{Panulirus interruptus}) porque es la especie con el registro de arribos más largo y
+consistente en la zona, y la extiende a abulón y erizo cuando los datos lo permiten.
+
+\section{Planteamiento del problema}
+
+El problema tiene tres dificultades que lo hacen algo más que un ejercicio estándar de
+pronóstico de series de tiempo.
+
+\begin{enumerate}
+  \item \textbf{Escasez de datos.} La unidad de análisis útil no es ``la pesca de Baja
+  California'' sino la serie \emph{especie $\times$ \ue{}}: cada cooperativa tiene su propia
+  zona de captura y su propio comportamiento. Al desagregar así, cada serie se queda con del
+  orden de $10^{2}$ a $10^{3}$ observaciones útiles ---unas pocas temporadas--- que es uno o
+  dos órdenes de magnitud menos de lo que los modelos modernos de pronóstico suelen requerir.
+
+  \item \textbf{Cambios de régimen ambiental.} La serie de San Quintín registra una caída
+  abrupta a partir de la temporada 2021-2022 que ningún modelo del planteamiento inicial
+  anticipó, y que todos sobre-predijeron. Un modelo entrenado sobre el régimen previo
+  extrapola un nivel de captura que ya no existe.
+
+  \item \textbf{Un pronóstico puntual no es lo que la decisión necesita.} La captura se
+  concentra en pocos días de apertura de temporada, de modo que el error diario de cualquier
+  modelo es grande aun cuando el agregado de la temporada sea razonable. Para decidir cuántos
+  insumos comprar, un rango con cobertura conocida es más útil ---y más honesto--- que un
+  número puntual acompañado de una métrica de error promedio.
+\end{enumerate}
+
+\section{Pregunta de investigación e hipótesis}
+
+La pregunta que guía el trabajo es: \textbf{¿cómo construir un pronóstico del volumen de
+captura por temporada que sea útil para una cooperativa pesquera, dado el volumen de datos
+realmente disponible?} De ella se desprenden tres preguntas subordinadas, que ordenan el
+documento:
+
+\begin{enumerate}
+  \item ¿Qué mecanismo explica los años atípicos, y puede incorporarse como variable
+  explicativa?
+  \item ¿Es el factor limitante la sofisticación del modelo o el volumen de datos?
+  \item ¿Puede el pronóstico entregarse con una medida de incertidumbre calibrada y verificable?
+\end{enumerate}
+
+La \textbf{hipótesis central} es que el factor limitante es el \emph{volumen de datos} ---el
+número de temporadas y de series disponibles--- y no la capacidad del modelo. La hipótesis es
+falsable, y el trabajo la somete a prueba en ambas direcciones: aumentando los datos (de 2 a
+21 series de langosta y de $\sim$3 a $\sim$9 temporadas) y aumentando la capacidad del modelo
+(hasta un Transformer de fusión temporal), para observar cuál de las dos palancas mueve el
+resultado.
+
+\section{Objetivos}
+
+\noindent\textbf{Objetivo general.} Construir y evaluar un sistema de pronóstico del volumen
+diario de captura por especie y \ue{}, con incertidumbre calibrada, reproducible y entregable
+a las cooperativas pesqueras de Baja California.
+
+\noindent\textbf{Objetivos específicos.}
+\begin{enumerate}
+  \item Reconstruir de forma reproducible y probada el proceso de datos, uniendo las fuentes
+  de arribos disponibles (COBI y CONAPESCA) con covariables oceanográficas satelitales.
+  \item Implementar un índice de olas de calor marinas según \citet{hobday2016} y evaluar si
+  explica los años atípicos de captura.
+  \item Comparar modelos estadísticos, de aprendizaje de máquina y de aprendizaje profundo
+  sobre una partición temporal estricta, con métricas explícitas.
+  \item Evaluar si un modelo global multi-especie y multi-\ue{} transfiere señal entre series.
+  \item Producir un pronóstico probabilístico con cobertura empírica verificable.
+  \item Contrastar la hipótesis de datos contra una arquitectura de vanguardia (TFT).
+  \item Entregar el resultado como un producto operativo consultable.
+\end{enumerate}
+
+\section{Aportaciones}
+
+\begin{itemize}
+  \item Un \textbf{diagnóstico causalmente informado} del año atípico: el índice de olas de
+  calor marinas conecta la caída de 2021-2022 con el régimen cálido de 2019-2021, mecanismo
+  documentado para Baja California por \citet{villasenor2024}.
+  \item Un \textbf{modelo global} sobre 44 series con la variable objetivo en escala
+  logarítmica, que supera o empata a los modelos específicos en cuatro de cinco series.
+  \item Un \textbf{pronóstico probabilístico calibrado} por regresión cuantílica
+  conformalizada, con cobertura estable incluso durante olas de calor marinas.
+  \item Una \textbf{prueba explícita de la hipótesis de datos}, en las dos direcciones:
+  añadiendo series y temporadas (sí mejora, y vuelve reproducible la calibración) y añadiendo
+  capacidad de modelo (no mejora).
+  \item Un \textbf{producto operativo} desplegable que sirve el intervalo calibrado por
+  especie y \ue{}, y un repositorio reproducible con pruebas automatizadas.
+\end{itemize}
+
+\section{Estructura del documento}
+
+El Capítulo~\ref{cap:revision} revisa la literatura de pronóstico pesquero, de olas de calor
+marinas y de predicción conformal. El Capítulo~\ref{cap:metodologia} plantea formalmente el
+problema, la partición temporal, las métricas y los modelos, incluido el procedimiento
+conformal. El Capítulo~\ref{cap:datos} describe las fuentes, el proceso de datos y el conjunto
+consolidado. El Capítulo~\ref{cap:resultados} presenta los resultados, desde la comparación
+inicial de modelos puntuales hasta la prueba de techo con el TFT. El
+Capítulo~\ref{cap:producto} describe el producto operativo. El Capítulo~\ref{cap:conclusiones}
+concluye, enumera las limitaciones y propone trabajo futuro.

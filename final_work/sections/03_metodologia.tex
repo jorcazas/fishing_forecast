@@ -1,0 +1,260 @@
+\chapter{Metodología}
+\label{cap:metodologia}
+
+Este capítulo fija la notación, la partición temporal, las métricas y los modelos. Todo lo que
+se reporta en el Capítulo~\ref{cap:resultados} se define aquí.
+
+\section{Planteamiento formal}
+\label{sec:met_formal}
+
+Sea $\mathcal{S}$ el conjunto de \emph{series}, donde cada serie $s \in \mathcal{S}$ es un par
+(especie, \ue{}). Para cada serie y cada día $t$ se observa
+
+\begin{itemize}
+  \item $y_s(t) \in \mathbb{R}_{\geq 0}$: el volumen desembarcado en kilogramos (la variable
+  objetivo), y
+  \item $\mathbf{x}_s(t) \in \mathbb{R}^{p}$: el vector de covariables oceanográficas del día
+  $t$ en la zona de la \ue{} (temperatura superficial del mar, su anomalía, el índice de olas
+  de calor y las variables de color del océano).
+\end{itemize}
+
+El horizonte de pronóstico es $\horizonte = 90$ días. Esta elección no es estadística sino
+operativa: es el plazo acordado con COBI para que una cooperativa pueda actuar sobre el
+pronóstico. La convención del proyecto es, por tanto, usar el estado del océano de hoy para
+predecir la captura de dentro de tres meses,
+\begin{equation}
+  \hat{y}_s(t+\horizonte) = f\big(\mathbf{x}_s(t),\ \mathbf{z}_s(t),\ s\big),
+  \label{eq:problema}
+\end{equation}
+donde $\mathbf{z}_s(t)$ agrupa las variables deterministas del calendario y los rezagos de la
+propia serie que son estrictamente pasados en $t$. En la implementación, la ecuación
+\eqref{eq:problema} se realiza desplazando las covariables oceanográficas $\horizonte$ días
+hacia adelante, de modo que la fila del día $t$ nunca contiene información posterior a
+$t-\horizonte$; los detalles de construcción están en la Sección~\ref{sec:datos_features}.
+
+\paragraph{Temporada.} La temporada de langosta va del 15 de septiembre al 15 de febrero del
+año siguiente; fuera de ese rango rige la veda. Se define el indicador $\mathrm{ens}_s(t) \in
+\{0,1\}$ (\emph{in season}) y la partición del calendario en temporadas $\mathcal{T}_1, \ldots,
+\mathcal{T}_K$. El agregado que le interesa a la cooperativa es la suma de temporada
+$Y_s(\mathcal{T}_k) = \sum_{t \in \mathcal{T}_k} y_s(t)$.
+
+\paragraph{Modelo específico y modelo global.} Un \emph{modelo específico} estima una función
+$f_s$ por serie usando solo los datos de $s$. Un \emph{modelo global} estima una única $f$
+sobre la unión $\bigcup_s \{(\mathbf{x}_s(t), y_s(t))\}$, con la identidad de la serie como
+covariable categórica. La comparación entre ambos es una de las preguntas del trabajo.
+
+\section{Partición temporal y validación}
+\label{sec:met_particion}
+
+Toda partición respeta el orden cronológico: no se usa validación cruzada aleatoria, que en
+series de tiempo filtra el futuro hacia el pasado.
+
+\paragraph{Cortes de prueba.} Se reportan sistemáticamente \emph{dos} cortes:
+\begin{itemize}
+  \item \textbf{01-julio-2020}, el corte canónico, elegido para ser comparable con la primera
+  iteración del trabajo. Deja $\sim$3 temporadas de entrenamiento y la caída post-ola-de-calor
+  \emph{fuera} del entrenamiento.
+  \item \textbf{01-junio-2024}, que aprovecha las temporadas 2022-2026 incorporadas en este
+  trabajo. Deja $\sim$7 temporadas de entrenamiento y la caída \emph{dentro} del entrenamiento.
+\end{itemize}
+Reportar ambos no es redundante: la diferencia entre columnas aísla el efecto de \emph{cuántas
+temporadas} ve el modelo, que es precisamente la hipótesis bajo prueba. Cada experimento acepta
+el corte como parámetro (variable de entorno \texttt{FF\_CUT\_DATE}), de modo que las dos
+columnas provienen del mismo código.
+
+\paragraph{Validación durante el ajuste.} Dentro del conjunto de entrenamiento se usa una
+ventana expansiva: los datos se dividen en $n$ bloques cronológicos y el bloque $k$ se valida
+con un modelo ajustado sobre todo lo anterior, de manera que cada partición de entrenamiento es
+un superconjunto de la anterior y el bloque de validación siempre está en el futuro respecto al
+de ajuste (Figura~\ref{fig:splits}).
+
+\paragraph{Ausencia de fuga de información.} Se aplican tres reglas, verificadas con pruebas
+automatizadas:
+\begin{enumerate}
+  \item Toda covariable oceanográfica es un desplazamiento de al menos $\horizonte$ días, ya sea
+  del valor o de una media móvil que termina en $t$ y luego se desplaza.
+  \item Toda estadística agregada ---medias y desviaciones de estandarización, estadísticas de
+  imputación, los cuantiles del conformal--- se calcula \emph{únicamente} sobre el conjunto de
+  entrenamiento (o de calibración) y se aplica al de prueba.
+  \item En el ensamble, la predicción de un modelo que alimenta a otro se construye fuera de
+  muestra con la ventana expansiva; usar la predicción en muestra le daría al segundo modelo
+  una señal que en prueba no existe con esa calidad.
+\end{enumerate}
+
+\section{Métricas}
+\label{sec:met_metricas}
+
+Sean $y_1,\ldots,y_n$ las observaciones del conjunto de prueba y $\hat{y}_1,\ldots,\hat{y}_n$
+las predicciones puntuales.
+
+\paragraph{Error diario.}
+\begin{align}
+  \mathrm{MAE} &= \frac{1}{n}\sum_{i=1}^{n} |y_i - \hat{y}_i|, &
+  \mathrm{RMSE} &= \sqrt{\frac{1}{n}\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 }.
+\end{align}
+El MAE está en kilogramos y es interpretable; el RMSE penaliza más los errores grandes, que en
+esta serie ocurren en los días de apertura.
+
+\paragraph{Error porcentual simétrico.} Como la escala varía en dos órdenes de magnitud entre
+\UEs{}, se agrega el sMAPE, acotado en $[0, 200]$ y definido con la convención de que los
+términos $0/0$ (día sin captura predicho como cero) cuentan como cero:
+\begin{equation}
+  \mathrm{sMAPE} = \frac{100}{n} \sum_{i=1}^{n}
+  \frac{2\,|y_i - \hat{y}_i|}{|y_i| + |\hat{y}_i|}.
+\end{equation}
+
+\paragraph{Error en la suma de temporada.} Es la métrica que le importa a la cooperativa:
+\begin{equation}
+  e(\mathcal{T}_k) = 100 \cdot
+  \frac{\sum_{t \in \mathcal{T}_k}\hat{y}(t) - \sum_{t \in \mathcal{T}_k} y(t)}
+       {\sum_{t \in \mathcal{T}_k} y(t)} .
+\end{equation}
+Se reporta con signo, porque sobre-predecir y sub-predecir tienen consecuencias operativas
+distintas.
+
+\paragraph{Diagnóstico de forma.} En una serie donde la mayoría de los días están en veda, un
+pronóstico casi plano obtiene un MAE bajo sin informar nada. Para distinguir el ajuste real del
+aplanamiento se reportan dos diagnósticos: la razón de dispersión
+$\mathrm{sd}(\hat{y})/\mathrm{sd}(y)$ ---cercana a $0$ delata un pronóstico plano, muy por
+encima de $1$ un modelo que sobre-reacciona--- y la correlación de Pearson entre $\hat{y}$ y
+$y$.
+
+\paragraph{Métricas probabilísticas.} Para un cuantil $\tau \in (0,1)$ con predicción
+$\hat{q}_\tau$, la pérdida \emph{pinball} es
+\begin{equation}
+  L_\tau(y, \hat{q}_\tau) =
+  \begin{cases}
+    \tau\,(y - \hat{q}_\tau) & \text{si } y \geq \hat{q}_\tau,\\
+    (1-\tau)\,(\hat{q}_\tau - y) & \text{en otro caso.}
+  \end{cases}
+\end{equation}
+El CRPS \citep{gneiting2007} se aproxima a partir de una rejilla de $m$ cuantiles mediante su
+descomposición en pérdidas pinball,
+\begin{equation}
+  \mathrm{CRPS} \approx \frac{2}{m}\sum_{j=1}^{m} L_{\tau_j}(y, \hat{q}_{\tau_j}),
+\end{equation}
+y está en kilogramos, por lo que solo es comparable entre series de escala similar. Para un
+intervalo $[\ell_i, u_i]$ de nivel nominal $1-\alpha$ se reportan la \textbf{cobertura
+empírica} y el \textbf{ancho medio}:
+\begin{align}
+  \widehat{C} &= \frac{1}{n}\sum_{i=1}^{n} \mathbf{1}\{\ell_i \leq y_i \leq u_i\}, &
+  \overline{W} &= \frac{1}{n}\sum_{i=1}^{n} (u_i - \ell_i).
+\end{align}
+Las dos se leen juntas: la cobertura sola se maximiza con un intervalo infinitamente ancho.
+
+\section{Modelos}
+\label{sec:met_modelos}
+
+\subsection{Modelos de referencia}
+ARIMA y Prophet \citep{taylor2017} sirven de piso: son autorregresivos y no usan covariables
+oceanográficas, de modo que superarlos es la condición mínima para afirmar que las variables
+del océano aportan señal. Los órdenes $(p,d,q)$ de ARIMA se eligen por AIC sobre el conjunto de
+entrenamiento en una rejilla acotada.
+
+\subsection{Ensambles de árboles}
+XGBoost \citep{chen2016} y LightGBM \citep{ke2017} son las familias de referencia para datos
+tabulares: manejan no linealidades, interacciones y valores faltantes de forma nativa, lo que
+importa porque las covariables oceanográficas tienen huecos.
+
+\subsection{Modelos recurrentes}
+La LSTM \citep{greff2017,staudemeyer2019} procesa la serie como secuencia. Se usa una ventana
+de 10 pasos y dos capas apiladas con \emph{dropout}. Al ser un modelo de la primera iteración
+del trabajo, se conserva su arquitectura para poder comparar contra ella.
+
+\subsection{Modelo global con la variable objetivo normalizada}
+\label{sec:met_global}
+El modelo global agrupa todas las series con la identidad de la serie codificada como variable
+categórica. El problema del agrupamiento directo es que la función de pérdida queda dominada
+por las series de mayor tonelaje. Para evitarlo se transforma la variable objetivo con
+\begin{equation}
+  \tilde{y} = \log(1+y),
+\end{equation}
+una transformación global, invertible y \emph{sin parámetros estimados} ---por lo que no puede
+filtrar información del conjunto de prueba---, y se invierte con $\exp(\tilde{y})-1$ antes de
+calcular cualquier métrica en kilogramos. Se comparó también la estandarización por serie
+($z$-score con media y desviación calculadas solo en entrenamiento), que resulta inferior.
+
+\subsection{Transformer de fusión temporal}
+El TFT \citep{lim2021,vaswani2023} es un modelo de atención multi-horizonte con selección de
+variables, diseñado para series con covariables estáticas, conocidas y observadas. Se incluye
+como \emph{prueba de techo}: no como candidato a producto, sino para responder si la capacidad
+adicional compra algo con este volumen de datos.
+
+\section{Pronóstico probabilístico: regresión cuantílica conformalizada}
+\label{sec:met_cqr}
+
+El producto no es un número sino un intervalo con cobertura verificable. El procedimiento
+combina regresión cuantílica con predicción conformal por partición (\emph{Mondrian}), y opera
+en la escala logarítmica de la Sección~\ref{sec:met_global}:
+
+\begin{enumerate}
+  \item \textbf{Partición.} El conjunto anterior al corte se divide cronológicamente en
+  \emph{entrenamiento} $\mathcal{D}_{\text{tr}}$ y \emph{calibración}
+  $\mathcal{D}_{\text{cal}}$, disjuntos. La calibración se restringe a días en temporada,
+  porque es el régimen en el que el intervalo se va a usar.
+
+  \item \textbf{Cuantiles base.} Sobre $\mathcal{D}_{\text{tr}}$ se ajusta un modelo global
+  cuantílico (\emph{gradient boosting} con pérdida pinball) para una rejilla de cuantiles
+  $\tau_1 < \cdots < \tau_m$, obteniendo $\hat{q}_{\tau}(\cdot)$. Si los cuantiles estimados se
+  cruzan, se reordenan de forma monótona por fila \citep{chernozhukov2010}.
+
+  \item \textbf{Puntuaciones de no conformidad.} Para el intervalo de nivel $1-\alpha$ con
+  cuantiles inferior $\tau_{\text{lo}} = \alpha/2$ y superior $\tau_{\text{hi}} = 1-\alpha/2$,
+  se calcula en cada punto de calibración
+  \begin{equation}
+    E_i = \max\big\{\, \hat{q}_{\tau_{\text{lo}}}(\mathbf{x}_i) - \tilde{y}_i,\;
+                       \tilde{y}_i - \hat{q}_{\tau_{\text{hi}}}(\mathbf{x}_i) \,\big\},
+    \label{eq:cqr_score}
+  \end{equation}
+  que es positiva cuando la observación cae fuera del intervalo y negativa cuando cae dentro
+  con holgura \citep{romano2019}.
+
+  \item \textbf{Corrección.} Sea $Q_{1-\alpha}(E)$ el cuantil empírico $(1-\alpha)(1+1/|
+  \mathcal{D}_{\text{cal}}|)$ de las puntuaciones. El intervalo conformalizado es
+  \begin{equation}
+    \Big[\, \hat{q}_{\tau_{\text{lo}}}(\mathbf{x}) - Q_{1-\alpha}(E),\;\;
+            \hat{q}_{\tau_{\text{hi}}}(\mathbf{x}) + Q_{1-\alpha}(E) \,\Big],
+  \end{equation}
+  que bajo intercambiabilidad tiene cobertura marginal de al menos $1-\alpha$ en muestra
+  finita. Se probó también una variante \emph{normalizada}, en la que la corrección se ensancha
+  proporcionalmente a la dispersión local en lugar de ser constante.
+
+  \item \textbf{Mondrian por serie.} Los pasos 3 y 4 se ejecutan \emph{por serie}: cada
+  especie $\times$ \ue{} tiene su propio $Q_{1-\alpha}(E)$. Esto es indispensable porque las
+  escalas difieren en órdenes de magnitud, y además permite auditar la cobertura serie por
+  serie ---la cobertura marginal promedia y puede ocultar una serie mal calibrada, como se verá
+  en la Sección~\ref{sec:res_cqr}.
+
+  \item \textbf{Regreso a kilogramos.} Los extremos se invierten con $\exp(\cdot)-1$ y se
+  truncan en cero. La inversión es monótona, de modo que preserva la cobertura.
+\end{enumerate}
+
+\section{Selección de hiperparámetros}
+\label{sec:met_hiperparametros}
+
+Para los modelos estadísticos se usa búsqueda exhaustiva en una rejilla acotada con criterio
+AIC. Para los modelos de aprendizaje de máquina y profundo se usa optimización bayesiana con
+Optuna \citep{akiba2019}, con un número limitado de ensayos para que el experimento sea
+reproducible en un tiempo razonable, y evaluando siempre sobre la ventana expansiva de
+validación descrita en la Sección~\ref{sec:met_particion}, nunca sobre el conjunto de prueba.
+Toda componente estocástica ---inicialización de pesos, submuestreo, semillas del optimizador---
+usa una semilla fija que se registra junto con las métricas del experimento.
+
+\section{Reproducibilidad}
+\label{sec:met_reproducibilidad}
+
+El trabajo se implementó como un paquete de Python con pruebas automatizadas
+(\texttt{137} pruebas unitarias que cubren el proceso de datos, las métricas, la construcción
+de variables sin fuga de información y la envoltura conformal). Cada experimento:
+
+\begin{itemize}
+  \item se ejecuta con \emph{un} comando y acepta el corte de prueba como parámetro;
+  \item escribe sus métricas en un archivo JSON versionado por corte, sus figuras en PNG y un
+  resumen en Markdown, de modo que ninguna cifra de este documento se transcribe a mano;
+  \item fija y registra la semilla aleatoria.
+\end{itemize}
+
+Las decisiones de diseño no triviales ---el tratamiento de la variable objetivo faltante y la
+justificación de la prueba de techo con el TFT--- están registradas como ADR (\emph{Architecture
+Decision Records}) en el repositorio, escritas \emph{antes} de correr los experimentos
+correspondientes.

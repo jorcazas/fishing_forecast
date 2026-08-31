@@ -1,0 +1,72 @@
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+
+Las cooperativas pesqueras de Baja California necesitan anticipar el volumen de captura de
+la siguiente temporada para dimensionar insumos, tripulación y compromisos de venta. Esta
+tesis construye esa herramienta para la langosta roja (\emph{Panulirus interruptus}) y la
+extiende a abulón y erizo, a partir de los arribos pesqueros registrados por Comunidad y
+Biodiversidad, A.C.\ (COBI) y por CONAPESCA, y de variables oceanográficas satelitales
+(temperatura superficial del mar y color del océano) del servicio Copernicus Marine.
+
+El trabajo parte de una comparación de modelos de pronóstico ---ARIMA, Prophet, XGBoost,
+LGBM, LSTM y su ensamble--- sobre una sola serie (langosta en San Quintín), y muestra que
+ninguno explicaba la caída atípica de la temporada 2021-2022. La tesis identifica el
+mecanismo faltante: las olas de calor marinas. Se implementa un índice de olas de calor
+según la metodología de Hobday et al.\ (2016), que reproduce el evento ``Blob'' de 2014-2016
+y el régimen cálido de 2019-2021, y se incorpora como covariable.
+
+Sobre esa base se desarrollan tres aportaciones. Primero, un \textbf{modelo global} que
+agrupa 44 series de especie por \ue{}, con la variable objetivo en escala logarítmica, que
+gana o empata contra los modelos específicos en cuatro de cinco series y rescata a las de
+menor escala. Segundo, un \textbf{pronóstico probabilístico} mediante regresión cuantílica
+conformalizada, que entrega intervalos con cobertura empírica cercana a la nominal y estable
+incluso durante olas de calor: para una cooperativa, un rango calibrado es más accionable y
+más honesto que un número puntual. Tercero, una \textbf{prueba directa de la hipótesis de
+fondo} ---que el factor limitante es el volumen de datos y no la sofisticación del
+modelo---: al pasar de 2 a 21 series de langosta y desbloquear las temporadas 2022-2026, la
+calibración de la serie insignia se vuelve estable e invariante a la composición del pool,
+mientras que ni la selección de variables por SHAP, ni la optimización bayesiana, ni un
+Temporal Fusion Transformer lo consiguen. El resultado se materializa en una aplicación de
+inferencia que sirve el intervalo calibrado por especie y \ue{}.
+
+\vspace{0.5cm}
+\noindent\textbf{Palabras clave:} pronóstico de series de tiempo, pesquerías, langosta roja,
+Baja California, olas de calor marinas, predicción conformal, modelos globales,
+interpretabilidad.
+
+\cleardoublepage
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Small-scale fishing cooperatives in Baja California need to anticipate next season's catch
+volume in order to plan inputs, crew and sales commitments. This thesis builds that tool for
+red spiny lobster (\emph{Panulirus interruptus}), extending it to abalone and sea urchin,
+using landings recorded by Comunidad y Biodiversidad, A.C.\ (COBI) and CONAPESCA together
+with satellite oceanographic covariates (sea surface temperature and ocean colour) from
+Copernicus Marine.
+
+Starting from a comparison of forecasting models ---ARIMA, Prophet, XGBoost, LGBM, LSTM and
+their ensemble--- on a single series, we show that none of them explained the anomalous
+2021-2022 season. We identify the missing mechanism as marine heatwaves, implement the
+Hobday et al.\ (2016) index ---which recovers the 2014-2016 ``Blob'' and the 2019-2021 warm
+regime--- and add it as a covariate.
+
+Three contributions follow. A \textbf{global model} pooling 44 species-by-cooperative series
+with a log-scaled target matches or beats series-specific models in four of five series and
+rescues the small-scale ones. A \textbf{probabilistic forecast} based on conformalized
+quantile regression yields intervals whose empirical coverage stays close to nominal even
+during marine heatwaves; for a cooperative, a calibrated range is more actionable ---and
+more honest--- than a point estimate. Finally, a \textbf{direct test of the underlying
+hypothesis} ---that the binding constraint is data volume rather than model
+sophistication---: expanding from 2 to 21 lobster series and unlocking the 2022-2026 seasons
+makes the flagship series' calibration stable and invariant to pool composition, whereas
+SHAP-based feature selection, Bayesian hyperparameter search and a Temporal Fusion
+Transformer all fail to. The result is delivered as an inference application serving the
+calibrated interval per species and cooperative.
+
+\vspace{0.5cm}
+\noindent\textbf{Keywords:} time series forecasting, fisheries, red spiny lobster, Baja
+California, marine heatwaves, conformal prediction, global models, interpretability.
+
+\cleardoublepage
