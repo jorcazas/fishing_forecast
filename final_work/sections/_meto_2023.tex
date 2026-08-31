@@ -1,0 +1,79 @@
+La metodología propuesta consiste de 5 etapas, cada una diseñada para evaluar y comparar la eficacia de diferentes modelos de pronóstico.
+
+\begin{enumerate}
+\item Selección de Modelos:
+
+\begin{itemize}
+    \item Se considerarán y evaluarán modelos representativos de aprendizaje de máquina y aprendizaje profundo, específicamente XGBoost, LGBM y LSTM. Estos modelos son conocidos por su capacidad para manejar datos complejos y no lineales. Además, se aprovechará su capacidad de ajustar modelos multivariados. Se probarán las versiones univariadas (sólo tomando en cuenta la fecha) y las versiones multivariadas; se espera que las versiones multivariadas tengan un mejor desempeño puesto que eso mostraría que las variables oceanográficas son relevantes para este estudio.
+    \item Modelos estadísticos autorregresivos, que servirán como baseline para la comparación, incluirán ARIMA y Prophet. Estos modelos establecerán el rendimiento mínimo esperado que los modelos de aprendizaje automático y profundo deben superar. Al ser autorregresivos, pueden considerarse modelos ingenuos, por lo que superar su desempeño no debería suponer un problema para los modelos informados de las variables oceanográficas, suponiendo que son significativas. 
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Selección de modelos y sus características}
+  \begin{tabular}{|p{4cm}|p{7.5cm}|}
+    \hline
+    \textbf{Modelo} & \textbf{Descripción} \\
+    \hline
+    \textbf{Aprendizaje de Máquina y Profundo} & \\
+    \hline
+    XGBoost & Modelo representativo de aprendizaje de máquina con capacidad para manejar datos complejos y no lineales. \\
+    \hline
+    LGBM & Modelo de aprendizaje de máquina optimizado para conjuntos de datos grandes y complejos. \\
+    \hline
+    LSTM & Red Neuronal Recurrente con celdas de memoria especializadas para captar dependencias a largo plazo en datos secuenciales. \\
+    \hline
+    \textbf{Estadísticos Autorregresivos (Baseline)} & \\
+    \hline
+    ARIMA & Modelo estadístico autorregresivo que puede manejar datos estacionarios con componentes autorregresivos y de media móvil. \\
+    \hline
+    Prophet & Modelo de previsión de series temporales desarrollado por Facebook, diseñado para manejar datos con estacionalidad y tendencias. \\
+
+    \hline
+  \end{tabular}
+\end{table}
+\newpage
+\item Preprocesamiento de Datos:
+
+\begin{itemize}
+    \item A partir de este punto, se llamará a las variables oceanográficas como las variables X, y a la variable objetivo, es decir el volumen de pesca por día, se le llamará Y. 
+    
+    Se llevará a cabo un preprocesamiento de datos para garantizar su calidad y la coherencia. Con el fin de homogeneizar las pruebas, se optó por un proceso estándar para todos los modelos, el cual incluye la normalización y la imputación de valores faltantes en las variables X. En esta etapa se decidió omitir la ingeniería de características o ‘feature engineering’, dado que es relevante entender cuáles son las variables que un modelo sin contexto considera relevantes.
+
+\end{itemize}
+
+\item Entrenamiento y Validación:
+\itemsep=0pt\topsep=0pt\partopsep=0pt
+\parskip=0pt\parsep=0pt
+\begin{itemize}
+    \item Los modelos seleccionados se entrenarán utilizando un conjunto de datos que contiene X y Y para los modelos multivariados, y sólo Y con Fecha para los modelos univariados o autorregresivos.
+
+    La validación durante el entrenamiento y/o ajuste de los modelos se hará con dos conjuntos de datos, i.e. conjunto de entrenamiento y conjunto de validación o ‘train test’ y ‘validation test’, independientes del conjunto de datos que se utilizará para evaluar el resultado de los modelos, i.e. conjunto de prueba o ‘test set’. Esto garantizará una evaluación imparcial de la capacidad predictiva de cada modelo y evitará la fuga de datos o ‘data leakage’.
+    Dada la naturaleza temporal de los datos, la división entre los tres conjuntos de datos se hará de la siguiente manera: Para dividir el conjunto de prueba, se hará un corte temporal en la fecha 01-junio-2021, pues esto nos deja con un 80\% (antes del corte) de datos para entrenar y un 20\% (después del corte) para probar. 
+
+    \item Para dividir los conjuntos de entrenamiento y validación se usará una ventana temporal, es decir, se dividirán los datos de entrenamiento en n-divisiones o ‘splits’ diferentes, donde cada una tendrá datos para entrenar y datos para validar, separadas por un corte temporal también; los ‘splits’ están diseñados de tal manera que cada uno es un superconjunto del anterior, y la cantidad de datos a entrenar es creciente mientras que la cantidad de datos para validar es fija. En la Figura 1 se explica el procedimiento visualmente.
+    
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\linewidth]{1_qvdnPF8ETV9mFdMT0Y_BBA.png}
+    \caption{División del conjunto de entrenamiento en 5 'splits' usando el método propuesto}
+    \label{fig:splits}
+\end{figure}
+
+\end{itemize}
+
+\item Establecimiento de Criterios de Desempeño:
+\itemsep=0pt\topsep=0pt\partopsep=0pt
+\parskip=0pt\parsep=0pt
+\begin{itemize}
+    \item Las métricas definidas para evaluar la capacidad predictiva de cada modelo son el error absoluto medio (MAE), la raíz del error cuadrático medio (RMSE) y el error porcentual en la suma del total de pesca de una temporada. Las temporadas comienzan el 15-septiembre y terminan el 15-febrero del año siguiente.
+
+    Los criterios de desempeño mínimo que los modelos de aprendizaje automático y profundo deben superar en comparación con los modelos estadísticos baseline son los resultados de estas tres métricas en los mejores estimadores para los modelos baseline.
+\end{itemize}
+\item Selección del Modelo Final:
+\begin{itemize}
+    \item El modelo final será seleccionado basándose en su capacidad para superar los criterios de desempeño establecidos. El énfasis recaerá en la precisión y robustez de las predicciones. Los modelos estadísticos baseline servirán como referencia, y solo los modelos de aprendizaje automático y profundo que superen significativamente su desempeño serán considerados.
+    \item Para hacer el entrenamiento o ajuste de los modelos, se usará Grid Search para encontrar los mejores parámetros de los modelos baseline; Bayesian Search para encontrar los mejores hiperparámetros de los modelos de aprendizaje de máquina y de aprendizaje profundo.
+\end{itemize}
+Esta metodología permitirá la evaluación de la capacidad predictiva de cada modelo, proporcionando una base sólida para la selección del modelo final que mejor se ajuste a los objetivos de la investigación.
+\end{enumerate}

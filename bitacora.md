@@ -1624,3 +1624,62 @@ Sesión de cierre: tres pulidos + una expansión con re-derivación de Exp 4.
   resuelta); smoke-test del store OK (28 series, Magdalena servida). 130 tests verdes.
 
 Nota deploy: `docker compose up --build` re-hornea `dataset_v1.parquet` → sirve las 21 series.
+
+---
+
+## 2026-08-31 — Exp 1b: los modelos ML/DL del borrador, sobre datos unidos
+
+Motivo: una revisión del estado de la tesis detectó que la Tabla `extension_comparativa`
+(§6.10) solo tenía ARIMA, Prophet y XGBoost. Faltaban **LGBM, LSTM y el ensamble
+XGBoost+LSTM** — y el ensamble era *el mejor modelo del borrador* (error de temporada 8.7% /
+12.9% agregado), el que sostiene la conclusión de 2023. Dejarlo fuera del refresco era la
+primera pregunta que un sinodal iba a hacer.
+
+### Qué se hizo
+- `experiments/exp1_baseline_retrain/legacy_ml.py` (Exp 1b): LGBM (hiperparámetros de la
+  Tabla `modelos_seleccionados` del borrador), LSTM apilada 2 capas + dropout 0.3 con ventana
+  de 10 pasos (la del borrador), y el ensamble tal como lo describe §5 (la predicción de
+  XGBoost entra a la LSTM como regresor extra). Mismos datos, features, partición y semilla
+  que Exp 2 → la fila `xgboost` reproduce 459.0 (corte 2020) y 145.4 (corte 2024) **exactos**,
+  que es la prueba de que las filas nuevas son comparables.
+- **Decisión de diseño**: la columna de XGBoost que alimenta a la LSTM se construye **fuera de
+  muestra** en train (ventana expansiva, `oof_predictions`). En muestra, la LSTM aprendería de
+  una señal que en test no existe con esa calidad.
+- **Diagnóstico de forma** (`shape_diagnostics`): sd(pred)/sd(obs) y correlación. Sin esto la
+  tabla se lee mal: en una serie con mayoría de días en veda, aplanar el pronóstico baja el MAE
+  sin informar nada. El borrador ya lo había dicho cualitativamente ("el ajuste de LSTM no
+  seguía la tendencia"); ahora está medido.
+- 7 tests nuevos (ventanas, escalado train-only, out-of-fold sin futuro, detección de
+  pronóstico plano). 137 verdes en total.
+
+### Resultados
+| corte | xgboost | lgbm | lstm | xgb_lstm |
+|---|---|---|---|---|
+| 2020-07-01 (~3 temp.) MAE | 459.0 | 401.9 | 290.7 | **236.4** |
+| 2024-06-01 (~7 temp.) MAE | 145.4 | 153.8 | 499.4 | 561.7 |
+
+**El ensamble no sobrevive al refresco.** Con 3 temporadas encabeza, pero por amortiguación:
+razón sd(pred)/sd(obs) 1.58 vs 2.37 del XGBoost con la *misma* correlación (0.61-0.67 los
+cuatro) — todos sobre-predicen el post-bache, los recurrentes solo lo hacen menos. Con 7
+temporadas se invierte: LSTM 499 / ensamble 562 frente a 103.5 del XGBoost+SHAP, ahora
+sobre-reaccionando (razón 3.26 / 4.06), con error de suma de la temporada 2024-2025 de
++626% / +704% vs +174%. El 12.9% del borrador era un artefacto de la partición corta.
+
+Anticipa exactamente el veredicto del TFT (§6.11): la palanca no es la arquitectura.
+
+### Tesis
+Tabla `extension_comparativa` con 2 filas nuevas (bold movido al ensamble en el corte 2020),
+cuarta lectura + figura `fig:extension_comparativa_legacy` (4 paneles observado vs. modelo), y
+párrafo correctivo en la Conclusión. Compila a **35 págs**, sin refs sin resolver ni labels
+duplicados.
+
+### Nota técnica
+En macOS, torch cuelga el proceso en la barrera de fork de OpenMP si xgboost/lightgbm ya
+cargaron su `libomp` (se queda bloqueado dentro de un `copy_` sin consumir CPU).
+`torch.set_num_threads(1)` lo evita y no cuesta nada aquí.
+
+### Próximo paso
+Los huecos que quedan para presentar la tesis son documentales, no científicos: formato ITAM
+(portada, firmas, índices), reencuadre del abstract/introducción (siguen describiendo solo el
+alcance 2023), un capítulo de metodología formal (métricas y CQR se usan pero no se definen),
+la sección del producto desplegado (hoy invisible en el documento) y la bibliografía.

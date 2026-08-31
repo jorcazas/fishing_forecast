@@ -1,0 +1,51 @@
+A continuación se muestran las gráficas de valores predichos contra los valores reales en cada uno de los modelos.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{arima_forecast.png}
+    \caption{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
+    \label{fig:pred_arima}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{prophet.png}
+    \caption{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}
+    \label{fig:pred_prophet}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{xgboost_final.png}
+    \caption{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
+    \label{fig:pred_xgboost}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{lgbm_final.png}
+    \caption{LGBM:  Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}
+    \label{fig:pred_lgbm}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{final_first_season.png}
+    \caption{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}
+    \label{fig:pred_ensemble_2020}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{image.png}
+    \caption{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}
+    \label{fig:pred_ensemble_2021}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{final_two_seasons.png}
+    \caption{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}
+    \label{fig:pred_ensemble_ambas}
+\end{figure}
+
+
+\vskip 0.2in

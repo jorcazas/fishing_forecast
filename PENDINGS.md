@@ -2,7 +2,7 @@
 
 Mapa de lo que **falta para terminar el plan** (`PLAN.md`), separando lo que está
 bloqueado por insumos externos de lo que es trabajo de código ya desbloqueado. Última
-actualización: **2026-07-23**.
+actualización: **2026-08-31**.
 
 ## Qué falta ahora (snapshot 2026-07-21, ordenado por prioridad)
 
@@ -97,6 +97,29 @@ Fases 1-3 cerradas con datos reales; ya no hay bloqueadores de insumos. Lo que q
    `final_work.tex` §6.10 (Tabla `extension_comparativa`): de ~3 a ~7 temporadas de train el MAE cae
    a la mitad (ARIMA 331→178, XGBoost 459→145); el orden se invierte (XGBoost supera a ARIMA con 7
    temporadas); la poda SHAP cambia de signo (empeoraba pre-unión 424→445, ahora ayuda 145→104).
+4b. **Modelos ML/DL del borrador en la comparativa (HECHO 2026-08-31)**: `experiments/exp1_baseline_retrain/legacy_ml.py`
+   (Exp 1b) añade **LGBM, LSTM y el ensamble XGBoost→LSTM** a la Tabla `extension_comparativa`
+   (§6.10), que solo tenía ARIMA/Prophet/XGBoost — el ensamble era el mejor modelo del borrador,
+   así que su ausencia dejaba la conclusión de 2023 sin verificar. Mismos datos, features,
+   partición y semilla que Exp 2 (la fila `xgboost` reproduce 459.0/145.4 exactos). **Veredicto:
+   el ensamble NO sobrevive al refresco.** Corte 2020 (~3 temporadas): encabeza (MAE 236.4 vs
+   459.0 del XGBoost) pero por **amortiguar** la serie, no por seguir su forma — razón
+   sd(pred)/sd(obs) 1.58 vs 2.37 con la misma correlación (0.61-0.67 los cuatro). Corte 2024
+   (~7 temporadas): se derrumba a MAE 499.4 (LSTM) / 561.7 (ensamble) vs 103.5 del XGBoost+SHAP,
+   ahora **sobre-reaccionando** (razón 3.26/4.06); error de suma de la temporada 2024-2025 de
+   +626%/+704% vs +174%. El 12.9% del borrador era artefacto de una partición corta. Tesis §6.10
+   ampliada (2 filas nuevas + 4ª lectura + figura `fig:extension_comparativa_legacy`) y párrafo
+   correctivo en la Conclusión; compila a 35 págs sin warnings. Reproducir:
+   `FF_CUT_DATE=<corte> uv run python -m experiments.exp1_baseline_retrain.legacy_ml`.
+   **Pendiente opcional (bajo retorno)**: la variante fiel `lstm_orig2023` (2700/800 unidades,
+   ~41 M de parámetros para ~10³ observaciones). No corrida por costo; el resultado esperado es
+   que empeore respecto a `lstm` (128/64) y el contraste sería un dato más del argumento de
+   volumen de datos. Comando:
+   `FF_LSTM_ARCHS=lstm,lstm_orig2023 FF_CUT_DATE=<corte> uv run python -m experiments.exp1_baseline_retrain.legacy_ml`.
+   Nota técnica: en macOS hay que dejar torch en un solo hilo (`torch.set_num_threads(1)`, ya en
+   el script) o el proceso se cuelga en la barrera de OpenMP por el `libomp` que ya cargaron
+   xgboost/lightgbm.
+
 5. **Feature engineering residual (Fase 2)**: `anomalies`, `interactions`, `rolling` configurable.
 6. ~~**Figura MHW** `reports/figures/mhw_timeline.png`~~ **HECHO (2026-07-21)**: generada
    (SST + climatología + umbral p90 + eventos MHW sombreados; el "Blob" 2014-2016 y el régimen

@@ -1,0 +1,76 @@
+\subsection{Descripción de los datos}
+El conjunto de datos utilizado está compuesto de fecha 'ds', variable objetivo 'y' y 16 variables regresoras 'xi', como se muestra en la tabla 4.
+\begin{table}[htbp]
+\centering
+\caption{Muestra de conjunto de datos}
+\label{tab:datos}
+\begin{tabular}{cccccccccccccccccc}
+\toprule
+ds & y & x1 & x2 & x3 & ... & x16 \\
+\midrule
+15/12/17 & 500 & 0.1556 & 0.2067 & 17.6501 & ... & 11.3717 \\
+16/12/17 & 598 & 0.2126 & 0.2732 & 12.5639 &  ... & 10.0574 \\
+17/12/17 & 1018 & 0.0677 & 0.1281 & 22.6158 & ... & 14.8350 \\
+18/12/17 & 0 & 0.0520 & 0.0985 & 7.8426 & ... & 12.2488 \\
+19/12/17 & 1568 & 0.0726 & 0.1186 & 9.8166 & ... & 11.8934 \\
+19/12/17 & 1568 & 0.0726 & 0.1186 & 9.8166 & ... & 11.8934 \\
+... & ... & ... & ... & ... & ... & ... \\
+31/12/21 & 60 & 0.0648	& 0.1079 & 99.7545 & ... &	12.0536 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A continuación se describe cada una de las variables:
+\begin{itemize}
+    \item \textbf{Variable ds | Fecha:} El conjunto de datos cuenta con observaciones diarias desde el 01 de enero de 2017 hasta el 31 de diciembre de 2022. La fecha tiene el formato d-m-y
+    \item \textbf{Variable y | Volumen total de pesca:} Es la variable objetivo. Se trata del volumen total de pesca para la fecha dada; el valor es flotante y representa kilogramos.
+       \item \textbf{Variable x1 | Aerosol Optical Thickness over Water:}
+    Medida de la cantidad de aerosoles en la atmósfera sobre cuerpos de agua.
+
+    \item \textbf{Variable x2 | Aerosol Optical Thickness over Water+Land:}
+    Similar a la anterior, pero considera tanto agua como tierra en la medición de aerosoles atmosféricos.
+
+    \item \textbf{Variable x3 | Cloud Fraction:}
+    Fracción del cielo cubierta por nubes, expresada como un valor entre 0 y 1.
+
+    \item \textbf{Variable x4 | Depth of the Bottom of the Euphotic Layer:}
+    Profundidad a la que la luz del sol es suficiente para la fotosíntesis en el océano.
+
+    \item \textbf{Variable x5 | Secchi Disk Depth:}
+    Profundidad a la que un disco blanco (Secchi) es visible en el agua y se utiliza para medir la transparencia del agua.
+
+    \item \textbf{Variable x6 | Heated Layer Depth:}
+    Profundidad de la capa calentada en el agua, que puede afectar las propiedades térmicas.
+
+    \item \textbf{Variable x7 | Particulate Backscattering Coefficient:}
+    Medida de la cantidad de luz dispersada por partículas en el agua en dirección opuesta a la fuente de luz.
+
+    \item \textbf{Variable x8 | Coloured Dissolved Detrital Organic Materials Absorption Coefficient:}
+    Coeficiente de absorción de materiales orgánicos disueltos y detritales que dan color al agua.
+
+    \item \textbf{Variable x9 | Diffuse Attenuation Coefficient:}
+    Tasa de disminución de la luz a medida que se propaga a través del agua debido a la dispersión y absorción.
+
+    \item \textbf{Variable x10 | Relative Excess of Radiance:}
+    Diferencia entre la radiación observada y la radiación esperada en un entorno dado.
+
+    \item \textbf{Variable x11 | Normalised Remote Sensing Reflectance:}
+    Reflectancia normalizada utilizada en teledetección para caracterizar la cantidad de luz reflejada por una superficie.
+
+    \item \textbf{Variable x12 | Normalised Fluorescence Line Height:}
+    Altura normalizada de la línea de fluorescencia, que puede indicar la actividad biológica en el agua.
+
+    \item \textbf{Variable x13 | Particulate Organic Carbon:}
+    Concentración de carbono orgánico en partículas suspendidas en el agua.
+
+    \item \textbf{Variable x14 | Particulate Inorganic Carbon:}
+    Concentración de carbono inorgánico en partículas suspendidas en el agua.
+
+    \item \textbf{Variable x15 | Inorganic Suspended Particulate Matter Concentration:}
+    Concentración de materia particulada inorgánica suspendida en el agua.
+
+    \item \textbf{Variable x16 | Photosynthetically Available Radiation:}
+    Radiación disponible para la fotosíntesis, es decir, la cantidad de luz que puede ser utilizada por los organismos fotosintéticos.
+\end{itemize}
+
+En el documento de GlobColour \cite{globcolour2020}, se proporciona información detallada sobre el procesamiento de cada variable.

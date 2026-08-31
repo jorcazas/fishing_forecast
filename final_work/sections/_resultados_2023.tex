@@ -1,0 +1,130 @@
+Después de la optimización de hiperparámetros y parámetros de cada modelo, y de la toma de decisión de arquitectura en el caso de LSTM, se llegó a los siguientes modelos representativos:
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lp{9.5cm}}
+\toprule
+Modelo & Arquitectura / Parámetros\\
+\midrule
+LSTM & (*) \\
+Prophet & changepoint prior scale: 0.016, seasonality prior scale: 750.108 \\
+LGBM & colsample bytree: 0.64, learning rate: 0.10, max depth: 6, n estimators: 63, num leaves: 67 \\
+XGBoost & colsample bytree: 0.37, learning rate: 0.02,  max depth: 10, n estimators: 190 \\
+ARIMA & d: 0, p: 29, q: 24, trend: c \\
+\bottomrule
+\end{tabular}
+\caption{Modelos seleccionados y su composición}
+\label{tab:modelos_seleccionados}
+\end{table}
+
+
+(*) La arquitectura y los hiperparámetros del modelo LSTM elegido son:
+
+\subsection{Arquitectura}
+
+- Capa de entrada con dimensiones de entrada (batch size, time steps, features) igual a (None, 10, 17).
+
+- Capa LSTM con 2700 unidades, activación 'relu', función de activación recurrente 'sigmoid', y una tasa de dropout del 30\%. Esta capa regresa secuencias y no estados.
+
+- Capa de dropout con una tasa de dropout del 30\%, aplicada a la salida de la capa LSTM.
+
+- Capa LSTM con 800 unidades, activación 'relu', función de activación recurrente 'sigmoid', y una tasa de dropout del 30\%. Esta capa no retorna secuencias, solo el estado final.
+
+- Capa de dropout con una tasa de dropout del 30\%, aplicada a la salida de la segunda capa LSTM.
+
+- Capa densa con 1 unidad y activación 'relu'.
+
+\subsection{Hiperparámetros:}
+
+- Unidades en la primera capa LSTM: 2700.
+
+- Unidades en la segunda capa LSTM: 800.
+
+- Tasa de dropout: 30\%.
+
+- Función de activación en las capas LSTM: 'relu'.
+
+- Función de activación recurrente en las capas LSTM: 'sigmoid'.
+
+- Se utiliza la inicialización de pesos GlorotUniform para las capas LSTM y Dense.
+
+- Se utiliza la inicialización de pesos Orthogonal para los pesos recurrentes de las capas LSTM.
+
+- Las capas LSTM no son stateful y no se desenrollan en el tiempo.
+
+- Se utiliza la implementación 2 para las capas LSTM.
+
+- La capa densa tiene 1 unidad de salida.\\
+
+Los resultados de las métricas a evaluar de cada modelo se muestran en las Tablas 3, 4 y 5.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
+\midrule
+XGBoost + LSTM & 106333.0 & 115583.97 & 8.7\% & 623.7 & 407.87 \\
+XGBoost & 106333.0 & 95654.32 & 12\% & 354.42 & 304.34 \\
+LGBM & 106333.0 & 137245.0 & 36\% & 494.9 & 380.2 \\
+\midrule
+Prophet & 106333.0 & 174790.93 & 164\% & 135.01 & 105.76 \\
+ARIMA & 106333.0 & 104482.56 & 338\% & 467.52 & 344.13 \\
+\bottomrule
+\end{tabular}
+\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2020-2021}
+\label{tab:metricas_2020_21}
+\end{table}
+
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
+\midrule
+XGBoost + LSTM & 30912.0 & 59351.04 & 92\% & 345.66 & 313.40 \\
+XGBoost & 30852 & 50490.34 & 16.3\% & 386.42 & 284.26 \\
+LGBM & 30912.0 & 145028.25 & 36\% & 494.9 & 380.2 \\
+\midrule
+Prophet & 30852 & 536030.88 & 1737\% & 135.01 & 105.76 \\
+ARIMA & 106133.0 & 90003.27 & 142\% & 467.52 & 344.13 \\
+\bottomrule
+\end{tabular}
+\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2021-2022}
+\label{tab:metricas_2021_22}
+\end{table}
+
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
+\midrule
+XGBoost + LSTM & 137245.0 & 154949.60 & 12.9\% & 527.31 & 368.97 \\
+XGBoost & 137245.0 & 117299.43 & 14.5\% & 450.67 & 312.6 \\
+LGBM & 137245.0  & 106133.0 & 36.4.7\% & 494.9 & 380.2 \\
+\midrule
+LSTM & 137245.0 & 11899.4 & 61\% & 183.13 & 104.9 \\
+Prophet & 137245.0 & 1043231.40 & 761\% & 135.01 & 105.76 \\
+ARIMA & 137245.0 & 150 & 142\% & 467.52 & 344.13 \\
+\bottomrule
+\end{tabular}
+\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para las dos temporadas 2020-2021 y 2021-2022}
+\label{tab:metricas_ambas}
+\end{table}
+
+
+Se optó por ensamblar XGBoost, el mejor modelo para predecir la tendencia, junto con LSTM: primero se hace la predicción con XGBoost y ese vector de y se introduce en LSTM como un regresor más. Los resultados del ensamble son los mejores, con un error de captura del 8.7\% para la primera temporada y un error global del 12.9\%. A pesar de esto, los resultados para la segunda temporada no son nada favorables. 
+
+Además, los RMSE y MAE son elevados, lo cual implica que las predicciones diarias son poco precisas, a pesar de que la suma de toda la temporada se predice con poco error. Esto puede significar un reto para confiar en el modelo, pero es consecuencia de la falta de granularidad en los datos de entrenamiento.
+
+En general, todos los modelos sobreestimaron la pesca de la segunda temporada debido a que podría tratarse de un caso atípico. Si comparamos esta temporada con el resto, el total de pesca es menos de la mitad. Por esta razón se decidió optar por predecir la temporada 2020-2021 también, pues es similar a las demás.
+
+No obstante, debemos poner atención a la causa de la reducción de la pesca en la temporada 2021-2022. Inicialmente se planteó la hipótesis de un efecto económico externo (el último año de la pandemia de Covid-19); sin embargo, la extensión de este trabajo (Sección \ref{sec:extension2026}) atribuye la caída a un mecanismo ambiental: las olas de calor marinas que afectaron a Baja California entre 2019 y 2021 \cite{villasenor2024}. Esto explica por qué los modelos que solo usan el historial de capturas —o las variables oceanográficas sin un índice de anomalía térmica de largo plazo— sobreestiman sistemáticamente esa temporada.
+
+Los próximos pasos de este esfuerzo son conseguir datos de otras regiones y de otras especies para replicar este procedimiento y verificar si los modelos elegidos tienen resultados similares.

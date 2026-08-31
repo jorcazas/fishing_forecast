@@ -78,13 +78,13 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ### 1.4. Re-entrenamiento del baseline
 
-> Estado (2026-06-21): 🟡 **arrancada**. `evaluation/metrics.py` (MAE/RMSE/sMAPE/suma de
-> temporada) y `experiments/exp1_baseline_retrain/baseline.py` (ARIMA + Prophet sobre
-> langosta-SQ, corte 2020-07-01) están escritos y testeados. **Falta correrlo** e instalar
-> Prophet; los modelos con covariables (LGBM/XGBoost/LSTM) esperan la oceanografía. Detalle
-> y comandos en `PENDINGS.md` §4.
+> Estado (2026-08-31): ✅ **cerrada**. ARIMA/Prophet en `baseline.py`; XGBoost en Exp 2; y
+> **LGBM, LSTM y el ensamble XGBoost+LSTM en `legacy_ml.py`** (Exp 1b), los tres corridos en
+> los dos cortes sobre el conjunto unido 2017-2026. Tabla completa en
+> `reports/exp1_legacy_ml_summary.md` y en la tesis §6.10. Pendiente opcional: la variante
+> `lstm_orig2023` (2700/800 unidades del borrador), ver `PENDINGS.md`.
 
-- [ ] Para cada modelo del borrador original (ARIMA, Prophet, LGBM, XGBoost, LSTM, XGBoost+LSTM) crear un script en `experiments/exp1_baseline_retrain/` que:
+- [x] Para cada modelo del borrador original (ARIMA, Prophet, LGBM, XGBoost, LSTM, XGBoost+LSTM) crear un script en `experiments/exp1_baseline_retrain/` que:
   - Carga el dataset expandido.
   - Filtra solo langosta + San Quintín (para ser comparable con el borrador).
   - Reproduce la partición temporal (corte en 01-jun-2021) **y** una partición adicional con corte en 01-jun-2024 (para usar datos nuevos).
@@ -92,11 +92,11 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
   - Registra métricas (MAE, RMSE, sMAPE, error de temporada) en `reports/metrics/exp1_*.json`.
   - Guarda el modelo en `models/exp1/`.
   - Produce gráfica predicho vs real en `reports/figures/exp1_*.png`.
-- [ ] Producir un notebook `notebooks/exp1_summary.ipynb` (o Markdown) con una tabla comparativa: modelo × partición × métricas. Comparar contra los números del paper original para detectar regresiones.
+- [x] Producir un notebook `notebooks/exp1_summary.ipynb` (o Markdown) con una tabla comparativa: modelo × partición × métricas. Comparar contra los números del paper original para detectar regresiones. → `reports/exp1_legacy_ml_summary.md` (modelo × corte × métricas + diagnóstico de forma).
 
 **Criterio de éxito**:
-- [ ] Las métricas reproducidas en la partición antigua están dentro de ±10% de las del paper. Si hay diferencias mayores, documentar por qué (posiblemente cambios en los datos fuente, que vale la pena notar).
-- [ ] Existe un baseline sólido con datos 2022-2025 contra el cual comparar los siguientes experimentos.
+- [x] Las métricas reproducidas en la partición antigua están dentro de ±10% de las del paper. Si hay diferencias mayores, documentar por qué. → **No son comparables en nivel** (el borrador medía sobre 2 temporadas de test y datos COBI solos; aquí el test del corte 2020 abarca 5 temporadas del conjunto unido), pero **el orden sí se reproduce**: con ~3 temporadas de train el ensamble XGBoost+LSTM encabeza, como en el borrador. Documentado en la tesis §6.10 junto con la razón (amortiguación, no ajuste de forma).
+- [x] Existe un baseline sólido con datos 2022-2025 contra el cual comparar los siguientes experimentos.
 
 ---
 
