@@ -492,5 +492,22 @@ def qc(
     print(f"[green]QC OK[/] — {len(issues)} incidencia(s) (ninguna bloqueante).")
 
 
+@app.command("serve-build")
+def serve_build(
+    cut: str = typer.Option("", help="Corte de prueba; vacío = el de producción (FF_SERVE_CUT)."),
+    out: str = typer.Option("", help="Ruta del artefacto; vacío = models/final/store.json."),
+) -> None:
+    """Entrena la CQR de producción y serializa el *store* a JSON (artefacto versionado).
+
+    Con el artefacto en `models/final/store.json`, la API arranca al instante en vez de entrenar
+    ~30-60 s en cada despliegue. Ver `models/final/README.md`.
+    """
+    from fishing_forecast.serving.forecast import build_store, save_store
+
+    store = build_store(cut or None)
+    path = save_store(store, out or None)
+    print(f"[green]Store guardado[/] → {path} ({len(store.series)} series, corte {store.cut_date})")
+
+
 if __name__ == "__main__":
     app()

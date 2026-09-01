@@ -5,6 +5,58 @@
 
 \input{sections/02_revision}
 
+\section{La pesquería de langosta roja en Baja California}
+\label{sec:revision_pesqueria}
+
+La langosta roja (\emph{Panulirus interruptus}) se distribuye a lo largo de la costa del
+Pacífico de la península de Baja California y sostiene una de las pesquerías ribereñas de mayor
+valor del noroeste de México, organizada en cooperativas con zonas de captura asignadas. Su
+aprovechamiento está regulado por la Norma Oficial Mexicana NOM-006-SAG/PESC-2016 \citep{nom006pesc2016}, que fija
+tallas mínimas, artes de pesca permitidas y la temporada de captura; el diagnóstico del estado
+del recurso se publica en la Carta Nacional Pesquera \citep{cnp2025}. La ventana de 15 de
+septiembre a 15 de febrero que estructura todo este trabajo proviene de ese marco regulatorio,
+no de una decisión de modelado.
+
+Para el pronóstico importa que la especie es sensible a la variabilidad ambiental.
+\citet{vega2003} documenta, con una serie de once años frente a la costa central de Baja
+California, que las estrategias reproductivas de \emph{P. interruptus} ---medidas por la
+proporción de hembras con espermatóforo y de hembras ovígeras--- responden a la temperatura y a
+la intensidad de las surgencias. Esa dependencia térmica es el mecanismo que hace plausible
+usar variables oceanográficas rezagadas como predictoras de la captura meses después.
+
+En el contexto mexicano existe además un antecedente directo de pronóstico sobre esta misma
+pesquería: \citet{hernandez2022} comparan redes neuronales artificiales (NAR y NARX) contra un
+modelo ARIMAX para pronosticar el \emph{precio} de la langosta roja mexicana. La estructura del
+problema es la misma que aquí ---serie corta, comparación contra un referente autorregresivo---
+aunque la variable objetivo es distinta: el precio de mercado en lugar del volumen desembarcado.
+
+\section{Olas de calor marinas y su efecto sobre las pesquerías}
+\label{sec:revision_mhw}
+
+Una ola de calor marina (\emph{marine heatwave}, MHW) es un periodo prolongado de temperatura
+superficial del mar anómalamente alta. \citet{hobday2016} propusieron la definición que se ha
+vuelto estándar ---al menos cinco días consecutivos por encima del percentil 90 de una
+climatología de referencia--- y \citet{hobday2018} la extendieron con un esquema de categorías
+(moderada, fuerte, severa, extrema) que permite comparar eventos entre regiones. Esa definición
+es la que se implementa en el Capítulo~\ref{cap:datos}.
+
+Estos eventos se han vuelto más frecuentes y más largos: \citet{oliver2018} documentan un
+aumento sostenido durante el último siglo, y \citet{frolicher2018} proyectan su intensificación
+bajo calentamiento global. El Pacífico nororiental ---la región de este trabajo--- vivió uno de
+los episodios mejor documentados, el llamado ``Blob'' de 2014-2016, cuya persistencia
+interanual analizan \citet{dilorenzo2016} y cuyos efectos biológicos, desde el plancton hasta
+los mamíferos marinos, sintetizan \citet{cavole2016}.
+
+El vínculo con la captura está documentado a dos escalas. Globalmente, \citet{free2019}
+estiman que el calentamiento histórico ya redujo la productividad pesquera máxima sostenible, y
+\citet{smith2021} revisan los impactos socioeconómicos de las MHW sobre las comunidades que
+dependen de la pesca. Localmente ---y es el hallazgo que reorientó este trabajo---
+\citet{villasenor2024} documentan que las olas de calor marinas redujeron las capturas de
+langosta, erizo y pepino de mar en la península de Baja California entre un 15\% y un 58\%
+durante las últimas dos décadas, con impactos mayores cerca de los quiebres biogeográficos como
+San Quintín. Esa evidencia es la que justifica incorporar un índice de MHW como covariable y la
+que ofrece una hipótesis concreta sobre la caída de la temporada 2021-2022.
+
 \section{Modelos globales y agrupamiento parcial}
 \label{sec:revision_globales}
 

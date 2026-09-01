@@ -33,7 +33,7 @@ Villaseñor-Derbez, Arafeh-Dalmau & Micheli (2024, *Communications Earth & Envir
 
 ## Objetivos de esta fase del proyecto
 
-Cinco experimentos ordenados por prioridad (detalle en `PLAN.md`):
+Cinco experimentos ordenados por prioridad (diseño en `PLAN.md`, ya cerrados; lo que falta está en `PENDINGS.md`):
 
 1. **ETL + re-entrenamiento del baseline** con datos 2022-2025.
 2. **Feature engineering sistemático + SHAP** (prioridad alta).
@@ -153,6 +153,6 @@ Antes de instalar, revisar qué ya está en `requirements.txt` / `pyproject.toml
 
 ## Al terminar cada sesión de trabajo
 
-- Actualizar `PLAN.md` marcando las tareas completadas.
+- Actualizar `PENDINGS.md`, que es la **lista única y viva** de lo que falta (`PLAN.md` quedó congelado el 2026-08-31 como diseño original de las fases; sus casillas ya no se mantienen).
 - Dejar un resumen en `reports/sessions/YYYY-MM-DD.md` con: qué se hizo, resultados principales, bloqueadores, próximo paso concreto.
 - Si se introdujeron decisiones de diseño no triviales, documentarlas en `docs/decisions/` como ADRs cortos (Architecture Decision Records).

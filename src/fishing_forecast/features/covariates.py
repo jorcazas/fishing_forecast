@@ -21,8 +21,12 @@ que produce `consolidate` para una `(species, economic_unit)`).
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+from loguru import logger
 
 #: Columnas oceanográficas que se desplazan/agregan (SST/MHW + color del océano).
 #: Las que no estén en el DataFrame se ignoran, así que es seguro listarlas todas.
@@ -114,3 +118,144 @@ def build_multiseries_features(
     if not frames:
         raise ValueError(f"Sin grupos en {group_cols}.")
     return pd.concat(frames, ignore_index=True)
+
+
+# --- Fase 2: anomalías climatológicas, interacciones y configuración por YAML ------------------
+
+
+@dataclass(frozen=True)
+class FeatureConfig:
+    """Configuración del feature engineering (ver `configs/features.yaml`)."""
+
+    shift_days: int = 90
+    rolling_windows: tuple[int, ...] = (90, 365)
+    anomalies: bool = False
+    anomaly_columns: tuple[str, ...] = ()
+    anomaly_smooth_window: int = 15
+    interactions: tuple[tuple[str, str], ...] = ()
+
+
+def load_feature_config(path: str | Path | None = None) -> FeatureConfig:
+    """Lee `configs/features.yaml` (o `path`) y devuelve la configuración tipada."""
+    import yaml
+
+    from fishing_forecast.config import get_settings
+
+    src = Path(path) if path else get_settings().configs_root / "features.yaml"
+    cfg = yaml.safe_load(src.read_text("utf-8")) or {}
+    anom = cfg.get("anomalies") or {}
+    inter = cfg.get("interactions") or {}
+    pairs = tuple(tuple(p) for p in (inter.get("pairs") or [])) if inter.get("enabled") else ()
+    return FeatureConfig(
+        shift_days=int(cfg.get("shift_days", 90)),
+        rolling_windows=tuple(cfg.get("rolling_windows") or (90, 365)),
+        anomalies=bool(anom.get("enabled", False)),
+        anomaly_columns=tuple(anom.get("columns") or ()),
+        anomaly_smooth_window=int(anom.get("smooth_window", 15)),
+        interactions=pairs,
+    )
+
+
+def fit_climatology(
+    df: pd.DataFrame,
+    columns: tuple[str, ...] | list[str],
+    *,
+    train_end: pd.Timestamp | str,
+    smooth_window: int = 15,
+) -> pd.DataFrame:
+    """Climatología por día-del-año estimada **solo con datos anteriores a `train_end`**.
+
+    Devuelve un DataFrame indexado por `doy` (1-366) con una columna por variable: la media
+    histórica de ese día del año, suavizada con una ventana circular de `smooth_window` días
+    (la media cruda por doy con pocas temporadas es ruidosa).
+
+    `train_end` es obligatorio y explícito justamente para que el anti-leakage sea auditable:
+    la climatología es un estadístico agregado y calcularlo con años de test contaminaría todas
+    las anomalías. Devuelve solo las columnas presentes en `df`.
+    """
+    train = df[pd.to_datetime(df["ds"]) < pd.Timestamp(train_end)]
+    cols = [c for c in columns if c in df.columns]
+    if train.empty or not cols:
+        return pd.DataFrame(index=pd.RangeIndex(1, 367, name="doy"))
+    doy = pd.to_datetime(train["ds"]).dt.dayofyear
+    clim = train[cols].groupby(doy).mean()
+    clim = clim.reindex(pd.RangeIndex(1, 367, name="doy"))
+    # Suavizado circular: se concatena el año consigo mismo para que diciembre y enero se vean.
+    tripled = pd.concat([clim, clim, clim])
+    smoothed = tripled.rolling(window=smooth_window, center=True, min_periods=1).mean()
+    out = smoothed.iloc[len(clim) : 2 * len(clim)]
+    out.index = clim.index
+    return out
+
+
+def add_climatology_anomalies(
+    feat: pd.DataFrame,
+    raw: pd.DataFrame,
+    climatology: pd.DataFrame,
+    *,
+    shift_days: int = 90,
+) -> pd.DataFrame:
+    """Añade `{col}_anom_lag{shift}` = (valor menos la climatología de su día-del-año), desplazado.
+
+    La anomalía se calcula sobre la serie cruda y **después** se desplaza `shift_days`, así que
+    la feature en `t` solo usa observaciones de `t - shift_days` o antes.
+    """
+    if climatology.empty:
+        return feat
+    doy = pd.to_datetime(raw["ds"]).dt.dayofyear.to_numpy()
+    for col in climatology.columns:
+        if col not in raw.columns:
+            continue
+        expected = climatology[col].reindex(doy).to_numpy()
+        anom = pd.Series(raw[col].to_numpy() - expected, index=raw.index)
+        feat[f"{col}_anom_lag{shift_days}"] = anom.shift(shift_days).to_numpy()
+    return feat
+
+
+def add_interactions(
+    feat: pd.DataFrame, pairs: tuple[tuple[str, str], ...] | list[list[str]]
+) -> pd.DataFrame:
+    """Añade el producto `a * b` como `a__x__b` para cada par presente en `feat`.
+
+    Un par cuyas columnas no existan (p. ej. una UE sin color del océano) se omite y se anota en
+    el log: es un dato faltante legítimo, no un error, pero no se silencia.
+    """
+    for a, b in pairs:
+        if a not in feat.columns or b not in feat.columns:
+            logger.warning(f"interacción {a}*{b} omitida: falta {a if a not in feat else b}")
+            continue
+        feat[f"{a}__x__{b}"] = feat[a].astype(float) * feat[b].astype(float)
+    return feat
+
+
+def build_features_v2(
+    df: pd.DataFrame,
+    *,
+    config: FeatureConfig | None = None,
+    train_end: pd.Timestamp | str | None = None,
+) -> pd.DataFrame:
+    """`build_covariate_features` + anomalías climatológicas + interacciones (Fase 2).
+
+    Es aditiva sobre el builder original —las columnas de aquel no cambian— para que los
+    experimentos existentes sigan comparándose contra la misma matriz. Las anomalías requieren
+    `train_end` (la climatología solo puede ver train); si no se pasa, se omiten con aviso.
+    """
+    cfg = config or load_feature_config()
+    feat = build_covariate_features(
+        df, shift_days=cfg.shift_days, rolling_windows=cfg.rolling_windows
+    )
+    raw = df.sort_values("ds").reset_index(drop=True)
+    if cfg.anomalies:
+        if train_end is None:
+            logger.warning("anomalías omitidas: se requiere `train_end` para la climatología.")
+        else:
+            clim = fit_climatology(
+                raw,
+                cfg.anomaly_columns,
+                train_end=train_end,
+                smooth_window=cfg.anomaly_smooth_window,
+            )
+            feat = add_climatology_anomalies(feat, raw, clim, shift_days=cfg.shift_days)
+    if cfg.interactions:
+        feat = add_interactions(feat, cfg.interactions)
+    return feat

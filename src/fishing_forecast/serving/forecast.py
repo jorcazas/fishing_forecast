@@ -13,8 +13,10 @@ series recientes (corte 2024-06-01) eso incluye las temporadas 2024-2026.
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -301,3 +303,85 @@ def build_store(cut_date: str | None = None, species: tuple[str, ...] = SPECIES)
         }
     logger.info(f"[serving] store listo: {len(store.series)} series")
     return store
+
+
+# --- Persistencia del store (artefacto de producción versionado) -------------------------------
+#
+# La API entrena al arrancar (~30-60 s). Para desplegar un artefacto fijo y auditable —el mismo
+# pronóstico que se reportó en la tesis, sin depender de que el dataset local sea idéntico— el
+# store se serializa a JSON: son arreglos diarios y metadata, no objetos de modelo, así que la
+# carga no depende de la versión de XGBoost ni de pickle.
+
+#: Ruta por defecto del artefacto serializado. Override: `FF_STORE_PATH`.
+DEFAULT_STORE_PATH = os.environ.get("FF_STORE_PATH", "") or str(
+    get_settings().models_root / "final" / "store.json"
+)
+#: Versión del formato del artefacto; subir si cambia la forma de `ForecastStore`.
+STORE_FORMAT_VERSION = 1
+
+
+def _dataset_fingerprint() -> dict:
+    """Huella del dataset con el que se construyó el store (para detectar desalineación)."""
+    path = get_settings().processed_dir / "dataset_v1.parquet"
+    if not path.exists():
+        return {}
+    stat = path.stat()
+    return {
+        "path": path.name,
+        "size_bytes": stat.st_size,
+        "mtime": pd.Timestamp(stat.st_mtime, unit="s").isoformat(),
+    }
+
+
+def save_store(store: ForecastStore, path: str | Path | None = None) -> Path:
+    """Serializa el store a JSON con su manifiesto (corte, series, huella del dataset)."""
+    out = Path(path or DEFAULT_STORE_PATH)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "format_version": STORE_FORMAT_VERSION,
+        "created_at": pd.Timestamp.utcnow().isoformat(),
+        "cut_date": store.cut_date,
+        "n_series": len(store.series),
+        "conf_levels": list(CONF_LEVELS),
+        "seed": SEED,
+        "dataset": _dataset_fingerprint(),
+        "units": store.units,
+        "series": store.series,
+    }
+    out.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    logger.info(
+        f"[serving] store → {out} ({out.stat().st_size / 1e6:.1f} MB, {len(store.series)} series)"
+    )
+    return out
+
+
+def load_store(path: str | Path | None = None) -> ForecastStore:
+    """Carga un store serializado por :func:`save_store`.
+
+    Lanza si el archivo no existe o si su `format_version` no es la soportada: un artefacto de
+    otra versión daría respuestas silenciosamente mal formadas.
+    """
+    src = Path(path or DEFAULT_STORE_PATH)
+    payload = json.loads(src.read_text(encoding="utf-8"))
+    version = payload.get("format_version")
+    if version != STORE_FORMAT_VERSION:
+        raise ValueError(
+            f"{src}: format_version={version}, se esperaba {STORE_FORMAT_VERSION}. "
+            "Regenera el artefacto con `fishing-etl serve-build`."
+        )
+    logger.info(
+        f"[serving] store cargado de {src}: corte {payload['cut_date']}, "
+        f"{payload['n_series']} series, generado {payload['created_at']}"
+    )
+    return ForecastStore(
+        cut_date=payload["cut_date"], series=payload["series"], units=payload["units"]
+    )
+
+
+def get_store(path: str | Path | None = None, cut_date: str | None = None) -> ForecastStore:
+    """Devuelve el store: del artefacto si existe, entrenando si no (y avisando cuál se usó)."""
+    src = Path(path or DEFAULT_STORE_PATH)
+    if src.exists():
+        return load_store(src)
+    logger.warning(f"[serving] sin artefacto en {src}; se entrena en caliente (~30-60 s).")
+    return build_store(cut_date)

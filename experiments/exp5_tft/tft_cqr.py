@@ -206,7 +206,9 @@ def main() -> None:
     (metrics_dir / f"{EXP_ID}_{CUT_DATE.date()}.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False)
     )
-    _write_summary(result, settings.reports_root / f"{EXP_ID}_summary.md")
+    # Un resumen por corte: si no, la segunda corrida pisa la primera y se pierde la
+    # comparación entre cortes (el JSON sí es por corte).
+    _write_summary(result, settings.reports_root / f"{EXP_ID}_summary_{CUT_DATE.date()}.md")
     print(_console(result))
 
 

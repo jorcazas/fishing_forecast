@@ -10,16 +10,19 @@ resultante. La descripción variable por variable está en el Apéndice~\ref{ap:
 \paragraph{Arribos pesqueros.} La variable objetivo proviene de dos fuentes complementarias.
 La primera es el registro histórico de COBI (2016-2021), obtenido por convenio, con
 granularidad de aviso de arribo. La segunda son los \emph{avisos de cosecha} de CONAPESCA
-(``AVISOS MAYORES/MENORES DE COSECHA'', 2022-2026), de acceso público. La segunda fuente fue la
+(``AVISOS MAYORES/MENORES DE COSECHA'', 2022-2026), publicados como datos abiertos
+\citep{conapesca_datos}. La segunda fuente fue la
 que permitió duplicar el número de temporadas disponibles.
 
 \paragraph{Oceanografía.} La temperatura superficial del mar (SST) proviene del producto
 reprocesado L4 de Copernicus Marine Service (OSTIA,
-\texttt{METOFFICE-GLO-SST-L4-REP-OBS-SST}), con cobertura diaria global desde 1981. Las
+\texttt{METOFFICE-GLO-SST-L4-REP-OBS-SST}), con cobertura diaria global desde 1981. OSTIA es un
+análisis que combina observaciones satelitales e in situ en una malla libre de nubes
+\citep{donlon2012}, en la configuración operativa descrita por \citet{good2020}. Las
 variables de color del océano ---clorofila (CHL), coeficiente de atenuación difusa (KD490),
 materia particulada en suspensión (SPM), profundidad de disco de Secchi (ZSD), retrodispersión
 de partículas (BBP) y materia orgánica coloreada disuelta (CDM)--- provienen del acervo
-GlobColour redistribuido por Copernicus, a 4~km de resolución.
+GlobColour \citep{globcolour2020} redistribuido por Copernicus, a 4~km de resolución.
 
 \paragraph{Nota sobre el acceso a GlobColour.} La primera iteración de este trabajo descargaba
 GlobColour por FTP. Esa vía entrega archivos \emph{globales sin recorte} (18~MB por variable y

@@ -11,6 +11,7 @@ Completa la Tabla `extension_comparativa` de la tesis (§6.10), que solo tenía 
 | xgboost | 459.0 | 712.3 | 153.0 | 2.37 | 0.66 |
 | lgbm | 401.9 | 668.8 | 136.7 | 2.35 | 0.67 |
 | lstm | 290.7 | 457.7 | 78.4 | 1.58 | 0.61 |
+| lstm_orig2023 | 435.3 | 824.4 | 70.3 | 2.99 | 0.64 |
 | xgb_lstm | 236.4 | 408.7 | 59.2 | 1.58 | 0.67 |
 
 | modelo | temporada | error de suma (%) |
@@ -30,6 +31,11 @@ Completa la Tabla `extension_comparativa` de la tesis (§6.10), que solo tenía 
 | lstm | 2022_2023 | +445.2 |
 | lstm | 2023_2024 | +351.0 |
 | lstm | 2024_2025 | +650.0 |
+| lstm_orig2023 | 2020_2021 | +89.9 |
+| lstm_orig2023 | 2021_2022 | +422.2 |
+| lstm_orig2023 | 2022_2023 | +577.3 |
+| lstm_orig2023 | 2023_2024 | +541.7 |
+| lstm_orig2023 | 2024_2025 | +867.7 |
 | xgb_lstm | 2020_2021 | +56.1 |
 | xgb_lstm | 2021_2022 | +197.7 |
 | xgb_lstm | 2022_2023 | +355.3 |
@@ -45,6 +51,7 @@ Completa la Tabla `extension_comparativa` de la tesis (§6.10), que solo tenía 
 | xgboost | 145.4 | 212.0 | 97.1 | 1.61 | 0.69 |
 | lgbm | 153.8 | 236.2 | 124.0 | 1.83 | 0.70 |
 | lstm | 499.4 | 628.7 | 131.5 | 3.26 | 0.61 |
+| lstm_orig2023 | 79.8 | 159.6 | 91.1 | 0.00 | 0.00 |
 | xgb_lstm | 561.7 | 746.6 | 115.2 | 4.06 | 0.59 |
 
 | modelo | temporada | error de suma (%) |
@@ -52,6 +59,7 @@ Completa la Tabla `extension_comparativa` de la tesis (§6.10), que solo tenía 
 | xgboost | 2024_2025 | +173.7 |
 | lgbm | 2024_2025 | +184.1 |
 | lstm | 2024_2025 | +626.1 |
+| lstm_orig2023 | 2024_2025 | -100.0 |
 | xgb_lstm | 2024_2025 | +704.2 |
 
 ## Notas de lectura

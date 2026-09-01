@@ -1,16 +1,31 @@
-
 # PLAN.md
 
-> **Nota (2026-08-31)**: el documento de tesis vive ahora en `final_work/final_work.tex`
-> (clase `report`) + `final_work/front/` + `final_work/sections/`. Ver `PENDINGS.md` §4c.
+> **CONGELADO (2026-08-31).** Este archivo es el **diseño original** de las cinco fases y se
+> conserva por su justificación metodológica. **Sus casillas ya no se mantienen**: muchas
+> quedaron marcadas como pendientes aunque el trabajo se hizo por otro camino, y otras fueron
+> superadas por decisiones posteriores.
+>
+> **La lista viva de lo que falta es `PENDINGS.md`.** El historial de lo hecho, con números,
+> está en `bitacora.md`.
+>
+> | Fase | Estado |
+> |---|---|
+> | 0. Reconocimiento del repo | ✅ Cerrada (`docs/repo_audit.md`) |
+> | 1. ETL + re-entrenamiento del baseline | ✅ Cerrada — ETL unido COBI+CONAPESCA, índice MHW, Exp 1 (ARIMA/Prophet) y Exp 1b (LGBM/LSTM/ensamble) |
+> | 2. Feature engineering + SHAP | ✅ Cerrada en lo esencial — covariables + poda SHAP; residuales opcionales en `PENDINGS.md` §B4 |
+> | 3. Modelo global multi-especie / multi-UE | ✅ Cerrada — pooling sobre `log1p(y)`, gana o empata en 4/5 series; residuales en §B3 y §B5 |
+> | 4. Pronóstico probabilístico (CQR) | ✅ Cerrada — CQR Mondrian por serie, calibrada en temporada, servida en producción |
+> | 5. TFT (opcional) | ✅ Cerrada — prueba de techo; no supera al XGBoost+CQR |
+> | Extra (no estaba en el plan) | Producto operativo desplegado + tesis reestructurada a formato de tesis |
+
 
 Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por prioridad según la reunión de planeación. Cada fase tiene criterios de éxito explícitos y un entregable verificable.
 
-**Uso**: marcar cada tarea con `[x]` al completarla. Claude Code debe ejecutar **fase por fase** en orden. No saltar fases. Si una fase revela problemas que bloquean la siguiente, documentarlos y consultar antes de continuar.
+**Uso original** (ya no aplica): marcar cada tarea con `[x]` al completarla, ejecutando fase por fase. Las cinco fases están cerradas; las casillas de abajo se dejaron como estaban al momento de escribirlas y **no reflejan el estado real** — ver la tabla de arriba y `PENDINGS.md`.
 
 ---
 
-## Fase 0. Reconocimiento del repo (obligatoria, hacer primero)
+## Fase 0. Reconocimiento del repo ✅ CERRADA
 
 **Objetivo**: entender qué hay antes de agregar nada.
 
@@ -33,7 +48,7 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ---
 
-## Fase 1. ETL de datos nuevos y re-entrenamiento del baseline
+## Fase 1. ETL de datos nuevos y re-entrenamiento del baseline ✅ CERRADA
 
 **Objetivo**: reproducir los resultados del borrador con los datos nuevos (2022-2025, otras especies, otras regiones) para tener un baseline actualizado.
 
@@ -103,7 +118,7 @@ Plan de experimentos para la fase de expansión de la tesis (2026). Ordenado por
 
 ---
 
-## Fase 2. Feature engineering sistemático con SHAP
+## Fase 2. Feature engineering sistemático con SHAP ✅ CERRADA (residuales en PENDINGS §B4)
 
 **Objetivo**: construir un conjunto enriquecido de features y usar SHAP para identificar los que realmente agregan señal.
 
@@ -148,7 +163,7 @@ Implementar en `src/features/`:
 
 ---
 
-## Fase 3. Modelo jerárquico / global multi-especie y multi-región
+## Fase 3. Modelo jerárquico / global multi-especie y multi-región ✅ CERRADA (residuales en PENDINGS §B3, §B5)
 
 **Objetivo**: entrenar un solo modelo global sobre todas las especies y unidades económicas disponibles, aprovechando transferencia de información entre series.
 
@@ -198,7 +213,7 @@ Implementar en `src/features/`:
 
 ---
 
-## Fase 4. Pronóstico probabilístico con Conformalized Quantile Regression
+## Fase 4. Pronóstico probabilístico con Conformalized Quantile Regression ✅ CERRADA (residual en PENDINGS §B6)
 
 **Objetivo**: agregar intervalos de predicción calibrados al mejor modelo de las fases anteriores.
 
@@ -237,7 +252,7 @@ Implementar en `src/features/`:
 
 ---
 
-## Fase 5 (opcional). Temporal Fusion Transformer
+## Fase 5 (opcional). Temporal Fusion Transformer ✅ CERRADA
 
 **Objetivo**: explorar si una arquitectura moderna de deep learning supera al ensamble. Solo hacer si hay tiempo.
 
@@ -253,7 +268,7 @@ Implementar en `src/features/`:
 
 ---
 
-## Entregables finales de esta fase del proyecto
+## Entregables finales de esta fase del proyecto (ver estado real en PENDINGS.md §E)
 
 Al completar todas las fases, debe existir:
 

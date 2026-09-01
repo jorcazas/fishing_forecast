@@ -27,7 +27,14 @@ El sistema tiene tres piezas:
   en escala logarítmica con conformalización Mondrian por serie--- y deja en memoria, por serie,
   el pronóstico diario calibrado (mediana y bandas de 80 y 90\%). Los endpoints solo leen esa
   memoria, de modo que la consulta es inmediata. El entrenamiento inicial tarda entre 30 y 60
-  segundos y el estado se expone en un endpoint de salud.
+  segundos y el estado se expone en un endpoint de salud. Para despliegues reproducibles ese
+  resultado puede además serializarse como \textbf{artefacto versionado}
+  (\texttt{models/final/store.json}, unos 0.8 MB): es el pronóstico ya calculado ---no un
+  \emph{pickle} del modelo, que ataría el despliegue a versiones exactas de las bibliotecas---
+  acompañado de un manifiesto con el corte, la semilla, la versión del formato y la huella del
+  conjunto de datos con el que se generó. Si el artefacto está presente la API arranca al
+  instante y sirve exactamente las cifras reportadas aquí; si no, entrena en caliente y lo
+  advierte en la bitácora.
   \item Un \textbf{front} estático mínimo: selector de especie y de zona, gráfico de abanico
   diario (observado contra las bandas calibradas) y un panel de \emph{backtest} por temporada
   con la captura observada y la cobertura empírica del intervalo del 90\% en temporada.

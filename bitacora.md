@@ -1740,3 +1740,127 @@ Nada de código. Del documento: los TODO de la portada (asesor, formato oficial,
 título registrado) y la bibliografía, que sigue corta en literatura pesquera (sin *Panulirus
 interruptus*, sin Carta Nacional Pesquera ni NOM-006-PESC, sin cita formal de la fuente de datos
 abiertos de CONAPESCA).
+
+---
+
+## 2026-08-31 (c) — Conciliación de PENDINGS y PLAN
+
+`PENDINGS.md` y `PLAN.md` llevaban meses divergiendo: el primero mezclaba pendientes reales con
+narración de lo ya hecho (~30 KB), y el segundo conservaba 43 casillas sin marcar de tareas que
+sí se hicieron —por otro camino— o que quedaron superadas. Además, la revisión del estado de la
+tesis había añadido una tercera lista que solo vivía en la conversación.
+
+Las tres se fundieron en una sola:
+
+- **`PENDINGS.md` es ahora la lista única y viva**, reescrita de cero: estado de lo cerrado y
+  cinco bloques de pendientes — **A** bloqueantes para presentar (portada/asesor, título,
+  bibliografía, lectura de consistencia), **B** mejoras opcionales con su retorno esperado,
+  **C** calidad de datos, **D** higiene y seguridad, **E** decisiones tomadas de cosas que ya
+  **no** se van a hacer (para que no reaparezcan como pendientes).
+- **`PLAN.md` quedó congelado** como diseño original de las fases, con una tabla de estado por
+  fase y una nota de que sus casillas ya no se mantienen.
+- **`CLAUDE.md`** ahora apunta a `PENDINGS.md` al cerrar sesión, en vez de a `PLAN.md`.
+
+Verificado contra el repo antes de escribir (no se copiaron afirmaciones viejas): `features/`
+solo tiene `covariates.py` (residuales de Fase 2 reales); el legacy ya está en `legacy/` pero
+**las credenciales de Postgres en claro siguen versionadas** ahí; la SST llega a 2026-03-31 (el
+pendiente de REP vs NRT quedó resuelto); hay **117 filas** con captura fuera de la ventana
+reglamentaria; `docs/thesis_sections/` y `models/final/` siguen vacíos pero fueron superados.
+
+---
+
+## 2026-08-31 (d) — Bibliografía (A3) y lectura de consistencia (A4)
+
+### A3 — Bibliografía
+De 28 `\bibitem` escritos a mano a **51 referencias en BibTeX** (`final_work/referencias.bib`,
+estilo `plainnat`). Las 23 nuevas no son relleno: cada una se citó donde hacía falta, y para
+lograrlo el Capítulo 2 ganó dos secciones que faltaban ---**la pesquería de langosta roja y su
+marco regulatorio** (de dónde sale realmente la ventana 15-sep–15-feb) y **olas de calor marinas
+y su efecto sobre las pesquerías** (de Hobday a Villaseñor-Derbez, pasando por el "Blob")---.
+El párrafo suelto de MHW que vivía en la revisión anterior se eliminó por duplicado.
+
+Los datos de publicación que no podía dar por buenos de memoria se **verificaron contra la
+fuente**: NOM-006-SAG/PESC-2016 (DOF 07-09-2016), Carta Nacional Pesquera (DOF 10-03-2025),
+Vega Velázquez 2003 (*Fisheries Research* 65:123-135) y Hernández-Casas et al. 2022
+(*Applied Sciences* 12(12):6044) — este último es el antecedente más cercano al trabajo: pronóstico
+para langosta roja mexicana, aunque de precio y no de volumen.
+
+Verificación automática: 0 claves citadas sin entrada, 0 entradas sin citar.
+
+### A4 — Consistencia: tres hallazgos reales
+1. **Números de tabla escritos a mano**: "las Tablas 3, 4 y 5" y "la tabla 4" en el texto
+   heredado — con la reestructuración en capítulos esos números ya eran incorrectos.
+   Sustituidos por `\ref`. Auditoría completa: 0 referencias rotas, 0 labels duplicados, y
+   todas las figuras y tablas citadas en el texto.
+2. **La sección de la CQR estaba desactualizada** — y es el hallazgo importante. Reportaba
+   cobertura marginal de 86 % / 81 % y una **sub-cobertura del 53 %** de la langosta de San
+   Quintín; esas cifras venían del pool de 5-7 series de antes de la expansión y del arreglo del
+   calendario de temporada. Con los `reports/metrics/` actuales la realidad es la contraria:
+   96.7 % / 93.5 % (corte 2020) y 95.8 % / 90.9 % (corte 2024), con San Quintín en 99.9 % y
+   96.2 %. El documento se contradecía a sí mismo: dos secciones después ya contaba la historia
+   corregida. Sección reescrita con los números reproducibles de ambos cortes, y el argumento de
+   la sub-cobertura movido a donde sí está sustentado (la inestabilidad del corte 2020).
+   De paso, el intento fallido con Optuna quedó cuantificado con su propio JSON: la pérdida de
+   validación mejora (0.146 → 0.139) mientras el ancho del percentil 90 del test se dispara de
+   ~9,776 a ~47,039 kg.
+3. **Dos tablas eran fotografías previas a la unión con CONAPESCA** (el piso ARIMA/Prophet/XGBoost
+   y la de poda SHAP) y no lo decían en su propio pie, de modo que sus cifras contradecían las de
+   la comparativa refrescada. Ahora lo declaran y apuntan a la tabla que las actualiza.
+   Igual tratamiento para la prueba de techo del TFT, que se corrió sobre el pool de aquel
+   momento: la comparación interna es válida, pero su CRPS marginal no es comparable con el de la
+   CQR final, y así se advierte.
+
+**94 páginas, 0 referencias sin resolver, 0 labels duplicados, 140 tests verdes.**
+
+**Decisión (2026-08-31)**: se mantiene el título nuevo de la tesis; si el registrado ante
+Dirección Escolar es el anterior, hay que tramitar el cambio. Los cuatro campos que faltan del
+front matter quedan como checklist al inicio de `final_work/front/portada.tex` para que Javier
+los llene; el asesor se define en un solo lugar con `\asesor{...}`.
+
+---
+
+## 2026-08-31 (e) — Bloque B: SHAP condicional, features de Fase 2, artefacto y TFT comparable
+
+**B5 — ¿el modelo global es uno o son veintiocho?** Nuevo experimento
+(`experiments/exp2_shap_selection/shap_by_group.py`) que descompone la atribución SHAP del pool
+de producción condicionada al grupo. La cuota que se lleva el one-hot de identidad es
+**38.4 %** con el corte de 2020 y **33.5 %** con el de 2024 — es decir, dos tercios de la
+atribución van a variables compartidas, y la dependencia de la identidad **baja al añadir
+temporadas**. Por especie el contraste es nítido: langosta 27.5 %, abulón 46-55 % (corte 2024).
+El modelo aprende lógica ambiental donde tiene datos y se apoya en el efecto fijo de la serie
+donde no. Divergencia Jensen-Shannon entre perfiles: 0.27 media entre especies, 0.22 entre las
+UEs de langosta (máx 0.47 entre San Quintín y La Purísima, los extremos del gradiente térmico).
+
+**B4 — enriquecer tampoco mueve la aguja.** Se implementaron las piezas que faltaban de la
+Fase 2: anomalías climatológicas por día del año (climatología estimada **solo** con años de
+train, `train_end` es argumento obligatorio para que el anti-fuga sea auditable), tres
+interacciones con justificación ecológica y toda la configuración en `configs/features.yaml`.
+La ablación sobre el modelo global da un resultado **negativo y limpio**: corte 2024, gana en
+10 de 28 series y el RMSE medio pasa de 633.4 a 633.7 kg/día; corte 2020, 25 de 33 y 435.0 →
+434.1. Junto con la poda por SHAP (que tampoco ayudaba), cierra el argumento por los dos lados:
+ni quitar ni añadir variables compensa la falta de temporadas.
+
+**B7 — el producto ya tiene artefacto.** `fishing-etl serve-build` serializa el *store*
+calibrado a `models/final/store.json` (0.8 MB, 28 series) con manifiesto —versión de formato,
+corte, semilla y huella del parquet— y la API lo carga si existe en vez de entrenar 30-60 s en
+cada arranque. Se serializan las **salidas**, no un `pickle` del modelo, para no atar el
+despliegue a versiones exactas de XGBoost/NumPy.
+
+**B9 — el TFT, por fin comparable.** Se re-corrió Exp 5 sobre las mismas 28 series y los mismos
+cortes que la CQR de producción, que era la advertencia de comparabilidad que arrastraba el
+documento.
+
+**B1 queda bloqueado, no olvidado**: `tlmgr` se niega a instalar `babel-spanish`/`setspace`
+(TinyTeX local en TeX Live 2024, repo remoto 2026; el histórico de 2024 está congelado y pide
+actualizar `tlmgr` primero). Arreglarlo toca la instalación de TeX del usuario, así que se
+documentó la causa exacta en `PENDINGS.md` en lugar de forzarlo.
+
+**157 tests verdes.**
+
+**B2 — la arquitectura fiel del borrador colapsa.** Se re-entrenó la LSTM original (2 700 y 800
+unidades, 40.8 M de parámetros) sobre las mismas 2 295 ventanas. Con el corte de 2024 predice
+**cero todos los días del periodo de prueba**: dispersión y correlación nulas, error de temporada
+$-100\%$ y, paradójicamente, el **mejor MAE de la tabla** (79.8, que es exactamente la media de la
+captura observada). Es la justificación empírica más limpia de haber añadido las métricas de
+forma: sin ellas, el modelo degenerado habría ganado el capítulo. Con el corte de 2020 no colapsa,
+pero queda por detrás de la red pequeña (MAE 435.3 vs 290.7, sobre-dispersión 2.99 vs 1.58).

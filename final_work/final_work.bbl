@@ -1,0 +1,312 @@
+\begin{thebibliography}{51}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Adibi et~al.(2020)Adibi, Pranovi, Raffaetà, Russo, Silvestri, Simeoni, Torsello, and Matwin]{adibi2020}
+Peyman Adibi, Fabio Pranovi, Alessandra Raffaetà, Emanuele Russo, Claudio Silvestri, Marta Simeoni, Andrea Torsello, and Stan Matwin.
+\newblock Predicting fishing effort and catch using semantic trajectories and machine learning.
+\newblock In \emph{Multiple-Aspect Analysis of Semantic Trajectories (MASTER 2019)}, volume 11889 of \emph{Lecture Notes in Computer Science}. Springer, Cham, 2020.
+\newblock \doi{10.1007/978-3-030-38081-6_7}.
+
+\bibitem[Akiba et~al.(2019)Akiba, Sano, Yanase, Ohta, and Koyama]{akiba2019}
+Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama.
+\newblock {Optuna}: A next-generation hyperparameter optimization framework.
+\newblock In \emph{Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining}, pages 2623--2631, 2019.
+\newblock \doi{10.1145/3292500.3330701}.
+
+\bibitem[Angelopoulos and Bates(2023)]{angelopoulos2023}
+Anastasios~N. Angelopoulos and Stephen Bates.
+\newblock Conformal prediction: A gentle introduction.
+\newblock \emph{Foundations and Trends in Machine Learning}, 16\penalty0 (4):\penalty0 494--591, 2023.
+\newblock \doi{10.1561/2200000101}.
+
+\bibitem[Bergmeir and Benítez(2012)]{bergmeir2012}
+Christoph Bergmeir and José~M. Benítez.
+\newblock On the use of cross-validation for time series predictor evaluation.
+\newblock \emph{Information Sciences}, 191:\penalty0 192--213, 2012.
+\newblock \doi{10.1016/j.ins.2011.12.028}.
+
+\bibitem[Box et~al.(2015)Box, Jenkins, Reinsel, and Ljung]{box2015}
+George E.~P. Box, Gwilym~M. Jenkins, Gregory~C. Reinsel, and Greta~M. Ljung.
+\newblock \emph{Time Series Analysis: Forecasting and Control}.
+\newblock Wiley, 5 edition, 2015.
+
+\bibitem[Cavole et~al.(2016)Cavole, Demko, Diner, et~al.]{cavole2016}
+Letícia~M. Cavole, Alyssa~M. Demko, Rachel~E. Diner, et~al.
+\newblock Biological impacts of the 2013--2015 warm-water anomaly in the northeast {Pacific}: winners, losers, and the future.
+\newblock \emph{Oceanography}, 29\penalty0 (2):\penalty0 273--285, 2016.
+\newblock \doi{10.5670/oceanog.2016.32}.
+
+\bibitem[Chen and Guestrin(2016)]{chen2016}
+Tianqi Chen and Carlos Guestrin.
+\newblock {XGBoost}: A scalable tree boosting system.
+\newblock In \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, pages 785--794, 2016.
+\newblock \doi{10.1145/2939672.2939785}.
+
+\bibitem[Chernozhukov et~al.(2010)Chernozhukov, Fernández-Val, and Galichon]{chernozhukov2010}
+Victor Chernozhukov, Iván Fernández-Val, and Alfred Galichon.
+\newblock Quantile and probability curves without crossing.
+\newblock \emph{Econometrica}, 78\penalty0 (3):\penalty0 1093--1125, 2010.
+\newblock \doi{10.3982/ECTA7880}.
+
+\bibitem[{Comisión Nacional de Acuacultura y Pesca}(2026)]{conapesca_datos}
+{Comisión Nacional de Acuacultura y Pesca}.
+\newblock Avisos de arribo, cosecha y producción. datos abiertos, 2026.
+\newblock URL \url{https://conapesca.gob.mx/wb/cona/avisos_arribo_cosecha_produccion}.
+\newblock Consultado en 2026.
+
+\bibitem[Di~Lorenzo and Mantua(2016)]{dilorenzo2016}
+Emanuele Di~Lorenzo and Nathan Mantua.
+\newblock Multi-year persistence of the 2014/15 {North Pacific} marine heatwave.
+\newblock \emph{Nature Climate Change}, 6:\penalty0 1042--1047, 2016.
+\newblock \doi{10.1038/nclimate3082}.
+
+\bibitem[Donlon et~al.(2012)Donlon, Martin, Stark, Roberts-Jones, Fiedler, and Wimmer]{donlon2012}
+Craig~J. Donlon, Matthew Martin, John Stark, Jonah Roberts-Jones, Emma Fiedler, and Werenfrid Wimmer.
+\newblock The operational sea surface temperature and sea ice analysis ({OSTIA}) system.
+\newblock \emph{Remote Sensing of Environment}, 116:\penalty0 140--158, 2012.
+\newblock \doi{10.1016/j.rse.2010.10.017}.
+
+\bibitem[Free et~al.(2019)Free, Thorson, Pinsky, Oken, Wiedenmann, and Jensen]{free2019}
+Christopher~M. Free, James~T. Thorson, Malin~L. Pinsky, Kiva~L. Oken, John Wiedenmann, and Olaf~P. Jensen.
+\newblock Impacts of historical warming on marine fisheries production.
+\newblock \emph{Science}, 363\penalty0 (6430):\penalty0 979--983, 2019.
+\newblock \doi{10.1126/science.aau1758}.
+
+\bibitem[Frölicher et~al.(2018)Frölicher, Fischer, and Gruber]{frolicher2018}
+Thomas~L. Frölicher, Erich~M. Fischer, and Nicolas Gruber.
+\newblock Marine heatwaves under global warming.
+\newblock \emph{Nature}, 560:\penalty0 360--364, 2018.
+\newblock \doi{10.1038/s41586-018-0383-9}.
+
+\bibitem[Glo(2020)]{globcolour2020}
+\emph{Product User Guide}.
+\newblock GlobColour, 2020.
+\newblock URL \url{https://www.globcolour.info/CDR_Docs/GlobCOLOUR_PUG.pdf}.
+\newblock Ref: GC-UM-ACR-PUG-01, versión 4.2.1.
+
+\bibitem[Gneiting and Raftery(2007)]{gneiting2007}
+Tilmann Gneiting and Adrian~E. Raftery.
+\newblock Strictly proper scoring rules, prediction, and estimation.
+\newblock \emph{Journal of the American Statistical Association}, 102\penalty0 (477):\penalty0 359--378, 2007.
+\newblock \doi{10.1198/016214506000001437}.
+
+\bibitem[Good et~al.(2020)Good, Fiedler, Mao, et~al.]{good2020}
+Simon Good, Emma Fiedler, Chongyuan Mao, et~al.
+\newblock The current configuration of the {OSTIA} system for operational production of foundation sea surface temperature and ice concentration analyses.
+\newblock \emph{Remote Sensing}, 12\penalty0 (4):\penalty0 720, 2020.
+\newblock \doi{10.3390/rs12040720}.
+
+\bibitem[Greff et~al.(2017)Greff, Srivastava, Koutník, Steunebrink, and Schmidhuber]{greff2017}
+Klaus Greff, Rupesh~K. Srivastava, Jan Koutník, Bas~R. Steunebrink, and Jürgen Schmidhuber.
+\newblock {LSTM}: A search space odyssey.
+\newblock \emph{IEEE Transactions on Neural Networks and Learning Systems}, 28\penalty0 (10):\penalty0 2222--2232, 2017.
+\newblock \doi{10.1109/TNNLS.2016.2582924}.
+
+\bibitem[Harris et~al.(2020)Harris, Millman, van~der Walt, et~al.]{harris2020}
+Charles~R. Harris, K.~Jarrod Millman, Stéfan~J. van~der Walt, et~al.
+\newblock Array programming with {NumPy}.
+\newblock \emph{Nature}, 585:\penalty0 357--362, 2020.
+\newblock \doi{10.1038/s41586-020-2649-2}.
+
+\bibitem[Hernández-Casas et~al.(2022)Hernández-Casas, Beltrán-Morales, Vargas-López, Vergara-Solana, and Seijo]{hernandez2022}
+Sofía Hernández-Casas, Luis~Felipe Beltrán-Morales, Victor~Gerardo Vargas-López, Francisco Vergara-Solana, and Juan~Carlos Seijo.
+\newblock Price forecast for mexican red spiny lobster ({Panulirus} spp.) using artificial neural networks ({ANNs}).
+\newblock \emph{Applied Sciences}, 12\penalty0 (12):\penalty0 6044, 2022.
+\newblock \doi{10.3390/app12126044}.
+
+\bibitem[Ho and Xie(1999)]{ho1999}
+S.~L. Ho and M.~Xie.
+\newblock The use of {ARIMA} models for reliability forecasting and analysis.
+\newblock \emph{Computers \& Industrial Engineering}, 37\penalty0 (1--2):\penalty0 213--216, 1999.
+\newblock \doi{10.1016/S0360-8352(98)00066-7}.
+
+\bibitem[Hobday et~al.(2016)Hobday, Alexander, Perkins, et~al.]{hobday2016}
+Alistair~J. Hobday, Lisa~V. Alexander, Sarah~E. Perkins, et~al.
+\newblock A hierarchical approach to defining marine heatwaves.
+\newblock \emph{Progress in Oceanography}, 141:\penalty0 227--238, 2016.
+\newblock \doi{10.1016/j.pocean.2015.12.014}.
+
+\bibitem[Hobday et~al.(2018)Hobday, Oliver, Sen~Gupta, et~al.]{hobday2018}
+Alistair~J. Hobday, Eric C.~J. Oliver, Alex Sen~Gupta, et~al.
+\newblock Categorizing and naming marine heatwaves.
+\newblock \emph{Oceanography}, 31\penalty0 (2):\penalty0 162--173, 2018.
+\newblock \doi{10.5670/oceanog.2018.205}.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter1997}
+Sepp Hochreiter and Jürgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+\newblock \doi{10.1162/neco.1997.9.8.1735}.
+
+\bibitem[Hyndman and Athanasopoulos(2021)]{hyndman2021}
+Rob~J. Hyndman and George Athanasopoulos.
+\newblock \emph{Forecasting: Principles and Practice}.
+\newblock OTexts, Melbourne, Australia, 3 edition, 2021.
+\newblock URL \url{https://otexts.com/fpp3/}.
+
+\bibitem[Hyndman and Koehler(2006)]{hyndman2006}
+Rob~J. Hyndman and Anne~B. Koehler.
+\newblock Another look at measures of forecast accuracy.
+\newblock \emph{International Journal of Forecasting}, 22\penalty0 (4):\penalty0 679--688, 2006.
+\newblock \doi{10.1016/j.ijforecast.2006.03.001}.
+
+\bibitem[{Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables}(2025)]{cnp2025}
+{Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables}.
+\newblock Acuerdo por el que se da a conocer la actualización de la carta nacional pesquera.
+\newblock Diario Oficial de la Federación, 10 de marzo de 2025, 2025.
+\newblock URL \url{https://www.gob.mx/cms/uploads/attachment/file/982574/CNP_2025.pdf}.
+
+\bibitem[Ke et~al.(2017)Ke, Meng, Finley, et~al.]{ke2017}
+Guolin Ke, Qi~Meng, Thomas Finley, et~al.
+\newblock {LightGBM}: A highly efficient gradient boosting decision tree.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NIPS 2017)}, 2017.
+\newblock URL \url{https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree}.
+
+\bibitem[Koenker and Bassett(1978)]{koenker1978}
+Roger Koenker and Gilbert Bassett.
+\newblock Regression quantiles.
+\newblock \emph{Econometrica}, 46\penalty0 (1):\penalty0 33--50, 1978.
+\newblock \doi{10.2307/1913643}.
+
+\bibitem[Lim et~al.(2021)Lim, Arık, Loeff, and Pfister]{lim2021}
+Bryan Lim, Sercan~Ö. Arık, Nicolas Loeff, and Tomas Pfister.
+\newblock Temporal fusion transformers for interpretable multi-horizon time series forecasting.
+\newblock \emph{International Journal of Forecasting}, 37\penalty0 (4):\penalty0 1748--1764, 2021.
+\newblock \doi{10.1016/j.ijforecast.2021.03.012}.
+
+\bibitem[Lindemann et~al.(2021)Lindemann, Müller, Vietz, Jazdi, and Weyrich]{lindemann2021}
+Benjamin Lindemann, Timo Müller, Hannes Vietz, Nasser Jazdi, and Michael Weyrich.
+\newblock A survey on long short-term memory networks for time series prediction.
+\newblock \emph{Procedia CIRP}, 99:\penalty0 650--655, 2021.
+\newblock \doi{10.1016/j.procir.2021.03.088}.
+
+\bibitem[Lundberg and Lee(2017)]{lundberg2017}
+Scott~M. Lundberg and Su-In Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NIPS 2017)}, 2017.
+\newblock URL \url{https://papers.nips.cc/paper/7062-a-unified-approach-to-interpreting-model-predictions}.
+
+\bibitem[Makwinja et~al.(2021)Makwinja, Kaunda, Mengistou, and Alamirew]{makwinja2021}
+Rodgers Makwinja, Emmanuel Kaunda, Seyoum Mengistou, and Tena Alamirew.
+\newblock Modeling of lake malombe annual fish landings and catch per unit effort ({CPUE}).
+\newblock \emph{Forecasting}, 3\penalty0 (1):\penalty0 39--55, 2021.
+\newblock \doi{10.3390/forecast3010004}.
+
+\bibitem[McKinney(2010)]{mckinney2010}
+Wes McKinney.
+\newblock Data structures for statistical computing in {Python}.
+\newblock In \emph{Proceedings of the 9th Python in Science Conference}, pages 56--61, 2010.
+\newblock \doi{10.25080/Majora-92bf1922-00a}.
+
+\bibitem[Montero-Manso and Hyndman(2021)]{montero2021}
+Pablo Montero-Manso and Rob~J. Hyndman.
+\newblock Principles and algorithms for forecasting groups of time series: Locality and globality.
+\newblock \emph{International Journal of Forecasting}, 37\penalty0 (4):\penalty0 1632--1653, 2021.
+\newblock \doi{10.1016/j.ijforecast.2021.03.004}.
+
+\bibitem[Oliver et~al.(2018)Oliver, Donat, Burrows, et~al.]{oliver2018}
+Eric C.~J. Oliver, Markus~G. Donat, Michael~T. Burrows, et~al.
+\newblock Longer and more frequent marine heatwaves over the past century.
+\newblock \emph{Nature Communications}, 9:\penalty0 1324, 2018.
+\newblock \doi{10.1038/s41467-018-03732-9}.
+
+\bibitem[Paszke et~al.(2019)Paszke, Gross, Massa, et~al.]{paszke2019}
+Adam Paszke, Sam Gross, Francisco Massa, et~al.
+\newblock {PyTorch}: An imperative style, high-performance deep learning library.
+\newblock In \emph{Advances in Neural Information Processing Systems 32 (NeurIPS 2019)}, 2019.
+\newblock \doi{10.48550/arXiv.1912.01703}.
+
+\bibitem[Pedregosa et~al.(2011)Pedregosa, Varoquaux, Gramfort, et~al.]{pedregosa2011}
+Fabian Pedregosa, Gaël Varoquaux, Alexandre Gramfort, et~al.
+\newblock Scikit-learn: Machine learning in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830, 2011.
+
+\bibitem[Petropoulos et~al.(2022)Petropoulos, Apiletti, Assimakopoulos, et~al.]{petropoulos2022}
+Fotios Petropoulos, Daniele Apiletti, Vassilios Assimakopoulos, et~al.
+\newblock Forecasting: theory and practice.
+\newblock \emph{International Journal of Forecasting}, 38\penalty0 (3):\penalty0 705--871, 2022.
+\newblock \doi{10.1016/j.ijforecast.2021.11.001}.
+
+\bibitem[Romano et~al.(2019)Romano, Patterson, and Candès]{romano2019}
+Yaniv Romano, Evan Patterson, and Emmanuel~J. Candès.
+\newblock Conformalized quantile regression.
+\newblock In \emph{Advances in Neural Information Processing Systems 32 (NeurIPS 2019)}, 2019.
+\newblock \doi{10.48550/arXiv.1905.03222}.
+
+\bibitem[{Secretaría de Agricultura, Ganadería, Desarrollo Rural, Pesca y Alimentación}(2016)]{nom006pesc2016}
+{Secretaría de Agricultura, Ganadería, Desarrollo Rural, Pesca y Alimentación}.
+\newblock Norma oficial mexicana {NOM-006-SAG/PESC-2016}, para regular el aprovechamiento de todas las especies de langosta en las aguas de jurisdicción federal del golfo de méxico y mar caribe, así como del océano pacífico incluyendo el golfo de california.
+\newblock Diario Oficial de la Federación, 7 de septiembre de 2016, 2016.
+\newblock URL \url{https://dof.gob.mx/nota_detalle.php?codigo=5451782&fecha=07/09/2016}.
+
+\bibitem[Shi et~al.(2022)Shi, Hu, Mo, and Wu]{shi2022}
+Zhuangwei Shi, Yang Hu, Guangliang Mo, and Jianguo Wu.
+\newblock Attention-based {CNN-LSTM} and {XGBoost} hybrid model for stock prediction.
+\newblock \emph{arXiv preprint arXiv:2204.02623}, 2022.
+\newblock \doi{10.48550/arXiv.2204.02623}.
+
+\bibitem[Smith et~al.(2021)Smith, Burrows, Hobday, et~al.]{smith2021}
+Kathryn~E. Smith, Michael~T. Burrows, Alistair~J. Hobday, et~al.
+\newblock Socioeconomic impacts of marine heatwaves: Global issues and opportunities.
+\newblock \emph{Science}, 374\penalty0 (6566):\penalty0 eabj3593, 2021.
+\newblock \doi{10.1126/science.abj3593}.
+
+\bibitem[Staudemeyer and Morris(2019)]{staudemeyer2019}
+Ralf~C. Staudemeyer and Eric~R. Morris.
+\newblock Understanding {LSTM} -- a tutorial into long short-term memory recurrent neural networks.
+\newblock \emph{arXiv preprint arXiv:1909.09586}, 2019.
+\newblock \doi{10.48550/arXiv.1909.09586}.
+
+\bibitem[Tashman(2000)]{tashman2000}
+Leonard~J. Tashman.
+\newblock Out-of-sample tests of forecasting accuracy: an analysis and review.
+\newblock \emph{International Journal of Forecasting}, 16\penalty0 (4):\penalty0 437--450, 2000.
+\newblock \doi{10.1016/S0169-2070(00)00065-0}.
+
+\bibitem[Taylor and Letham(2017)]{taylor2017}
+Sean~J. Taylor and Benjamin Letham.
+\newblock Forecasting at scale.
+\newblock \emph{PeerJ Preprints}, 5:\penalty0 e3190v2, 2017.
+\newblock \doi{10.7287/peerj.preprints.3190v2}.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, et~al.]{vaswani2023}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, et~al.
+\newblock Attention is all you need.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NIPS 2017)}, 2017.
+\newblock \doi{10.48550/arXiv.1706.03762}.
+
+\bibitem[Vega~Velázquez(2003)]{vega2003}
+Armando Vega~Velázquez.
+\newblock Reproductive strategies of the spiny lobster {Panulirus interruptus} related to the marine environmental variability off central {Baja California}, {Mexico}: management implications.
+\newblock \emph{Fisheries Research}, 65\penalty0 (1--3):\penalty0 123--135, 2003.
+\newblock \doi{10.1016/j.fishres.2003.09.011}.
+
+\bibitem[Villaseñor-Derbez et~al.(2024)Villaseñor-Derbez, Arafeh-Dalmau, and Micheli]{villasenor2024}
+Juan~Carlos Villaseñor-Derbez, Nur Arafeh-Dalmau, and Fiorenza Micheli.
+\newblock Past and future impacts of marine heatwaves on small-scale fisheries in {Baja California}, {Mexico}.
+\newblock \emph{Communications Earth \& Environment}, 5:\penalty0 623, 2024.
+\newblock \doi{10.1038/s43247-024-01696-x}.
+
+\bibitem[Vovk et~al.(2005)Vovk, Gammerman, and Shafer]{vovk2005}
+Vladimir Vovk, Alexander Gammerman, and Glenn Shafer.
+\newblock \emph{Algorithmic Learning in a Random World}.
+\newblock Springer, 2005.
+\newblock \doi{10.1007/b106715}.
+
+\bibitem[Yoon et~al.(2020)Yoon, Kim, Baek, et~al.]{yoon2020}
+Yu-Jin Yoon, Tae-Ho Kim, Seung-Il Baek, et~al.
+\newblock An artificial intelligence method for the prediction of near- and off-shore fish catch using satellite and numerical model data.
+\newblock \emph{Korean Journal of Remote Sensing}, 36\penalty0 (1):\penalty0 41--53, 2020.
+\newblock \doi{10.7780/KJRS.2020.36.1.4}.
+
+\bibitem[Zhao et~al.(2021)Zhao, Hu, Wang, et~al.]{zhao2021}
+Zhixin Zhao, Fenfang Hu, Wenbin Wang, et~al.
+\newblock Short-term prediction of fishing effort distributions by discovering fishing chronology among trawlers based on {VMS} dataset.
+\newblock \emph{Expert Systems with Applications}, 184:\penalty0 115512, 2021.
+\newblock \doi{10.1016/j.eswa.2021.115512}.
+
+\end{thebibliography}

@@ -1,0 +1,36 @@
+# Configuración del feature engineering (Fase 2). La leen los experimentos vía
+# `fishing_forecast.features.covariates.load_feature_config()`. Los valores de aquí son los
+# **defaults del proyecto**; cualquier experimento puede pasar los suyos por código.
+
+# Desplazamiento X(t) → Y(t+shift_days). Convención acordada con COBI: 3 meses.
+shift_days: 90
+
+# Ventanas (días) de las medias rodantes de las variables oceanográficas.
+# 90 = estado pre-temporada; 365 = calor/productividad acumulados del año previo.
+rolling_windows: [90, 365]
+
+# Anomalías climatológicas: valor menos la media histórica de ese día-del-año.
+# La climatología se estima **solo con años de train** (ver `fit_climatology`), por eso hay que
+# pasarle un `train_end`; sin él no se construyen.
+anomalies:
+  enabled: true
+  # Columnas sobre las que se calcula la anomalía (las ausentes se ignoran).
+  columns: [sst, chl, bbp, zsd]
+  # Ventana de suavizado (días) sobre la climatología por día-del-año: la media cruda por doy
+  # con ~7 años de historia es ruidosa; ±window/2 días la estabiliza.
+  smooth_window: 15
+
+# Interacciones. Solo pares con justificación ecológica explícita: son features caras en un
+# régimen de pocos datos, así que no se hace el producto cartesiano.
+interactions:
+  enabled: true
+  pairs:
+    # Calor acumulado del año previo × estar en temporada: el efecto de una MHW sobre la
+    # captura se materializa dentro de la ventana de pesca, no fuera (Villaseñor-Derbez 2024).
+    - [mhw_intensity_roll365_lag90, in_season]
+    # Anomalía térmica en un contexto de productividad: la misma anomalía de SST no significa
+    # lo mismo con clorofila alta (surgencia activa) que baja (agua pobre y cálida).
+    - [sst_anomaly_lag90, chl_lag90]
+    # Escala histórica de la serie modulada por el calor acumulado: cuánto capturó el año
+    # pasado, corregido por si ese año fue anómalamente cálido.
+    - [y_lag365, sst_roll365_lag90]

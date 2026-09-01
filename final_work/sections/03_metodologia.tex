@@ -33,7 +33,7 @@ hacia adelante, de modo que la fila del día $t$ nunca contiene información pos
 $t-\horizonte$; los detalles de construcción están en la Sección~\ref{sec:datos_features}.
 
 \paragraph{Temporada.} La temporada de langosta va del 15 de septiembre al 15 de febrero del
-año siguiente; fuera de ese rango rige la veda. Se define el indicador $\mathrm{ens}_s(t) \in
+año siguiente; fuera de ese rango rige la veda \citep{nom006pesc2016}. Se define el indicador $\mathrm{ens}_s(t) \in
 \{0,1\}$ (\emph{in season}) y la partición del calendario en temporadas $\mathcal{T}_1, \ldots,
 \mathcal{T}_K$. El agregado que le interesa a la cooperativa es la suma de temporada
 $Y_s(\mathcal{T}_k) = \sum_{t \in \mathcal{T}_k} y_s(t)$.
@@ -47,7 +47,7 @@ covariable categórica. La comparación entre ambos es una de las preguntas del 
 \label{sec:met_particion}
 
 Toda partición respeta el orden cronológico: no se usa validación cruzada aleatoria, que en
-series de tiempo filtra el futuro hacia el pasado.
+series de tiempo filtra el futuro hacia el pasado \citep{tashman2000,bergmeir2012}.
 
 \paragraph{Cortes de prueba.} Se reportan sistemáticamente \emph{dos} cortes:
 \begin{itemize}
@@ -105,7 +105,7 @@ El MAE está en kilogramos y es interpretable; el RMSE penaliza más los errores
 esta serie ocurren en los días de apertura.
 
 \paragraph{Error porcentual simétrico.} Como la escala varía en dos órdenes de magnitud entre
-\UEs{}, se agrega el sMAPE, acotado en $[0, 200]$ y definido con la convención de que los
+\UEs{}, se agrega el sMAPE \citep{hyndman2006}, acotado en $[0, 200]$ y definido con la convención de que los
 términos $0/0$ (día sin captura predicho como cero) cuentan como cero:
 \begin{equation}
   \mathrm{sMAPE} = \frac{100}{n} \sum_{i=1}^{n}
@@ -155,7 +155,7 @@ Las dos se leen juntas: la cobertura sola se maximiza con un intervalo infinitam
 \label{sec:met_modelos}
 
 \subsection{Modelos de referencia}
-ARIMA y Prophet \citep{taylor2017} sirven de piso: son autorregresivos y no usan covariables
+ARIMA \citep{box2015} y Prophet \citep{taylor2017} sirven de piso: son autorregresivos y no usan covariables
 oceanográficas, de modo que superarlos es la condición mínima para afirmar que las variables
 del océano aportan señal. Los órdenes $(p,d,q)$ de ARIMA se eligen por AIC sobre el conjunto de
 entrenamiento en una rejilla acotada.
@@ -166,7 +166,7 @@ tabulares: manejan no linealidades, interacciones y valores faltantes de forma n
 importa porque las covariables oceanográficas tienen huecos.
 
 \subsection{Modelos recurrentes}
-La LSTM \citep{greff2017,staudemeyer2019} procesa la serie como secuencia. Se usa una ventana
+La LSTM \citep{hochreiter1997,greff2017,staudemeyer2019} procesa la serie como secuencia. Se usa una ventana
 de 10 pasos y dos capas apiladas con \emph{dropout}. Al ser un modelo de la primera iteración
 del trabajo, se conserva su arquitectura para poder comparar contra ella.
 
@@ -252,7 +252,7 @@ usa una semilla fija que se registra junto con las métricas del experimento.
 \section{Reproducibilidad}
 \label{sec:met_reproducibilidad}
 
-El trabajo se implementó como un paquete de Python con pruebas automatizadas
+El trabajo se implementó como un paquete de Python ---sobre \texttt{numpy} \citep{harris2020}, \texttt{pandas} \citep{mckinney2010}, \texttt{scikit-learn} \citep{pedregosa2011} y \texttt{PyTorch} \citep{paszke2019}--- con pruebas automatizadas
 (\texttt{137} pruebas unitarias que cubren el proceso de datos, las métricas, la construcción
 de variables sin fuga de información y la envoltura conformal). Cada experimento:
 

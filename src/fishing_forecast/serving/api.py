@@ -1,7 +1,8 @@
 """API mínima de inferencia (FastAPI) sobre las zonas del pool de langosta/abulón/erizo.
 
-Al arrancar entrena la CQR de producción una vez (``build_store``) y cachea el pronóstico
-calibrado por serie; los endpoints solo leen el cache. Sirve además un front estático mínimo.
+Al arrancar carga el store de producción una vez (``get_store``: el artefacto serializado en
+``models/final/store.json`` si existe, o entrenando la CQR en caliente si no) y lo cachea; los
+endpoints solo leen el cache. Sirve además un front estático mínimo.
 
 Ejecutar en local:
     uv run --extra serve --extra models uvicorn fishing_forecast.serving.api:app --reload
@@ -18,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from fishing_forecast.serving.forecast import DEFAULT_CUT, build_store
+from fishing_forecast.serving.forecast import DEFAULT_CUT, DEFAULT_STORE_PATH, get_store
 
 #: Directorio del front estático (montado en la imagen Docker junto al paquete).
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
@@ -28,8 +29,10 @@ _state: dict = {"store": None}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("[serving] entrenando CQR de producción (esto tarda ~30-60 s)…")
-    _state["store"] = build_store()
+    # Si hay artefacto serializado (`models/final/store.json`, ver su README) se sirve ese —el
+    # mismo pronóstico auditado— y el arranque es inmediato; si no, se entrena en caliente.
+    logger.info(f"[serving] preparando store (artefacto esperado en {DEFAULT_STORE_PATH})…")
+    _state["store"] = get_store()
     logger.info("[serving] listo para servir")
     yield
     _state["store"] = None
