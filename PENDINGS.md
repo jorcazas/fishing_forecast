@@ -4,7 +4,7 @@
 original de las fases (congelado, ya no se marca) y `bitacora.md` es el historial de lo hecho
 con sus números. Si algo no está en este archivo, no está pendiente.
 
-Última actualización: **2026-09-01** (ronda final de revisión del documento).
+Última actualización: **2026-09-01** (ronda final de revisión + B1 cerrado).
 
 ---
 
@@ -46,7 +46,7 @@ Cerradas el 2026-08-31 (e): **B2, B4, B5, B7 y B9**. Sigue abierto lo de abajo.
 
 | # | Qué | Estado | Detalle |
 |---|---|---|---|
-| **B1** | Guionado en español del PDF | **Bloqueado (decisión de Javier)** | `tlmgr` no puede instalar `babel-spanish`/`setspace`: el TinyTeX local es TeX Live **2024** y el repo remoto es **2026** ("cross release updates are only supported with update-tlmgr-latest"); el repo histórico de 2024 responde "TeX Live 2024 is frozen… tlmgr itself needs to be updated… Terminating". Desbloquearlo exige correr `update-tlmgr-latest.sh` o reinstalar TinyTeX —modifica la instalación de TeX del usuario, así que no se hizo sin permiso—. El preámbulo redefine los nombres a mano y el PDF compila bien; el único costo es el guionado. |
+| ~~B1~~ | ~~Guionado en español del PDF~~ | **HECHO (2026-09-01)** | El `reinstall_tinytex()` desde R falló (404: el paquete `tinytex` de R 4.4 busca `TinyTeX-1.tgz`, que ya no existe en los releases) y de paso **borró** la instalación 2024. Se reinstaló TinyTeX (TeX Live **2026**, `TinyTeX-1-darwin-v2026.09.tar.xz` directo de GitHub), `tlmgr path add`, y se instalaron `babel`, `babel-spanish`, `hyphen-spanish` y `grfext`. El preámbulo ahora carga `\usepackage[spanish,es-tabla,es-noshorthands]{babel}` (con `\bibname` = «Referencias») y se quitó el bloque de nombres a mano. El PDF guiona en español; 96 págs, 0 refs sin resolver, 1 overfull de 1.3 pt (invisible). Nota: si se vuelve a usar `tinytex` desde R conviene actualizar antes el paquete (`install.packages("tinytex")`). |
 | ~~B2~~ | ~~Variante fiel `lstm_orig2023` (2700/800 unidades)~~ | **HECHO** | Re-entrenada la arquitectura del borrador (40.8 M de parámetros) sobre las mismas 2 295 ventanas. Con el corte 2024 **colapsa a una constante**: predice 0 todos los días, lo que le da el *mejor* MAE de la tabla (79.8 = la media observada) con dispersión y correlación 0 y error de temporada −100 %; juzgada solo por MAE habría ganado. Con el corte 2020 no colapsa pero es peor que la red pequeña (MAE 435.3 vs 290.7, dispersión 2.99 vs 1.58). Es el caso de manual de por qué las métricas de forma son obligatorias. |
 | **B3** | Endurecer el modelo global `pooled_log` | Pendiente | Optuna sobre el pool en log; investigar por qué langosta@Isla Cedros (la de mayor escala) empeora con log; probar pesos por serie u objetivo por grupo. |
 | ~~B4~~ | ~~Feature engineering residual (Fase 2)~~ | **HECHO** | `configs/features.yaml` + `fit_climatology` / `add_climatology_anomalies` / `add_interactions` / `build_features_v2` en `features/covariates.py`, con 7 tests anti-fuga. Ablación `experiments/exp2_covariates/features_v2_ablation.py`: **no mejoran** (corte 2024: gana en 10/28 series, RMSE medio 633.4→633.7; corte 2020: 25/33, 435.0→434.1). Resultado negativo consistente con Exp 2: con pocas temporadas, más features no ayudan. |

@@ -47,7 +47,7 @@ El mismo diagnóstico se puso a prueba por el lado contrario: en vez de podar, \
 
 La conclusión metodológica es importante: la selección de variables por sí sola no resuelve el sobreajuste, porque el factor limitante no es la dimensionalidad sino la cantidad de temporadas. Esto refuerza que la palanca real está en \emph{sumar datos} ---más unidades económicas y más temporadas---, motivando el modelo global de la siguiente sección.
 
-\section{Modelo global multi-especie y multi-unidad eco\-nó\-mi\-ca}
+\section{Modelo global multi-especie y multi-unidad económica}
 Para atacar la escasez de datos por serie se entrenó un único modelo global sobre varias series (especie, unidad económica), con codificación one-hot de especie y de unidad económica y la oceanografía compartida, y se comparó contra modelos específicos entrenados por serie. Se incorporó una segunda unidad económica, Isla Cedros ($\sim$28$^\circ$N), además de San Quintín ($\sim$30.5$^\circ$N), lo que introduce variación a lo largo del gradiente biogeográfico. La Tabla \ref{tab:extension_global} muestra la comparación por serie.
 
 \begin{table}[htbp]

@@ -1878,3 +1878,10 @@ rota colapsadas en una con nota histórica, notas de instantánea en las tablas 
 reencuadrado, «44 series»→«28-33 según corte», y una docena de correcciones menores.
 `\emergencystretch` mitiga la falta de guionado (B1). Resultado: **96 págs, 0 overfull,
 0 refs sin resolver**. Detalle en `reports/sessions/2026-09-01.md`.
+
+### 2026-09-01 (b) — B1 cerrado
+
+TinyTeX 2024 murió en el intento de `reinstall_tinytex()` de R (404 + borrado); reinstalado
+TeX Live 2026 directo del release de GitHub, con `babel-spanish`/`hyphen-spanish`/`grfext`.
+Babel activo (`spanish,es-tabla,es-noshorthands`), guionado en español verificado en el PDF.
+96 págs, 0 refs sin resolver, 1 overfull de 1.3 pt. Detalle en `reports/sessions/2026-09-01.md`.

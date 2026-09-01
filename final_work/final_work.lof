@@ -1,3 +1,4 @@
+\babel@toc {spanish}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
@@ -16,11 +17,11 @@
 \contentsline {figure}{\numberline {6.1}{\ignorespaces Intervalos calibrados servidos por la API para tres series de langosta roja en la temporada 2024-2025: la serie insignia de San Quintín, una zona de historia larga (El Rosario) y una de historia corta, incorporada solo con los avisos de CONAPESCA (Bahía Tortugas, Vizcaíno). Los puntos son la captura observada; las bandas, los intervalos del 80 y 90\%; la línea, la mediana. La cobertura empírica en temporada se anota en cada panel. El ancho de la banda superior en los días de apertura es la limitación conocida del método: el cuantil alto en escala logarítmica se amplifica al invertir la transformación.}}{53}{figure.6.1}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {A.1}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{61}{figure.A.1}%
-\contentsline {figure}{\numberline {A.2}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{62}{figure.A.2}%
-\contentsline {figure}{\numberline {A.3}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{62}{figure.A.3}%
-\contentsline {figure}{\numberline {A.4}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{63}{figure.A.4}%
-\contentsline {figure}{\numberline {A.5}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{63}{figure.A.5}%
-\contentsline {figure}{\numberline {A.6}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{64}{figure.A.6}%
-\contentsline {figure}{\numberline {A.7}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{64}{figure.A.7}%
+\contentsline {figure}{\numberline {A.1}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{61}{figure.Alph1.1}%
+\contentsline {figure}{\numberline {A.2}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{62}{figure.Alph1.2}%
+\contentsline {figure}{\numberline {A.3}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{62}{figure.Alph1.3}%
+\contentsline {figure}{\numberline {A.4}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{63}{figure.Alph1.4}%
+\contentsline {figure}{\numberline {A.5}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{63}{figure.Alph1.5}%
+\contentsline {figure}{\numberline {A.6}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{64}{figure.Alph1.6}%
+\contentsline {figure}{\numberline {A.7}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{64}{figure.Alph1.7}%
 \addvspace {10\p@ }

@@ -2,9 +2,12 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\@writefile{toc}{\contentsline {chapter}{Agradecimientos}{v}{chapter*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Resumen}{vii}{chapter*.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Abstract}{ix}{chapter*.3}\protected@file@percent }
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\babel@aux{spanish}{}
+\@writefile{toc}{\contentsline {chapter}{Agradecimientos}{\es@scroman  {v}}{chapter*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Resumen}{\es@scroman  {vii}}{chapter*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Abstract}{\es@scroman  {ix}}{chapter*.3}\protected@file@percent }
 \citation{hobday2016}
 \citation{cnp2025}
 \@writefile{toc}{\contentsline {chapter}{\numberline {1}Introducción}{1}{chapter.1}\protected@file@percent }
@@ -44,11 +47,11 @@
 \citation{frolicher2018}
 \citation{dilorenzo2016}
 \citation{cavole2016}
-\@writefile{toc}{\contentsline {section}{\numberline {2.3}Olas de calor marinas y su efecto sobre las pesquerías}{7}{section.2.3}\protected@file@percent }
-\newlabel{sec:revision_mhw}{{2.3}{7}{Olas de calor marinas y su efecto sobre las pesquerías}{section.2.3}{}}
 \citation{free2019}
 \citation{smith2021}
 \citation{villasenor2024}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Olas de calor marinas y su efecto sobre las pesquerías}{7}{section.2.3}\protected@file@percent }
+\newlabel{sec:revision_mhw}{{2.3}{7}{Olas de calor marinas y su efecto sobre las pesquerías}{section.2.3}{}}
 \citation{montero2021}
 \citation{petropoulos2022}
 \citation{koenker1978}
@@ -70,7 +73,7 @@
 \newlabel{cap:metodologia}{{3}{11}{Metodología}{chapter.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3.1}Planteamiento formal}{11}{section.3.1}\protected@file@percent }
 \newlabel{sec:met_formal}{{3.1}{11}{Planteamiento formal}{section.3.1}{}}
-\newlabel{eq:problema}{{3.1}{11}{Planteamiento formal}{equation.3.1.1}{}}
+\newlabel{eq:problema}{{3.1}{11}{Planteamiento formal}{equation.3.1}{}}
 \citation{tashman2000,bergmeir2012}
 \@writefile{toc}{\contentsline {paragraph}{Temporada.}{12}{section*.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Modelo específico y modelo global.}{12}{section*.8}\protected@file@percent }
@@ -108,7 +111,7 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.4.5}Transformer de fusión temporal}{16}{subsection.3.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3.5}Pronóstico probabilístico: regresión cuantílica conformalizada}{16}{section.3.5}\protected@file@percent }
 \newlabel{sec:met_cqr}{{3.5}{16}{Pronóstico probabilístico: regresión cuantílica conformalizada}{section.3.5}{}}
-\newlabel{eq:cqr_score}{{3.9}{16}{Pronóstico probabilístico: regresión cuantílica conformalizada}{equation.3.5.9}{}}
+\newlabel{eq:cqr_score}{{3.9}{16}{Pronóstico probabilístico: regresión cuantílica conformalizada}{equation.3.9}{}}
 \citation{akiba2019}
 \citation{harris2020}
 \citation{mckinney2010}
@@ -190,7 +193,7 @@
 \citation{lundberg2017}
 \@writefile{lot}{\contentsline {table}{\numberline {5.4}{\ignorespaces Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020), \emph  {antes} de la unión con CONAPESCA. Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: con tres temporadas el cuello de botella no es \emph  {cuáles} variables se usan, sino el volumen de datos. Sobre el conjunto unido el signo se invierte y la poda sí ayuda (Tabla~\ref {tab:extension_comparativa}).}}{34}{table.5.4}\protected@file@percent }
 \newlabel{tab:extension_shap}{{5.4}{34}{Selección de variables con SHAP sobre langosta $\times $ San Quintín (corte 01-julio-2020), \emph {antes} de la unión con CONAPESCA. Podar a las 16 variables de mayor $|$SHAP$|$ no mejora el desempeño: con tres temporadas el cuello de botella no es \emph {cuáles} variables se usan, sino el volumen de datos. Sobre el conjunto unido el signo se invierte y la poda sí ayuda (Tabla~\ref {tab:extension_comparativa})}{table.5.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad eco\-nó\-mi\-ca}{35}{section.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad económica}{35}{section.5.5}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {5.5}{\ignorespaces Modelo global vs.\ modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series. \emph  {Nota}: esta tabla y la Tabla~\ref {tab:extension_ynorm} son instantáneas de corridas sucesivas del proceso en evolución, registradas en la bitácora del repositorio; la matriz de variables cambió entre ambas corridas, por lo que las celdas que comparten difieren ligeramente. La comparación válida es \emph  {dentro} de cada tabla, con pool, variables y semilla idénticos entre columnas.}}{35}{table.5.5}\protected@file@percent }
 \newlabel{tab:extension_global}{{5.5}{35}{Modelo global vs.\ modelos específicos, por serie (RMSE diario, kg). El global gana o empata en 2 de 5 series. \emph {Nota}: esta tabla y la Tabla~\ref {tab:extension_ynorm} son instantáneas de corridas sucesivas del proceso en evolución, registradas en la bitácora del repositorio; la matriz de variables cambió entre ambas corridas, por lo que las celdas que comparten difieren ligeramente. La comparación válida es \emph {dentro} de cada tabla, con pool, variables y semilla idénticos entre columnas}{table.5.5}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5.6}Normalización de la variable objetivo por serie}{36}{section.5.6}\protected@file@percent }
@@ -254,26 +257,26 @@
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{ap:figuras}{{A}{61}{Gráficas de pronóstico de la primera iteración}{appendix.A}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.1}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{61}{figure.A.1}\protected@file@percent }
-\newlabel{fig:pred_arima}{{A.1}{61}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.A.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.2}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{62}{figure.A.2}\protected@file@percent }
-\newlabel{fig:pred_prophet}{{A.2}{62}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.A.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.3}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{62}{figure.A.3}\protected@file@percent }
-\newlabel{fig:pred_xgboost}{{A.3}{62}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.A.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.4}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{63}{figure.A.4}\protected@file@percent }
-\newlabel{fig:pred_lgbm}{{A.4}{63}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.A.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.5}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{63}{figure.A.5}\protected@file@percent }
-\newlabel{fig:pred_ensemble_2020}{{A.5}{63}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.A.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.6}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{64}{figure.A.6}\protected@file@percent }
-\newlabel{fig:pred_ensemble_2021}{{A.6}{64}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.A.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.7}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{64}{figure.A.7}\protected@file@percent }
-\newlabel{fig:pred_ensemble_ambas}{{A.7}{64}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.A.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.1}{\ignorespaces ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{61}{figure.Alph1.1}\protected@file@percent }
+\newlabel{fig:pred_arima}{{A.1}{61}{ARIMA: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.Alph1.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.2}{\ignorespaces Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}}{62}{figure.Alph1.2}\protected@file@percent }
+\newlabel{fig:pred_prophet}{{A.2}{62}{Prophet: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (rojo)}{figure.Alph1.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.3}{\ignorespaces XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{62}{figure.Alph1.3}\protected@file@percent }
+\newlabel{fig:pred_xgboost}{{A.3}{62}{XGBoost: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.Alph1.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.4}{\ignorespaces LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}}{63}{figure.Alph1.4}\protected@file@percent }
+\newlabel{fig:pred_lgbm}{{A.4}{63}{LGBM: Predicción de ambas temporadas | Valores reales (azul) contra valores predichos (naranja)}{figure.Alph1.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.5}{\ignorespaces XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}}{63}{figure.Alph1.5}\protected@file@percent }
+\newlabel{fig:pred_ensemble_2020}{{A.5}{63}{XGBoost + LSTM | Predicción temporada 2020-2021: Valores reales (azul) contra valores predichos (rojo)}{figure.Alph1.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.6}{\ignorespaces XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}}{64}{figure.Alph1.6}\protected@file@percent }
+\newlabel{fig:pred_ensemble_2021}{{A.6}{64}{XGBoost + LSTM | Predicción temporada 2021-2022: Valores reales (azul) contra valores predichos (rojo)}{figure.Alph1.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.7}{\ignorespaces XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}}{64}{figure.Alph1.7}\protected@file@percent }
+\newlabel{fig:pred_ensemble_ambas}{{A.7}{64}{XGBoost + LSTM | Predicción temporadas 2020-2021 y 2021-2022: Valores reales (azul) contra valores predichos (rojo). Nota: Aquí no aparecen las fechas consideradas como veda (periodo entre temporadas)}{figure.Alph1.7}{}}
 \@writefile{toc}{\contentsline {chapter}{\numberline {B}Descripción de las variables}{65}{appendix.B}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{ap:variables}{{B}{65}{Descripción de las variables}{appendix.B}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {B.1}{\ignorespaces Muestra de conjunto de datos}}{65}{table.B.1}\protected@file@percent }
-\newlabel{tab:datos}{{B.1}{65}{Muestra de conjunto de datos}{table.B.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {B.1}{\ignorespaces Muestra de conjunto de datos}}{65}{table.Alph2.1}\protected@file@percent }
+\newlabel{tab:datos}{{B.1}{65}{Muestra de conjunto de datos}{table.Alph2.1}{}}
 \citation{globcolour2020}
 \bibstyle{plainnat}
 \bibdata{referencias}
@@ -286,7 +289,7 @@
 \bibcite{chen2016}{{7}{2016}{{Chen and Guestrin}}{{}}}
 \bibcite{chernozhukov2010}{{8}{2010}{{Chernozhukov et~al.}}{{Chernozhukov, Fernández-Val, and Galichon}}}
 \bibcite{conapesca_datos}{{9}{2026}{{Comisión Nacional de Acuacultura y Pesca}}{{}}}
-\@writefile{toc}{\contentsline {chapter}{Referencias}{69}{table.B.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Referencias}{69}{table.Alph2.1}\protected@file@percent }
 \bibcite{dilorenzo2016}{{10}{2016}{{Di~Lorenzo and Mantua}}{{}}}
 \bibcite{donlon2012}{{11}{2012}{{Donlon et~al.}}{{Donlon, Martin, Stark, Roberts-Jones, Fiedler, and Wimmer}}}
 \bibcite{free2019}{{12}{2019}{{Free et~al.}}{{Free, Thorson, Pinsky, Oken, Wiedenmann, and Jensen}}}

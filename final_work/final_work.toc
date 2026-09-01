@@ -1,6 +1,7 @@
-\contentsline {chapter}{Agradecimientos}{v}{chapter*.1}%
-\contentsline {chapter}{Resumen}{vii}{chapter*.2}%
-\contentsline {chapter}{Abstract}{ix}{chapter*.3}%
+\babel@toc {spanish}{}\relax 
+\contentsline {chapter}{Agradecimientos}{\es@scroman {v}}{chapter*.1}%
+\contentsline {chapter}{Resumen}{\es@scroman {vii}}{chapter*.2}%
+\contentsline {chapter}{Abstract}{\es@scroman {ix}}{chapter*.3}%
 \contentsline {chapter}{\numberline {1}Introducción}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Contexto}{1}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Planteamiento del problema}{2}{section.1.2}%
@@ -57,7 +58,7 @@
 \contentsline {section}{\numberline {5.2}El bache de la temporada 2021-2022 se explica por olas de calor}{32}{section.5.2}%
 \contentsline {section}{\numberline {5.3}Re-entrenamiento del baseline y modelo con covariables}{33}{section.5.3}%
 \contentsline {section}{\numberline {5.4}Color del océano y selección de variables con SHAP}{33}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad eco\-nó\-mi\-ca}{35}{section.5.5}%
+\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad económica}{35}{section.5.5}%
 \contentsline {section}{\numberline {5.6}Normalización de la variable objetivo por serie}{36}{section.5.6}%
 \contentsline {section}{\numberline {5.7}¿Un modelo global o veintiocho modelos disfrazados?}{37}{section.5.7}%
 \contentsline {section}{\numberline {5.8}Pronóstico probabilístico con regresión cuantílica conformalizada}{38}{section.5.8}%
@@ -82,4 +83,4 @@
 \contentsline {section}{\numberline {7.3}Trabajo futuro}{59}{section.7.3}%
 \contentsline {chapter}{\numberline {A}Gráficas de pronóstico de la primera iteración}{61}{appendix.A}%
 \contentsline {chapter}{\numberline {B}Descripción de las variables}{65}{appendix.B}%
-\contentsline {chapter}{Referencias}{69}{table.B.1}%
+\contentsline {chapter}{Referencias}{69}{table.Alph2.1}%

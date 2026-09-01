@@ -26,18 +26,12 @@
 
 \graphicspath{{images/}}
 
-% --- Nombres en español (sin babel: no está instalado en este TeX y se prefiere que el
-% --- documento compile sin dependencias adicionales). ---------------------------------
-\renewcommand{\chaptername}{Capítulo}
-\renewcommand{\appendixname}{Apéndice}
-\renewcommand{\contentsname}{Índice general}
-\renewcommand{\listfigurename}{Índice de figuras}
-\renewcommand{\listtablename}{Índice de tablas}
-\renewcommand{\figurename}{Figura}
-\renewcommand{\tablename}{Tabla}
-\renewcommand{\bibname}{Referencias}
-\renewcommand{\refname}{Referencias}
-\renewcommand{\abstractname}{Resumen}
+% --- Español: babel provee nombres y guionado (instalado el 2026-09-01; cierra B1). ---
+% es-tabla: «Tabla» en vez de «Cuadro»; es-noshorthands: sin atajos que interfieran con
+% el modo matemático. El único nombre que se ajusta es \bibname («Referencias» en lugar
+% del «Bibliografía» de babel).
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\addto\captionsspanish{\renewcommand{\bibname}{Referencias}}
 
 % --- Macros del dominio ---------------------------------------------------------------
 \newcommand{\ue}{unidad económica}
@@ -46,9 +40,9 @@
 
 \linespread{1.25}
 
-% Sin babel no hay patrones de guionado en español (ver PENDINGS B1): se permite estirar
-% los espacios entre palabras antes que dejar líneas salidas del margen.
-\setlength{\emergencystretch}{2.5em}
+% Colchón de justificación: aun con guionado, permite estirar espacios antes que dejar
+% líneas salidas del margen.
+\setlength{\emergencystretch}{1.5em}
 
 % --- Flotantes: permitir más figuras/tablas por página y menos páginas en blanco. -----
 \renewcommand{\topfraction}{0.9}
