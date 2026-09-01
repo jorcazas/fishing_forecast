@@ -6,8 +6,8 @@
 La pesca en Baja California tiene gran importancia económica y cultural. Con más de 1{,}500
 kilómetros de litorales y una biodiversidad marina privilegiada, el estado se ubica entre los
 principales productores pesqueros de México tanto en volumen como en valor, y sus flotas se
-componen principalmente de embarcaciones menores de pesca ribereña. En 2016, Baja California
-registró la producción de 45 especies entre pesca y acuacultura, donde sobresalen la sardina,
+componen principalmente de embarcaciones menores de pesca ribereña \citep{cnp2025}. Su
+producción abarca decenas de especies entre pesca y acuacultura, donde sobresalen la sardina,
 el atún, el erizo, la langosta, el calamar y el camarón. Esta actividad económica genera
 numerosos empleos en las cadenas de captura, procesamiento y distribución. No obstante, el
 sector enfrenta problemas por la incertidumbre en el otorgamiento de permisos, la pesca ilegal
@@ -66,7 +66,7 @@ documento:
 La \textbf{hipótesis central} es que el factor limitante es el \emph{volumen de datos} ---el
 número de temporadas y de series disponibles--- y no la capacidad del modelo. La hipótesis es
 falsable, y el trabajo la somete a prueba en ambas direcciones: aumentando los datos (de 2 a
-21 series de langosta y de $\sim$3 a $\sim$9 temporadas) y aumentando la capacidad del modelo
+21 series de langosta y de $\sim$5 a $\sim$9 temporadas) y aumentando la capacidad del modelo
 (hasta un Transformer de fusión temporal), para observar cuál de las dos palancas mueve el
 resultado.
 
@@ -96,8 +96,9 @@ a las cooperativas pesqueras de Baja California.
   \item Un \textbf{diagnóstico causalmente informado} del año atípico: el índice de olas de
   calor marinas conecta la caída de 2021-2022 con el régimen cálido de 2019-2021, mecanismo
   documentado para Baja California por \citet{villasenor2024}.
-  \item Un \textbf{modelo global} sobre 44 series con la variable objetivo en escala
-  logarítmica, que supera o empata a los modelos específicos en cuatro de cinco series.
+  \item Un \textbf{modelo global} sobre las series del conjunto consolidado (de 28 a 33
+  con datos suficientes, según el corte) con la variable objetivo en escala logarítmica, que
+  supera o empata a los modelos específicos en cuatro de cinco series.
   \item Un \textbf{pronóstico probabilístico calibrado} por regresión cuantílica
   conformalizada, con cobertura estable incluso durante olas de calor marinas.
   \item Una \textbf{prueba explícita de la hipótesis de datos}, en las dos direcciones:

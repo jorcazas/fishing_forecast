@@ -4,7 +4,7 @@
 original de las fases (congelado, ya no se marca) y `bitacora.md` es el historial de lo hecho
 con sus números. Si algo no está en este archivo, no está pendiente.
 
-Última actualización: **2026-08-31** (e).
+Última actualización: **2026-09-01** (ronda final de revisión del documento).
 
 ---
 
@@ -20,7 +20,10 @@ con sus números. Si algo no está en este archivo, no está pendiente.
   reproducibles con un comando y parametrizados por `FF_CUT_DATE`.
 - **Producto operativo**: API FastAPI + front + Docker, sirviendo 28 series.
 - **Documento de tesis**: reestructurado a formato de tesis (`report`, capítulos, front matter),
-  85 págs, 0 referencias sin resolver, 0 labels duplicados.
+  96 págs, 0 referencias sin resolver, 0 labels duplicados, **0 overfull en el log** tras la
+  ronda final de revisión (2026-09-01): tabla de series reencajada, 10 citas `\cite`→`\citep/\citet`
+  corregidas, 3 figuras de terceros sustituidas por figuras propias, tablas heredadas de 2023
+  colapsadas y anotadas, y notas de instantánea en las tablas de Exp 3.
 - **157 tests verdes.** Sin bloqueadores de insumos externos: todo lo que sigue es decisión,
   redacción o mejora opcional.
 

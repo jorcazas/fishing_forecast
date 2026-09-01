@@ -7,6 +7,9 @@ para el mapa), de modo que la tesis nunca cite cifras escritas a mano:
   con temporadas disponibles, días con captura, tonelaje y cobertura de las covariables.
 - ``final_work/images/mapa_ues.png``: mapa de las unidades económicas sobre la SST media,
   que muestra el gradiente térmico del rango (San Quintín al norte, Bahía Magdalena al sur).
+- ``fig_splits.png``, ``fig_desplazamiento.png`` y ``fig_zona_sq.png``: figuras propias que
+  sustituyen a las ilustraciones de terceros del borrador (esquema de ventana expansiva,
+  ejemplo del desplazamiento de 90 días con SST real, y detalle del bbox de San Quintín).
 
 Uso:
     uv run python -m experiments.thesis_assets
@@ -38,6 +41,33 @@ REGION_LABEL = {
     "vizcaino": "Vizcaíno",
     "pacifico_bcs": "Pacífico BCS",
     "bahia_magdalena": "Bahía Magdalena",
+}
+
+
+#: Nombre corto de cada cooperativa para la tabla de series (el nombre legal completo
+#: desborda el ancho de página; el mapeo es explícito para no truncar a ciegas).
+COOP_SHORT = {
+    "litoral_bc_sur": "Litoral de BC",
+    "pabellon_sq": "El Pabellón",
+    "rocas_san_martin": "Rocas de San Martín",
+    "er_el_chute": "El Chute",
+    "er_isla_san_geronimo": "Isla San Jerónimo",
+    "er_mortera_leyva": "Mortera de Leyva",
+    "er_regasa": "Regasa",
+    "er_scpp_ensenada": "SCPP Ensenada",
+    "punta_canoas": "Punta Canoas",
+    "isla_cedros": r"Pesc.\ Nac.\ de Abulón",
+    "vizcaino_asuncion": "Leyes de Reforma",
+    "vizcaino_emancipacion": "Emancipación",
+    "vizcaino_natividad": "Buzos y Pescadores",
+    "vizcaino_tortugas": "Bahía Tortugas",
+    "abreojos_progreso": "Progreso",
+    "abreojos_punta": "Punta Abreojos",
+    "abreojos_san_ignacio": r"Calif.\ de San Ignacio",
+    "la_purisima": "La Purísima",
+    "magdalena_bahia": "Bahía Magdalena",
+    "magdalena_chale": "Puerto Chalé",
+    "magdalena_san_carlos": "Puerto San Carlos",
 }
 
 
@@ -84,36 +114,45 @@ def _latex_escape(text: str) -> str:
 
 def write_series_table(summary: pd.DataFrame, units: dict, out_path: Path) -> None:
     """Escribe la tabla `longtable` de series lista para `\\input` desde la tesis."""
+    header = (
+        r"Especie & Zona (cooperativa) & Temp. & Días & Ton. & "
+        r"Cob.\ SST & Cob.\ CHL \\"
+    )
     lines = [
         "% Generado por experiments/thesis_assets.py — no editar a mano.",
+        r"\begingroup\footnotesize\setlength{\tabcolsep}{3.5pt}",
         r"\begin{longtable}{llrrrrc}",
         r"\caption{Series (especie $\times$ unidad económica) del conjunto consolidado "
-        r"2017-2026. `Temporadas' cuenta las que tienen al menos un día de captura; la "
-        r"cobertura es la fracción de días con el valor oceanográfico disponible.}"
+        r"2017-2026. `Temp.' cuenta las temporadas con al menos un día de captura; `Días' son "
+        r"los días con captura; `Ton.' las toneladas desembarcadas del periodo; la cobertura "
+        r"es la fracción de días con el valor oceanográfico disponible.}"
         r"\label{tab:series_resumen}\\",
         r"\toprule",
-        r"Especie & Zona & Temporadas & Días con captura & Toneladas & Cobertura SST & "
-        r"Cobertura CHL \\",
+        header,
         r"\midrule",
         r"\endfirsthead",
         r"\toprule",
-        r"Especie & Zona & Temporadas & Días con captura & Toneladas & Cobertura SST & "
-        r"Cobertura CHL \\",
+        header,
         r"\midrule",
         r"\endhead",
         r"\bottomrule",
         r"\endfoot",
     ]
     for _, r in summary.iterrows():
-        unit_name = units.get(r["economic_unit"], {}).get("name", r["economic_unit"])
+        coop = COOP_SHORT.get(
+            r["economic_unit"], units.get(r["economic_unit"], {}).get("name", r["economic_unit"])
+        )
         zone = region_label(r["region"])
+        # Si la cooperativa se llama igual que la zona, no hay nada que desambiguar.
+        zona = zone if coop == zone else f"{zone} ({coop})"
         lines.append(
             f"{SPECIES_LABEL.get(r['species'], r['species'])} & "
-            f"{_latex_escape(zone)} ({_latex_escape(unit_name[:22])}) & "
+            f"{_latex_escape(zona)} & "
             f"{r['seasons']:d} & {r['catch_days']:d} & {r['tonnes']:,.1f} & "
-            f"{r['cov_sst']:.0%} & {r['cov_chl']:.0%} \\\\".replace("%", r"\%")
+            f"{r['cov_sst']:.0%} & {r['cov_chl']:.0%} \\\\".replace("%", "\\%")
         )
     lines.append(r"\end{longtable}")
+    lines.append(r"\endgroup")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines) + "\n")
     logger.info(f"Tabla → {out_path} ({len(summary)} series)")
@@ -184,6 +223,186 @@ def plot_units_map(units: dict, summary: pd.DataFrame, sst_path: Path, out_path:
     logger.info(f"Mapa → {out_path}")
 
 
+def plot_expanding_splits(out_path: Path) -> None:
+    """Diagrama propio de la validación con ventana expansiva (Figura del Cap. 3).
+
+    Sustituye a la figura tomada de un artículo de terceros: azul = entrenamiento,
+    naranja = bloque de validación, en español, con la misma semántica.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyArrow, Rectangle
+
+    n_folds, total = 4, 10.0
+    train_c, val_c, rest_c = "#4878b0", "#e8853d", "#f0f0f0"
+    fig, ax = plt.subplots(figsize=(8, 3.2))
+    ax.add_patch(Rectangle((0, n_folds), total, 0.6, color="#9fc79f", ec="#555"))
+    ax.text(
+        total / 2,
+        n_folds + 0.3,
+        "Serie completa (orden cronológico)",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+    val_len = total / (n_folds + 1)
+    for k in range(n_folds):
+        y = n_folds - 1 - k
+        train_end = val_len * (k + 1)
+        ax.add_patch(Rectangle((0, y), train_end, 0.6, color=train_c, ec="#555"))
+        ax.add_patch(Rectangle((train_end, y), val_len, 0.6, color=val_c, ec="#555"))
+        if train_end + val_len < total:
+            ax.add_patch(
+                Rectangle(
+                    (train_end + val_len, y),
+                    total - train_end - val_len,
+                    0.6,
+                    color=rest_c,
+                    ec="#bbb",
+                )
+            )
+        ax.text(
+            train_end / 2,
+            y + 0.3,
+            "entrenamiento",
+            ha="center",
+            va="center",
+            fontsize=8,
+            color="white",
+        )
+        ax.text(
+            train_end + val_len / 2,
+            y + 0.3,
+            "validación",
+            ha="center",
+            va="center",
+            fontsize=8,
+            color="white",
+        )
+    ax.add_patch(
+        FancyArrow(
+            total + 0.35,
+            n_folds + 0.3,
+            0,
+            -(n_folds + 0.1),
+            width=0.02,
+            head_width=0.14,
+            head_length=0.18,
+            color="#555",
+        )
+    )
+    ax.text(
+        total + 0.55,
+        n_folds / 2 + 0.3,
+        "iteraciones",
+        rotation=90,
+        va="center",
+        fontsize=8,
+        color="#555",
+    )
+    ax.set_xlim(-0.2, total + 1.0)
+    ax.set_ylim(-0.3, n_folds + 0.9)
+    ax.axis("off")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+    logger.info(f"Figura splits → {out_path}")
+
+
+def plot_shift_example(df: pd.DataFrame, out_path: Path) -> None:
+    """Ejemplo del desplazamiento de 90 días con la SST real de San Quintín.
+
+    Sustituye a la figura ilustrativa tomada de internet: misma idea (serie original
+    contra la serie desplazada +90 días) pero con datos del propio conjunto.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    sub = (
+        df[(df["economic_unit"] == "litoral_bc_sur") & (df["species"] == "lobster_red")]
+        .sort_values("ds")
+        .set_index("ds")["sst"]
+    )
+    sub = sub.loc["2019-01-01":"2020-12-31"]
+    shifted = sub.copy()
+    shifted.index = shifted.index + pd.Timedelta(days=90)
+    fig, ax = plt.subplots(figsize=(8, 3.4))
+    ax.plot(sub.index, sub.values, color="#4878b0", lw=1.2, label="SST original ($t$)")
+    ax.plot(
+        shifted.index, shifted.values, color="#e8b13d", lw=1.2, label="SST desplazada ($t+90$ d)"
+    )
+    ax.set_ylabel("SST (°C)")
+    ax.legend(loc="upper left", fontsize=8, frameon=False)
+    ax.margins(x=0.01)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+    logger.info(f"Figura desplazamiento → {out_path}")
+
+
+def plot_zone_sq(units: dict, sst_path: Path, out_path: Path) -> None:
+    """Detalle de la zona costera (bounding box) de San Quintín sobre la SST media.
+
+    Sustituye a la captura de Google Maps: mismo propósito (ubicar la zona de la UE
+    insignia) pero generado del propio `.nc` de SST y del bbox de `economic_units.yaml`.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import xarray as xr
+
+    bbox = units["litoral_bc_sur"]["bbox"]
+    pad = 0.8
+    pad_e = 0.15  # hacia el este solo un margen corto: más allá está el Golfo de California
+    fig, ax = plt.subplots(figsize=(6.2, 5.4))
+    ds = xr.open_dataset(sst_path)
+    var = next(v for v in ds.data_vars if ds[v].ndim >= 3)
+    field = (
+        ds[var]
+        .sel(
+            longitude=slice(bbox["lon_min"] - pad, bbox["lon_max"] + pad_e),
+            latitude=slice(bbox["lat_min"] - pad, bbox["lat_max"] + pad),
+        )
+        .isel(time=slice(-365, None))
+        .mean("time")
+    )
+    if float(field.max()) > 200:  # Kelvin → °C
+        field = field - 273.15
+    mesh = ax.pcolormesh(
+        field["longitude"], field["latitude"], field, cmap="RdYlBu_r", shading="auto"
+    )
+    fig.colorbar(mesh, ax=ax, label="SST media 2025 (°C)", shrink=0.8)
+    ds.close()
+    ax.add_patch(
+        plt.Rectangle(
+            (bbox["lon_min"], bbox["lat_min"]),
+            bbox["lon_max"] - bbox["lon_min"],
+            bbox["lat_max"] - bbox["lat_min"],
+            fill=False,
+            edgecolor="#111",
+            lw=1.8,
+        )
+    )
+    ax.annotate(
+        "bbox San Quintín",
+        (bbox["lon_min"], bbox["lat_max"]),
+        xytext=(4, 5),
+        textcoords="offset points",
+        fontsize=9,
+    )
+    ax.set_xlabel("longitud (°)")
+    ax.set_ylabel("latitud (°)")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+    logger.info(f"Figura zona SQ → {out_path}")
+
+
 def main() -> None:
     settings = get_settings()
     df = pd.read_parquet(settings.processed_dir / "dataset_v1.parquet")
@@ -198,6 +417,12 @@ def main() -> None:
         summary,
         settings.data_root / "raw" / "copernicus" / "sst_l4.nc",
         repo_root / "final_work" / "images" / "mapa_ues.png",
+    )
+    images = repo_root / "final_work" / "images"
+    plot_expanding_splits(images / "fig_splits.png")
+    plot_shift_example(df, images / "fig_desplazamiento.png")
+    plot_zone_sq(
+        units, settings.data_root / "raw" / "copernicus" / "sst_l4.nc", images / "fig_zona_sq.png"
     )
 
     total = summary.groupby("species").agg(

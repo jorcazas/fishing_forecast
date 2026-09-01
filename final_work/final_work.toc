@@ -34,7 +34,7 @@
 \contentsline {subsection}{\numberline {3.4.2}Ensambles de árboles}{15}{subsection.3.4.2}%
 \contentsline {subsection}{\numberline {3.4.3}Modelos recurrentes}{15}{subsection.3.4.3}%
 \contentsline {subsection}{\numberline {3.4.4}Modelo global con la variable objetivo normalizada}{15}{subsection.3.4.4}%
-\contentsline {subsection}{\numberline {3.4.5}Transformer de fusión temporal}{15}{subsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.4.5}Transformer de fusión temporal}{16}{subsection.3.4.5}%
 \contentsline {section}{\numberline {3.5}Pronóstico probabilístico: regresión cuantílica conformalizada}{16}{section.3.5}%
 \contentsline {section}{\numberline {3.6}Selección de hiperparámetros}{17}{section.3.6}%
 \contentsline {section}{\numberline {3.7}Reproducibilidad}{17}{section.3.7}%
@@ -42,33 +42,33 @@
 \contentsline {section}{\numberline {4.1}Fuentes}{19}{section.4.1}%
 \contentsline {paragraph}{Arribos pesqueros.}{19}{section*.17}%
 \contentsline {paragraph}{Oceanografía.}{19}{section*.18}%
-\contentsline {paragraph}{Nota sobre el acceso a GlobColour.}{19}{section*.19}%
+\contentsline {paragraph}{Nota sobre el acceso a GlobColour.}{20}{section*.19}%
 \contentsline {section}{\numberline {4.2}Consolidación}{20}{section.4.2}%
 \contentsline {paragraph}{Consistencia del empalme.}{20}{section*.20}%
-\contentsline {paragraph}{Esquema.}{20}{section*.21}%
+\contentsline {paragraph}{Esquema.}{21}{section*.21}%
 \contentsline {section}{\numberline {4.3}Tratamiento de la variable objetivo faltante}{21}{section.4.3}%
 \contentsline {section}{\numberline {4.4}Zona de cada unidad económica{}}{21}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Índice de olas de calor marinas}{23}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Construcción de variables}{23}{section.4.6}%
-\contentsline {section}{\numberline {4.7}El conjunto consolidado}{24}{section.4.7}%
-\contentsline {section}{\numberline {4.8}Origen de la información de las figuras heredadas}{26}{section.4.8}%
+\contentsline {section}{\numberline {4.5}Índice de olas de calor marinas}{22}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Construcción de variables}{24}{section.4.6}%
+\contentsline {section}{\numberline {4.7}El conjunto consolidado}{25}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Origen de la información de las figuras heredadas}{27}{section.4.8}%
 \contentsline {chapter}{\numberline {5}Resultados}{29}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Primera iteración: comparación de modelos puntuales}{29}{section.5.1}%
 \contentsline {section}{\numberline {5.2}El bache de la temporada 2021-2022 se explica por olas de calor}{32}{section.5.2}%
 \contentsline {section}{\numberline {5.3}Re-entrenamiento del baseline y modelo con covariables}{33}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Color del océano y selección de variables con SHAP}{34}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad económica}{35}{section.5.5}%
+\contentsline {section}{\numberline {5.4}Color del océano y selección de variables con SHAP}{33}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Modelo global multi-especie y multi-unidad eco\-nó\-mi\-ca}{35}{section.5.5}%
 \contentsline {section}{\numberline {5.6}Normalización de la variable objetivo por serie}{36}{section.5.6}%
 \contentsline {section}{\numberline {5.7}¿Un modelo global o veintiocho modelos disfrazados?}{37}{section.5.7}%
 \contentsline {section}{\numberline {5.8}Pronóstico probabilístico con regresión cuantílica conformalizada}{38}{section.5.8}%
 \contentsline {section}{\numberline {5.9}La hipótesis de datos, puesta a prueba: más unidades y más temporadas}{39}{section.5.9}%
-\contentsline {section}{\numberline {5.10}Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}{42}{section.5.10}%
+\contentsline {section}{\numberline {5.10}Comparativa de modelos puntuales sobre datos unidos: el efecto de las temporadas de entrenamiento}{43}{section.5.10}%
 \contentsline {section}{\numberline {5.11}Prueba de techo: un Transformer de fusión temporal (TFT)}{46}{section.5.11}%
 \contentsline {chapter}{\numberline {6}El producto operativo}{51}{chapter.6}%
 \contentsline {section}{\numberline {6.1}Qué entrega y por qué así}{51}{section.6.1}%
 \contentsline {section}{\numberline {6.2}Arquitectura}{51}{section.6.2}%
 \contentsline {section}{\numberline {6.3}Lo que ve una cooperativa}{52}{section.6.3}%
-\contentsline {section}{\numberline {6.4}Advertencias que el sistema declara}{52}{section.6.4}%
+\contentsline {section}{\numberline {6.4}Advertencias que el sistema declara}{53}{section.6.4}%
 \contentsline {chapter}{\numberline {7}Conclusiones}{55}{chapter.7}%
 \contentsline {section}{\numberline {7.1}Respuesta a las preguntas de investigación}{55}{section.7.1}%
 \contentsline {section}{\numberline {7.2}Limitaciones}{57}{section.7.2}%

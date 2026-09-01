@@ -70,7 +70,7 @@ de ajuste (Figura~\ref{fig:splits}).
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.62\linewidth]{1_qvdnPF8ETV9mFdMT0Y_BBA.png}
+\includegraphics[width=0.8\linewidth]{fig_splits.png}
 \caption{Esquema de validación con ventana expansiva. Cada partición de entrenamiento (azul)
 es un superconjunto de la anterior y el bloque de validación (naranja) siempre está en el
 futuro respecto a los datos con los que se ajusta el modelo.}
@@ -181,7 +181,7 @@ por las series de mayor tonelaje. Para evitarlo se transforma la variable objeti
 una transformación global, invertible y \emph{sin parámetros estimados} ---por lo que no puede
 filtrar información del conjunto de prueba---, y se invierte con $\exp(\tilde{y})-1$ antes de
 calcular cualquier métrica en kilogramos. Se comparó también la estandarización por serie
-($z$-score con media y desviación calculadas solo en entrenamiento), que resulta inferior.
+($z$-score con media y desviación calculadas solo en entrenamiento), que resulta inferior al logaritmo en las series clave.
 
 \subsection{Transformer de fusión temporal}
 El TFT \citep{lim2021,vaswani2023} es un modelo de atención multi-horizonte con selección de
@@ -253,13 +253,13 @@ usa una semilla fija que se registra junto con las métricas del experimento.
 \label{sec:met_reproducibilidad}
 
 El trabajo se implementó como un paquete de Python ---sobre \texttt{numpy} \citep{harris2020}, \texttt{pandas} \citep{mckinney2010}, \texttt{scikit-learn} \citep{pedregosa2011} y \texttt{PyTorch} \citep{paszke2019}--- con pruebas automatizadas
-(\texttt{137} pruebas unitarias que cubren el proceso de datos, las métricas, la construcción
+(\texttt{157} pruebas unitarias que cubren el proceso de datos, las métricas, la construcción
 de variables sin fuga de información y la envoltura conformal). Cada experimento:
 
 \begin{itemize}
   \item se ejecuta con \emph{un} comando y acepta el corte de prueba como parámetro;
   \item escribe sus métricas en un archivo JSON versionado por corte, sus figuras en PNG y un
-  resumen en Markdown, de modo que ninguna cifra de este documento se transcribe a mano;
+  resumen en Markdown, de modo que las cifras de este documento provienen de esos artefactos versionados o, en el caso de las instantáneas históricas señaladas como tales, de la bitácora de corridas del repositorio;
   \item fija y registra la semilla aleatoria.
 \end{itemize}
 

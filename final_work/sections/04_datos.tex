@@ -2,7 +2,7 @@
 \label{cap:datos}
 
 Este capítulo describe de dónde vienen los datos, cómo se consolidan y qué contiene el conjunto
-resultante. La descripción variable por variable está en el Apéndice~\ref{ap:variables}.
+resultante. La descripción variable por variable del acervo original de la primera iteración está en el Apéndice~\ref{ap:variables}; las variables vigentes se describen en las Secciones~\ref{sec:datos_fuentes} y~\ref{sec:datos_features}.
 
 \section{Fuentes}
 \label{sec:datos_fuentes}
@@ -80,11 +80,21 @@ La oceanografía se agrega espacialmente sobre la zona costera de cada \ue{}. Lo
 recortar con el polígono TURF exacto de cada cooperativa, pero esos polígonos no son de acceso
 público y no fue posible obtenerlos. Se usa en su lugar un rectángulo costero (\emph{bounding
 box}) por clúster de cooperativas. A la resolución de los productos satelitales empleados
----0.25\textdegree{} para la SST y 4~km para el color del océano--- el rectángulo es una
+---0.05\textdegree{} para la SST y 4~km para el color del océano--- el rectángulo es una
 aproximación razonable, y es además lo que hacía la primera iteración del trabajo; el polígono
 exacto queda como mejora deseable y no bloqueante. La Figura~\ref{fig:mapa_ues} muestra las
 zonas sobre el campo medio de SST, y la Figura~\ref{fig:zona_pesca} el detalle de la zona de
 San Quintín.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.72\linewidth]{fig_zona_sq.png}
+\caption{Detalle de la zona costera (\emph{bounding box}) asignada a la \ue{} LITORAL DE BAJA
+CALIFORNIA S DE PR DE RL, la cooperativa de San Quintín que sirve de serie insignia, sobre la
+SST media. El rectángulo cubre también tierra; los píxeles sobre tierra no tienen dato de SST y
+no entran al promedio espacial.}
+\label{fig:zona_pesca}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering
@@ -119,6 +129,15 @@ ecuación~\eqref{eq:problema}, con tres bloques:
   ecológico que se quiere modelar y, a la vez, lo que garantiza que no haya fuga de información
   (Figura~\ref{fig:desplazamiento}).
 \end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{fig_desplazamiento.png}
+\caption{El desplazamiento temporal de 90 días con la SST real de la zona de San Quintín
+(2019-2020): en azul la serie original y en amarillo la desplazada. La convención del proyecto
+usa el estado del océano en $t$ para predecir la captura en $t+90$ días.}
+\label{fig:desplazamiento}
+\end{figure}
 
 Con las seis variables de color del océano el conjunto crece a unas 35 variables, un número
 grande frente a las pocas temporadas disponibles; el Capítulo~\ref{cap:resultados} muestra que

@@ -1864,3 +1864,17 @@ $-100\%$ y, paradójicamente, el **mejor MAE de la tabla** (79.8, que es exactam
 captura observada). Es la justificación empírica más limpia de haber añadido las métricas de
 forma: sin ellas, el modelo degenerado habría ganado el capítulo. Con el corte de 2020 no colapsa,
 pero queda por detrás de la red pequeña (MAE 435.3 vs 290.7, sobre-dispersión 2.99 vs 1.58).
+
+
+## 2026-09-01 — Ronda final de revisión del documento
+
+Revisión dura de `final_work/` con verificación cifra por cifra contra `reports/metrics/*.json`
+(todo lo numérico de los experimentos cuadró). Corregido: tabla de series desbordada ~11 cm
+(generador reescrito: nombres cortos de cooperativa + `\footnotesize`), 10 citas duplicadas
+(`\cite`→`\citet/\citep`), 3 figuras de terceros sustituidas por figuras propias
+(`fig_splits`, `fig_desplazamiento` con SST real, `fig_zona_sq`), tablas 2023 con aritmética
+rota colapsadas en una con nota histórica, notas de instantánea en las tablas de Exp 3
+(no trazaban a metrics y diferían entre sí), 0.25°→0.05° (SST), 137→157 tests, apéndice B
+reencuadrado, «44 series»→«28-33 según corte», y una docena de correcciones menores.
+`\emergencystretch` mitiga la falta de guionado (B1). Resultado: **96 págs, 0 overfull,
+0 refs sin resolver**. Detalle en `reports/sessions/2026-09-01.md`.

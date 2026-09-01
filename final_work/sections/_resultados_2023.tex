@@ -56,66 +56,33 @@ ARIMA & d: 0, p: 29, q: 24, trend: c \\
 
 - La capa densa tiene 1 unidad de salida.\\
 
-Los resultados de las métricas de cada modelo se muestran en las Tablas \ref{tab:metricas_2020_21}, \ref{tab:metricas_2021_22} y \ref{tab:metricas_ambas}; las gráficas de valores predichos contra valores reales de cada modelo están en el Apéndice~\ref{ap:figuras} (Figuras \ref{fig:pred_arima} a \ref{fig:pred_ensemble_ambas}).
+Los resultados de las métricas de cada modelo, tal como los reportó el borrador, se resumen en la Tabla~\ref{tab:metricas_borrador}; las gráficas de valores predichos contra valores reales de cada modelo están en el Apéndice~\ref{ap:figuras} (Figuras \ref{fig:pred_arima} a \ref{fig:pred_ensemble_ambas}).
 
 \begin{table}[htbp]
 \centering
 \small
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccc}
 \toprule
-Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
+Modelo & Err.\ temp.\ 2020-21 & Err.\ temp.\ 2021-22 & Err.\ ambas & RMSE & MAE \\
 \midrule
-XGBoost + LSTM & 106333.0 & 115583.97 & 8.7\% & 623.7 & 407.87 \\
-XGBoost & 106333.0 & 95654.32 & 12\% & 354.42 & 304.34 \\
-LGBM & 106333.0 & 137245.0 & 36\% & 494.9 & 380.2 \\
+XGBoost + LSTM & 8.7\% & 92\% & 12.9\% & 527.3 & 369.0 \\
+XGBoost & 12\% & 16.3\% & 14.5\% & 450.7 & 312.6 \\
+LGBM & 36\% & 36\% & 36.4\% & 494.9 & 380.2 \\
 \midrule
-Prophet & 106333.0 & 174790.93 & 164\% & 135.01 & 105.76 \\
-ARIMA & 106333.0 & 104482.56 & 338\% & 467.52 & 344.13 \\
+LSTM & --- & --- & 61\% & 183.1 & 104.9 \\
+Prophet & 164\% & 1737\% & 761\% & 135.0 & 105.8 \\
+ARIMA & 338\% & 142\% & 142\% & 467.5 & 344.1 \\
 \bottomrule
 \end{tabular}
-\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2020-2021}
-\label{tab:metricas_2020_21}
-\end{table}
-
-
-\begin{table}[htbp]
-\centering
-\small
-\begin{tabular}{lcccccc}
-\toprule
-Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
-\midrule
-XGBoost + LSTM & 30912.0 & 59351.04 & 92\% & 345.66 & 313.40 \\
-XGBoost & 30852 & 50490.34 & 16.3\% & 386.42 & 284.26 \\
-LGBM & 30912.0 & 145028.25 & 36\% & 494.9 & 380.2 \\
-\midrule
-Prophet & 30852 & 536030.88 & 1737\% & 135.01 & 105.76 \\
-ARIMA & 106133.0 & 90003.27 & 142\% & 467.52 & 344.13 \\
-\bottomrule
-\end{tabular}
-\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para la temporada 2021-2022}
-\label{tab:metricas_2021_22}
-\end{table}
-
-
-\begin{table}[htbp]
-\centering
-\small
-\begin{tabular}{lcccccc}
-\toprule
-Modelo & Real & Predicción & Error temp.\ (\%) & RMSE & MAE \\
-\midrule
-XGBoost + LSTM & 137245.0 & 154949.60 & 12.9\% & 527.31 & 368.97 \\
-XGBoost & 137245.0 & 117299.43 & 14.5\% & 450.67 & 312.6 \\
-LGBM & 137245.0  & 106133.0 & 36.4.7\% & 494.9 & 380.2 \\
-\midrule
-LSTM & 137245.0 & 11899.4 & 61\% & 183.13 & 104.9 \\
-Prophet & 137245.0 & 1043231.40 & 761\% & 135.01 & 105.76 \\
-ARIMA & 137245.0 & 150 & 142\% & 467.52 & 344.13 \\
-\bottomrule
-\end{tabular}
-\caption{Comparación de RMSE, MAE y Error de pesca por temporada. Resultados para las dos temporadas 2020-2021 y 2021-2022}
-\label{tab:metricas_ambas}
+\caption{Resultados de la primera iteración (borrador de 2023) por modelo: error en la suma de
+temporada (2020-2021, 2021-2022 y ambas) y RMSE/MAE diarios en kg. \emph{Nota}: las cifras se
+transcriben tal cual del borrador, cuyo proceso de datos dependía de fuentes hoy inaccesibles y
+no es reproducible; contienen inconsistencias internas menores de transcripción (algunos errores
+porcentuales no cuadran exactamente con las sumas que los acompañaban), por lo que deben leerse
+como el registro histórico del punto de partida y no como cifras verificadas. La re-corrida
+verificable de estos mismos modelos sobre el conjunto unido 2017-2026 está en la
+Tabla~\ref{tab:extension_comparativa}.}
+\label{tab:metricas_borrador}
 \end{table}
 
 
@@ -125,6 +92,6 @@ Además, los RMSE y MAE son elevados, lo cual implica que las predicciones diari
 
 En general, todos los modelos sobreestimaron la pesca de la segunda temporada debido a que podría tratarse de un caso atípico. Si comparamos esta temporada con el resto, el total de pesca es menos de la mitad. Por esta razón se decidió optar por predecir la temporada 2020-2021 también, pues es similar a las demás.
 
-No obstante, debemos poner atención a la causa de la reducción de la pesca en la temporada 2021-2022. Inicialmente se planteó la hipótesis de un efecto económico externo (el último año de la pandemia de Covid-19); sin embargo, el índice de olas de calor marinas de la Sección~\ref{sec:datos_mhw} atribuye la caída a un mecanismo ambiental: las olas de calor marinas que afectaron a Baja California entre 2019 y 2021 \cite{villasenor2024}. Esto explica por qué los modelos que solo usan el historial de capturas —o las variables oceanográficas sin un índice de anomalía térmica de largo plazo— sobreestiman sistemáticamente esa temporada.
+No obstante, debemos poner atención a la causa de la reducción de la pesca en la temporada 2021-2022. Inicialmente se planteó la hipótesis de un efecto económico externo (el último año de la pandemia de Covid-19); sin embargo, el índice de olas de calor marinas de la Sección~\ref{sec:datos_mhw} atribuye la caída a un mecanismo ambiental: las olas de calor marinas que afectaron a Baja California entre 2019 y 2021 \citep{villasenor2024}. Esto explica por qué los modelos que solo usan el historial de capturas —o las variables oceanográficas sin un índice de anomalía térmica de largo plazo— sobreestiman sistemáticamente esa temporada.
 
-Los próximos pasos de este esfuerzo son conseguir datos de otras regiones y de otras especies para replicar este procedimiento y verificar si los modelos elegidos tienen resultados similares.
+El paso siguiente que este planteamiento dejaba señalado ---conseguir datos de otras regiones y de otras especies, replicar el procedimiento y verificar si los modelos elegidos sostienen sus resultados--- es exactamente el que emprenden las secciones que siguen.

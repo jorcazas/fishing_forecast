@@ -16,7 +16,8 @@ según la metodología de Hobday et al.\ (2016), que reproduce el evento ``Blob'
 y el régimen cálido de 2019-2021, y se incorpora como covariable.
 
 Sobre esa base se desarrollan tres aportaciones. Primero, un \textbf{modelo global} que
-agrupa 44 series de especie por \ue{}, con la variable objetivo en escala logarítmica, que
+agrupa las series de especie por \ue{} del conjunto (de 28 a 33 con datos suficientes, según
+el corte), con la variable objetivo en escala logarítmica, que
 gana o empata contra los modelos específicos en cuatro de cinco series y rescata a las de
 menor escala. Segundo, un \textbf{pronóstico probabilístico} mediante regresión cuantílica
 conformalizada, que entrega intervalos con cobertura empírica cercana a la nominal y estable
@@ -52,8 +53,8 @@ their ensemble--- on a single series, we show that none of them explained the an
 Hobday et al.\ (2016) index ---which recovers the 2014-2016 ``Blob'' and the 2019-2021 warm
 regime--- and add it as a covariate.
 
-Three contributions follow. A \textbf{global model} pooling 44 species-by-cooperative series
-with a log-scaled target matches or beats series-specific models in four of five series and
+Three contributions follow. A \textbf{global model} pooling the dataset's species-by-cooperative series (28--33 with
+enough data, depending on the cut) with a log-scaled target matches or beats series-specific models in four of five series and
 rescues the small-scale ones. A \textbf{probabilistic forecast} based on conformalized
 quantile regression yields intervals whose empirical coverage stays close to nominal even
 during marine heatwaves; for a cooperative, a calibrated range is more actionable ---and
@@ -62,7 +63,7 @@ hypothesis} ---that the binding constraint is data volume rather than model
 sophistication---: expanding from 2 to 21 lobster series and unlocking the 2022-2026 seasons
 makes the flagship series' calibration stable and invariant to pool composition, whereas
 SHAP-based feature selection, Bayesian hyperparameter search and a Temporal Fusion
-Transformer all fail to. The result is delivered as an inference application serving the
+Transformer all fail to do so. The result is delivered as an inference application serving the
 calibrated interval per species and cooperative.
 
 \vspace{0.5cm}
