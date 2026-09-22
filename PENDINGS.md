@@ -4,7 +4,7 @@
 original de las fases (congelado, ya no se marca) y `bitacora.md` es el historial de lo hecho
 con sus números. Si algo no está en este archivo, no está pendiente.
 
-Última actualización: **2026-09-01** (ronda final de revisión + B1 cerrado).
+Última actualización: **2026-09-22** (artefactos de LaTeX fuera de git).
 
 ---
 
@@ -90,8 +90,10 @@ Cerradas el 2026-08-31 (e): **B2, B4, B5, B7 y B9**. Sigue abierto lo de abajo.
   decidir si se archivan como están o se limpian. Ya están fuera del camino de ejecución.
 - [ ] **Deuda de lint preexistente**: 7 errores de `ruff` en `src/` y `tests/` (ninguno en el
   código nuevo). `uv run ruff check .` los lista.
-- [ ] **Artefactos de LaTeX versionados** (`.aux`, `.log`, `.out`, `.toc`, `.lof`, `.lot`, `.pdf`):
-  decidir si se ignoran en `.gitignore` o se conservan a propósito para tener el PDF en el repo.
+- [x] ~~**Artefactos de LaTeX versionados**~~ — **HECHO (2026-09-22)**: se ignoran todos,
+  **incluido `final_work.pdf`** (binario de 2.7 MB regenerable que cambia en cada compilación).
+  Se sacaron del índice con `git rm --cached` (siguen en disco y en el historial). El PDF se
+  compila con `latexmk -pdf final_work.tex` y se comparte fuera de git.
 - [ ] **Commits automáticos del 2026-08-31**: tres commits (`6b1632f`, `556b339`, `410a14d`)
   entraron a `main` sin haberse pedido, aparentemente por un hook. Decidir si se dejan, se
   reescriben con mensajes propios o se reorganizan.

@@ -255,3 +255,16 @@ reports/etl/**
 
 # Keys
 *keys.json
+# LaTeX (final_work/): solo se versiona la fuente (.tex, .bib, .sty, imágenes).
+# El PDF se regenera con `latexmk -pdf final_work.tex` y se comparte fuera de git.
+final_work/**/*.aux
+final_work/**/*.bbl
+final_work/**/*.blg
+final_work/**/*.lof
+final_work/**/*.lot
+final_work/**/*.out
+final_work/**/*.toc
+final_work/**/*.fls
+final_work/**/*.fdb_latexmk
+final_work/**/*.synctex.gz
+final_work/final_work.pdf
